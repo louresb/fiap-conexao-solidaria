@@ -1,0 +1,9 @@
+snapshot_date,tenant_id,campaign_id,raised_amount,donor_count,conversion_rate,avg_ticket,recurring_revenue,pending_documents
+2026-06-15,tnt_esperanca,cmp_001,38200.00,412,0.034,92.72,18450.00,4
+2026-06-20,tnt_esperanca,cmp_001,44680.00,471,0.036,94.86,18450.00,2
+2026-06-22,tnt_esperanca,cmp_001,46500.00,489,0.037,95.09,18450.00,1
+2026-06-15,tnt_esperanca,cmp_003,64800.00,152,0.021,426.31,18450.00,5
+2026-06-22,tnt_esperanca,cmp_003,72300.00,169,0.024,427.81,18450.00,3
+2026-06-22,tnt_marelimpa,cmp_101,38200.00,188,0.031,203.19,6100.00,2
+2026-06-22,tnt_aurora,cmp_201,57800.00,221,0.028,261.54,9800.00,4
+2026-06-22,tnt_futuro,cmp_301,84600.00,146,0.019,579.45,12400.00,2

@@ -1,0 +1,7 @@
+id,tenant_id,recipient_type,recipient_id,campaign_id,channel,subject,body,status,created_at
+msg_001,tnt_esperanca,donor,don_001,cmp_001,email,Atualizacao da sua campanha,"Sua doacao ajudou a compor o primeiro lote de alimentos. O painel ja mostra os bairros atendidos de forma agregada.",sent,2026-06-19T18:00:00-03:00
+msg_002,tnt_esperanca,donor,don_002,cmp_001,in_app,Obrigado pela doacao,"Recebemos sua contribuicao via Pix. Voce pode acompanhar a prestacao de contas pela pagina da campanha.",sent,2026-06-12T20:06:00-03:00
+msg_003,tnt_esperanca,donor,don_004,cmp_002,email,Kits escolares em andamento,"O primeiro lote de kits escolares foi separado. A entrega sera registrada com evidencias agregadas.",sent,2026-06-09T09:00:00-03:00
+msg_004,tnt_esperanca,user,usr_001,cmp_001,in_app,Campanha em atencao,"A campanha Mesa Cheia nas Ferias esta com risco medio por prazo curto e conversao abaixo do esperado.",sent,2026-06-21T07:00:00-03:00
+msg_005,tnt_marelimpa,donor,don_007,cmp_101,email,Mutirao confirmado,"O primeiro mutirao de limpeza costeira ja tem data e equipe confirmada.",sent,2026-06-18T17:00:00-03:00
+msg_006,tnt_aurora,donor,don_009,cmp_201,email,Turma iniciada,"A primeira turma da trilha de autonomia iniciou acolhimento e planejamento de oficinas.",sent,2026-06-20T15:00:00-03:00

@@ -1,0 +1,17 @@
+id,tenant_id,name,email,role,status,last_login_at
+usr_001,tnt_esperanca,Renata Alves,renata.alves@example.org,ngo_manager,active,2026-06-21T18:20:00-03:00
+usr_002,tnt_esperanca,Helena Prado,helena.prado@example.org,auditor_partner,active,2026-06-20T09:05:00-03:00
+usr_003,tnt_esperanca,Jorge Nascimento,jorge.nascimento@example.org,volunteer_coordinator,active,2026-06-21T07:40:00-03:00
+usr_004,tnt_esperanca,Marina Couto,marina.couto@example.org,finance_manager,active,2026-06-22T10:15:00-03:00
+usr_005,tnt_esperanca,Bianca Torres,bianca.torres@example.org,communications,active,2026-06-22T12:05:00-03:00
+usr_006,tnt_esperanca,Diego Freire,diego.freire@example.org,programs_coordinator,active,2026-06-21T16:45:00-03:00
+usr_007,tnt_marelimpa,Ana Bezerra,ana.bezerra@example.org,ngo_manager,active,2026-06-22T09:30:00-03:00
+usr_008,tnt_marelimpa,Rafael Duarte,rafael.duarte@example.org,volunteer_coordinator,active,2026-06-22T08:10:00-03:00
+usr_009,tnt_marelimpa,Luiza Matos,luiza.matos@example.org,communications,active,2026-06-20T15:00:00-03:00
+usr_010,tnt_aurora,Clara Sampaio,clara.sampaio@example.org,ngo_manager,active,2026-06-22T11:20:00-03:00
+usr_011,tnt_aurora,Solange Pires,solange.pires@example.org,programs_coordinator,active,2026-06-21T09:35:00-03:00
+usr_012,tnt_aurora,Maria Lemos,maria.lemos@example.org,auditor_partner,active,2026-06-19T14:05:00-03:00
+usr_013,tnt_futuro,Pedro Lins,pedro.lins@example.org,ngo_manager,active,2026-06-22T13:05:00-03:00
+usr_014,tnt_futuro,Natalia Rocha,natalia.rocha@example.org,programs_coordinator,active,2026-06-21T19:25:00-03:00
+usr_015,tnt_futuro,Bruno Maia,bruno.maia@example.org,communications,active,2026-06-20T17:50:00-03:00
+usr_016,platform,Caio Mendonca,caio.mendonca@example.org,saas_admin,active,2026-06-22T08:10:00-03:00

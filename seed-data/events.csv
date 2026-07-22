@@ -1,0 +1,10 @@
+id,tenant_id,user_or_donor_id,event_type,entity_type,entity_id,metadata_json,created_at
+evt_001,tnt_esperanca,don_002,campaign_view,campaign,cmp_001,"{""referrer"":""instagram"",""device"":""mobile""}",2026-06-12T19:59:00-03:00
+evt_002,tnt_esperanca,don_002,donation_started,campaign,cmp_001,"{""payment_method"":""pix""}",2026-06-12T20:03:00-03:00
+evt_003,tnt_esperanca,don_002,donation_confirmed,donation,dnt_0002,"{""amount"":120.00}",2026-06-12T20:05:00-03:00
+evt_004,tnt_esperanca,usr_001,campaign_approved,campaign,cmp_003,"{""workflow"":""standard""}",2026-06-14T10:25:00-03:00
+evt_005,tnt_esperanca,usr_005,accountability_update_published,campaign,cmp_001,"{""title"":""Primeira lista de bairros confirmada""}",2026-06-19T17:15:00-03:00
+evt_006,tnt_esperanca,usr_001,ai_recommendation_requested,campaign,cmp_001,"{""intent"":""risk_explanation""}",2026-06-21T09:00:00-03:00
+evt_007,tnt_marelimpa,usr_007,campaign_published,campaign,cmp_101,"{""category"":""environment""}",2026-06-01T10:00:00-03:00
+evt_008,tnt_aurora,usr_010,campaign_published,campaign,cmp_201,"{""category"":""employability""}",2026-06-04T11:00:00-03:00
+evt_009,tnt_futuro,usr_013,campaign_published,campaign,cmp_301,"{""category"":""technology_education""}",2026-06-01T09:30:00-03:00

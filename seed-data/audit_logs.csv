@@ -1,0 +1,6 @@
+id,tenant_id,actor_user_id,action,entity_type,entity_id,before_json,after_json,ip_address,created_at
+aud_001,tnt_esperanca,usr_001,approve,campaign,cmp_003,"{""status"":""draft""}","{""status"":""active""}",10.20.1.15,2026-06-14T10:25:00-03:00
+aud_002,tnt_esperanca,usr_002,export,report,rpt_q2_2026,"{}","{""format"":""pdf""}",10.20.1.44,2026-06-20T09:20:00-03:00
+aud_003,tnt_esperanca,usr_003,upload,evidence,evd_212,"{}","{""file_name"":""entrega-lote-03.pdf""}",10.20.1.31,2026-06-21T08:02:00-03:00
+aud_004,tnt_esperanca,usr_005,publish,accountability_update,acc_001,"{""status"":""draft""}","{""status"":""published""}",10.20.1.19,2026-06-19T17:15:00-03:00
+aud_005,tnt_esperanca,usr_001,request_ai,campaign,cmp_001,"{}","{""intent"":""risk_explanation"",""sources"":3}",10.20.1.15,2026-06-21T09:00:00-03:00

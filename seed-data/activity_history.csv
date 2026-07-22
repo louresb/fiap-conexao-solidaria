@@ -1,0 +1,9 @@
+id,tenant_id,actor_name,description,occurred_at
+hst_001,tnt_esperanca,Renata Alves,Aprovou a campanha Conexao para Aprender,2026-06-14T10:25:00-03:00
+hst_002,tnt_esperanca,Sistema,Gatilho de alerta de risco medio para Mesa Cheia nas Ferias,2026-06-16T07:00:00-03:00
+hst_003,tnt_esperanca,Patricia Moura,Confirmou doacao recorrente mensal,2026-06-18T14:22:00-03:00
+hst_004,tnt_esperanca,Helena Prado,Exportou relatorio trimestral para auditoria,2026-06-20T09:20:00-03:00
+hst_005,tnt_esperanca,Bianca Torres,Publicou atualizacao de transparencia da campanha Mesa Cheia nas Ferias,2026-06-19T17:15:00-03:00
+hst_006,tnt_marelimpa,Ana Bezerra,Publicou a campanha Praia Limpa Bairro Vivo,2026-06-01T10:00:00-03:00
+hst_007,tnt_aurora,Clara Sampaio,Aprovou plano de oficinas da campanha Trilhas de Autonomia,2026-06-05T14:30:00-03:00
+hst_008,tnt_futuro,Pedro Lins,Atualizou meta operacional do Laboratorio Aberto,2026-06-18T11:45:00-03:00

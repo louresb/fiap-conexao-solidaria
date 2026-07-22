@@ -1,0 +1,7 @@
+id,tenant_id,audience,question,expected_source,classification
+rq_001,tnt_esperanca,donor,Posso doar para uma campanha especifica?,faq-doadores.md,public
+rq_002,tnt_esperanca,donor,O que acontece se sobrar saldo de uma campanha?,politica-uso-doacoes.md,public
+rq_003,tnt_esperanca,auditor,Quais evidencias sao aceitas na prestacao de contas?,manual-prestacao-contas.md,restricted
+rq_004,tnt_esperanca,manager,Quais campanhas estao em risco de nao bater a meta?,indicator_snapshots.csv,internal
+rq_005,tnt_esperanca,manager,Que mensagem posso enviar para doadores recorrentes?,guia-criacao-campanhas.md,internal
+rq_006,tnt_esperanca,admin,Quais respostas de IA precisam ser auditadas?,guardrails-de-ia.md,internal

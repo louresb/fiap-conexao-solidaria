@@ -1,0 +1,10 @@
+id,tenant_id,campaign_id,published_at,title,body,status
+upd_001,tnt_esperanca,cmp_002,2026-06-02T09:00:00-03:00,Cotacao iniciada,"Comecamos a cotacao de mochilas e cadernos com fornecedores homologados. O foco e comparar preco unitario, qualidade e prazo.",published
+upd_002,tnt_esperanca,cmp_002,2026-06-08T17:30:00-03:00,Primeiro lote separado,"O primeiro lote de kits escolares foi separado e aguarda conferencia final antes da entrega.",published
+upd_003,tnt_esperanca,cmp_001,2026-06-12T10:15:00-03:00,Compra de alimentos,"A equipe fechou compra parcial de arroz, feijao e proteinas. O valor executado ja aparece no painel de transparencia.",published
+upd_004,tnt_esperanca,cmp_001,2026-06-19T17:15:00-03:00,Bairros confirmados,"Publicamos a primeira lista agregada de bairros atendidos, sem expor nomes de familias.",published
+upd_005,tnt_esperanca,cmp_003,2026-06-21T11:00:00-03:00,Oficinas digitais,"As primeiras oficinas digitais foram agendadas com foco em seguranca online, pesquisa escolar e ferramentas basicas.",published
+upd_006,tnt_esperanca,cmp_004,2026-06-22T08:10:00-03:00,Resposta pos-chuva,"A equipe iniciou triagem de kits de limpeza e colchoes para familias afetadas pelas chuvas.",published
+upd_007,tnt_marelimpa,cmp_101,2026-06-18T16:30:00-03:00,Mutirao confirmado,"O primeiro mutirao costeiro foi confirmado com voluntarios e escola parceira.",published
+upd_008,tnt_aurora,cmp_201,2026-06-20T14:00:00-03:00,Turma de formacao,"A primeira turma de trilha de autonomia fechou inscricoes e iniciou acolhimento.",published
+upd_009,tnt_futuro,cmp_301,2026-06-22T18:20:00-03:00,Laboratorio aberto,"O laboratorio recebeu novos horarios de mentoria e acompanhamento de trilhas.",published

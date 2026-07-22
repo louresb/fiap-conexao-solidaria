@@ -1,0 +1,14 @@
+id,tenant_id,campaign_id,donor_id,amount,payment_method,channel,donated_at,status,is_anonymous
+dnt_0001,tnt_esperanca,cmp_001,don_001,50.00,pix,email,2026-06-18T14:22:00-03:00,confirmed,false
+dnt_0002,tnt_esperanca,cmp_001,don_002,120.00,pix,instagram,2026-06-12T20:05:00-03:00,confirmed,false
+dnt_0003,tnt_esperanca,cmp_003,don_003,5000.00,invoice,b2b_outreach,2026-06-10T11:30:00-03:00,confirmed,false
+dnt_0004,tnt_esperanca,cmp_004,don_001,80.00,card,landing_page,2026-06-19T08:11:00-03:00,confirmed,false
+dnt_0005,tnt_esperanca,cmp_002,don_004,75.00,pix,email,2026-06-20T08:40:00-03:00,confirmed,false
+dnt_0006,tnt_esperanca,cmp_005,don_006,3000.00,invoice,b2b_outreach,2026-06-16T10:00:00-03:00,confirmed,false
+dnt_0007,tnt_esperanca,cmp_006,don_005,250.00,card,landing_page,2026-06-19T21:15:00-03:00,confirmed,false
+dnt_0008,tnt_marelimpa,cmp_101,don_007,40.00,pix,email,2026-06-17T18:00:00-03:00,confirmed,false
+dnt_0009,tnt_marelimpa,cmp_102,don_008,2200.00,invoice,b2b_outreach,2026-06-14T12:30:00-03:00,confirmed,false
+dnt_0010,tnt_aurora,cmp_201,don_009,90.00,pix,email,2026-06-18T09:10:00-03:00,confirmed,false
+dnt_0011,tnt_aurora,cmp_202,don_010,4000.00,invoice,b2b_outreach,2026-06-11T16:45:00-03:00,confirmed,false
+dnt_0012,tnt_futuro,cmp_301,don_012,6000.00,invoice,b2b_outreach,2026-06-12T09:00:00-03:00,confirmed,false
+dnt_0013,tnt_futuro,cmp_302,don_011,180.00,pix,instagram,2026-06-15T20:05:00-03:00,confirmed,false

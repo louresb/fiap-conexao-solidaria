@@ -1,0 +1,7 @@
+id,tenant_id,recipient_type,recipient_id,template_key,channel,status,scheduled_at,sent_at
+ntf_001,tnt_esperanca,donor,don_001,donation_receipt,email,sent,2026-06-18T14:23:00-03:00,2026-06-18T14:23:11-03:00
+ntf_002,tnt_esperanca,donor,don_002,campaign_update_whatsapp,in_app,sent,2026-06-15T10:00:00-03:00,2026-06-15T10:00:02-03:00
+ntf_003,tnt_esperanca,user,usr_001,risk_alert_campaign,email,sent,2026-06-21T07:00:00-03:00,2026-06-21T07:00:03-03:00
+ntf_004,tnt_esperanca,donor,don_004,donation_receipt,email,sent,2026-06-20T08:41:00-03:00,2026-06-20T08:41:08-03:00
+ntf_005,tnt_marelimpa,donor,don_007,donation_receipt,email,sent,2026-06-17T18:01:00-03:00,2026-06-17T18:01:04-03:00
+ntf_006,tnt_aurora,donor,don_009,donation_receipt,email,sent,2026-06-18T09:11:00-03:00,2026-06-18T09:11:07-03:00

@@ -1,0 +1,7 @@
+id,tenant_id,donation_id,campaign_id,provider,method,amount,currency,status,provider_payment_id,qr_code_expires_at,created_at,confirmed_at
+pay_001,tnt_esperanca,dnt_0001,cmp_001,fake-pix,pix,50.00,BRL,confirmed,fpix_0001,2026-06-18T15:22:00-03:00,2026-06-18T14:22:00-03:00,2026-06-18T14:22:18-03:00
+pay_002,tnt_esperanca,dnt_0002,cmp_001,fake-pix,pix,120.00,BRL,confirmed,fpix_0002,2026-06-12T21:05:00-03:00,2026-06-12T20:03:00-03:00,2026-06-12T20:05:00-03:00
+pay_003,tnt_esperanca,dnt_0003,cmp_003,fake-invoice,invoice,5000.00,BRL,confirmed,finv_0003,2026-06-11T11:30:00-03:00,2026-06-10T11:30:00-03:00,2026-06-10T11:30:00-03:00
+pay_004,tnt_esperanca,dnt_0004,cmp_004,fake-card,card,80.00,BRL,confirmed,fcard_0004,2026-06-19T09:11:00-03:00,2026-06-19T08:11:00-03:00,2026-06-19T08:11:23-03:00
+pay_005,tnt_esperanca,dnt_pending_001,cmp_001,fake-pix,pix,150.00,BRL,waiting_payment,fpix_pending_001,2026-06-23T12:00:00-03:00,2026-06-23T11:00:00-03:00,
+pay_006,tnt_esperanca,dnt_expired_001,cmp_002,fake-pix,pix,75.00,BRL,expired,fpix_expired_001,2026-06-20T09:40:00-03:00,2026-06-20T08:40:00-03:00,

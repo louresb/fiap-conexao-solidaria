@@ -1,0 +1,54 @@
+[
+  {
+    "id": "tnt_esperanca",
+    "name": "Instituto Esperanca Solidaria",
+    "publicBrand": "Esperanca Solidaria",
+    "slug": "esperanca-solidaria",
+    "city": "Recife",
+    "state": "PE",
+    "cause": "Seguranca alimentar, permanencia escolar e inclusao digital",
+    "primaryColor": "#2E7D5A",
+    "secondaryColor": "#D96C4A",
+    "accentColor": "#1F4E79",
+    "status": "active"
+  },
+  {
+    "id": "tnt_marelimpa",
+    "name": "Instituto Mare Limpa",
+    "publicBrand": "Mare Limpa",
+    "slug": "mare-limpa",
+    "city": "Recife",
+    "state": "PE",
+    "cause": "Educacao ambiental e recuperacao costeira",
+    "primaryColor": "#0F5E9C",
+    "secondaryColor": "#58B7B2",
+    "accentColor": "#EFE3C2",
+    "status": "active"
+  },
+  {
+    "id": "tnt_aurora",
+    "name": "Rede Aurora Mulher",
+    "publicBrand": "Aurora Mulher",
+    "slug": "aurora-mulher",
+    "city": "Salvador",
+    "state": "BA",
+    "cause": "Protecao, autonomia e empregabilidade de mulheres",
+    "primaryColor": "#6E4AA3",
+    "secondaryColor": "#E67C73",
+    "accentColor": "#F8F4F7",
+    "status": "active"
+  },
+  {
+    "id": "tnt_futuro",
+    "name": "Instituto Futuro em Rede",
+    "publicBrand": "Futuro em Rede",
+    "slug": "futuro-em-rede",
+    "city": "Fortaleza",
+    "state": "CE",
+    "cause": "Educacao, tecnologia e insercao produtiva de jovens",
+    "primaryColor": "#3246A8",
+    "secondaryColor": "#A8D65E",
+    "accentColor": "#F3F5F7",
+    "status": "active"
+  }
+]

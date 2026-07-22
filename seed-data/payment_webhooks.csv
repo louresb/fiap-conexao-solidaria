@@ -1,0 +1,5 @@
+id,tenant_id,payment_transaction_id,provider,provider_event_id,event_type,signature_valid,processed,status,received_at
+pwh_001,tnt_esperanca,pay_001,fake-pix,evt_pay_0001,payment.approved,true,true,processed,2026-06-18T14:22:18-03:00
+pwh_002,tnt_esperanca,pay_002,fake-pix,evt_pay_0002,payment.approved,true,true,processed,2026-06-12T20:05:00-03:00
+pwh_003,tnt_esperanca,pay_005,fake-pix,evt_pay_pending_001,payment.pending,true,true,ignored_pending,2026-06-23T11:01:00-03:00
+pwh_004,tnt_esperanca,pay_006,fake-pix,evt_pay_expired_001,payment.expired,true,true,processed,2026-06-20T09:41:00-03:00

@@ -1,0 +1,13 @@
+id,tenant_id,name,profile,email,is_recurring,city,state,lifetime_value,last_donation_at
+don_001,tnt_esperanca,Patricia Moura,individual,patricia.moura@example.org,true,Recife,PE,1480.00,2026-06-18T14:22:00-03:00
+don_002,tnt_esperanca,Lucas Teles,individual,lucas.teles@example.org,false,Olinda,PE,120.00,2026-06-12T20:05:00-03:00
+don_003,tnt_esperanca,Grupo Horizonte Cidadao,company,contato@grupo-horizonte.example.org,true,Recife,PE,18500.00,2026-06-10T11:30:00-03:00
+don_004,tnt_esperanca,Fabiana Melo,individual,fabiana.melo@example.org,true,Jaboatao dos Guararapes,PE,920.00,2026-06-20T08:40:00-03:00
+don_005,tnt_esperanca,Carlos Vieira,individual,carlos.vieira@example.org,false,Paulista,PE,250.00,2026-06-19T21:15:00-03:00
+don_006,tnt_esperanca,Studio Norte Criativo,company,parcerias@studionorte.example.org,false,Recife,PE,3000.00,2026-06-16T10:00:00-03:00
+don_007,tnt_marelimpa,Marcos Lima,individual,marcos.lima@example.org,true,Recife,PE,640.00,2026-06-17T18:00:00-03:00
+don_008,tnt_marelimpa,Coletivo Praia Viva,company,contato@praiaviva.example.org,false,Olinda,PE,2200.00,2026-06-14T12:30:00-03:00
+don_009,tnt_aurora,Aline Nunes,individual,aline.nunes@example.org,true,Salvador,BA,1120.00,2026-06-18T09:10:00-03:00
+don_010,tnt_aurora,Empresa Ponte Azul,company,social@ponteazul.example.org,true,Salvador,BA,12000.00,2026-06-11T16:45:00-03:00
+don_011,tnt_futuro,Vitor Ramos,individual,vitor.ramos@example.org,false,Fortaleza,CE,180.00,2026-06-15T20:05:00-03:00
+don_012,tnt_futuro,TechLab Nordeste,company,impacto@techlabne.example.org,true,Fortaleza,CE,15600.00,2026-06-12T09:00:00-03:00

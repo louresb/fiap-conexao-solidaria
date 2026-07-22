@@ -1,0 +1,9 @@
+id,tenant_id,campaign_id,type,title,amount,occurred_at,status,visibility
+evd_001,tnt_esperanca,cmp_001,invoice,Compra parcial de alimentos,18450.00,2026-06-12T10:00:00-03:00,approved,public_summary
+evd_002,tnt_esperanca,cmp_001,delivery_report,Entrega lote 01,0.00,2026-06-19T15:30:00-03:00,approved,public_summary
+evd_003,tnt_esperanca,cmp_002,invoice,Kits escolares lote 01,22600.00,2026-06-08T16:00:00-03:00,approved,public_summary
+evd_004,tnt_esperanca,cmp_003,service_order,Oficinas digitais ciclo 01,7200.00,2026-06-21T09:30:00-03:00,pending_review,internal
+evd_005,tnt_esperanca,cmp_004,delivery_report,Kits limpeza emergencial,14300.00,2026-06-22T08:00:00-03:00,pending_review,public_summary
+evd_006,tnt_marelimpa,cmp_101,activity_report,Mutirao costeiro piloto,4100.00,2026-06-18T15:00:00-03:00,approved,public_summary
+evd_007,tnt_aurora,cmp_201,activity_report,Oficina de autonomia turma 01,6800.00,2026-06-20T13:00:00-03:00,approved,restricted
+evd_008,tnt_futuro,cmp_301,invoice,Equipamentos laboratorio,31800.00,2026-06-18T11:00:00-03:00,approved,public_summary
