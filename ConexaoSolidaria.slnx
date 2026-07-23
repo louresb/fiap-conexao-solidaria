@@ -1,6 +1,15 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Application/ConexaoSolidaria.Application.csproj" />
+    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Contracts/ConexaoSolidaria.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Infrastructure/ConexaoSolidaria.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/ConexaoSolidaria.SharedKernel/ConexaoSolidaria.SharedKernel.csproj" />
+  </Folder>
   <Folder Name="/src/Web/">
     <Project Path="src/Web/ConexaoSolidaria.Web/ConexaoSolidaria.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ConexaoSolidaria.Architecture.Tests/ConexaoSolidaria.Architecture.Tests.csproj" />
   </Folder>
 </Solution>
