@@ -1,0 +1,20 @@
+global:
+  environment: local
+  cloudProvider: local
+
+image:
+  registry: localhost:5000
+  repository: conexao-solidaria-web
+  tag: local
+  pullPolicy: IfNotPresent
+
+web:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30080
+  ingress:
+    enabled: false
+
+observability:
+  otlpEndpoint: http://otel-collector:4317

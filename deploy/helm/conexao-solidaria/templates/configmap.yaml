@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "conexao-solidaria.fullname" . }}-web
+  labels:
+    {{- include "conexao-solidaria.labels" . | nindent 4 }}
+data:
+  ASPNETCORE_ENVIRONMENT: {{ .Values.web.env.ASPNETCORE_ENVIRONMENT | quote }}
+  ASPNETCORE_URLS: "http://+:{{ .Values.web.port }}"
+  CS_DEFAULT_TENANT_ID: {{ .Values.global.tenant.defaultId | quote }}
+  CS_CLOUD_PROVIDER: {{ .Values.global.cloudProvider | quote }}
+  CS_ENVIRONMENT: {{ .Values.global.environment | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.observability.otlpEndpoint | quote }}

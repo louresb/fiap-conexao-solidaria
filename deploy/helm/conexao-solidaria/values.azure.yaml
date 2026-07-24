@@ -1,0 +1,19 @@
+global:
+  environment: azure
+  cloudProvider: azure
+
+image:
+  registry: "<acr-name>.azurecr.io"
+  repository: conexao-solidaria-web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+web:
+  replicaCount: 2
+  ingress:
+    enabled: true
+    className: webapprouting.kubernetes.azure.com
+    host: conexao-solidaria.example.com
+
+observability:
+  otlpEndpoint: http://otel-collector.observability:4317

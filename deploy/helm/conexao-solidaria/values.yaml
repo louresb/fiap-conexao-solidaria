@@ -1,0 +1,59 @@
+global:
+  environment: local
+  cloudProvider: local
+  tenant:
+    defaultId: esperanca-solidaria
+
+image:
+  registry: ghcr.io
+  repository: louresb/fiap-conexao-solidaria-web
+  tag: dev
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+web:
+  replicaCount: 1
+  port: 8080
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: false
+    className: nginx
+    host: conexao-solidaria.local
+    path: /
+  probes:
+    enabled: false
+    readinessPath: /health/ready
+    livenessPath: /health/live
+  env:
+    ASPNETCORE_ENVIRONMENT: Production
+
+observability:
+  enabled: true
+  otlpEndpoint: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 64198
+  runAsGroup: 64198
+  fsGroup: 64198
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
