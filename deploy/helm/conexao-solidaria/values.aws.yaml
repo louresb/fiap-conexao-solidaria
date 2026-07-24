@@ -1,0 +1,23 @@
+global:
+  environment: aws
+  cloudProvider: aws
+
+image:
+  registry: "<aws-account-id>.dkr.ecr.us-east-1.amazonaws.com"
+  repository: conexao-solidaria-web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ""
+
+web:
+  replicaCount: 2
+  ingress:
+    enabled: true
+    className: alb
+    host: conexao-solidaria.example.com
+
+observability:
+  otlpEndpoint: http://otel-collector.observability:4317
