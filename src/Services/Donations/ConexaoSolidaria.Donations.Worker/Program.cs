@@ -44,7 +44,7 @@ else
 
 builder.Services.AddMassTransit(bus =>
 {
-    bus.AddConsumer<DonationIntentCreatedConsumer>();
+    bus.AddConsumer<PaymentConfirmedConsumer>();
     bus.AddEntityFrameworkOutbox<CampaignsDbContext>(outbox =>
     {
         outbox.UsePostgres();
@@ -68,7 +68,7 @@ builder.Services.AddMassTransit(bus =>
             endpoint.UseMessageRetry(retry => retry.Intervals(200, 500, 1000, 5000));
             endpoint.UseEntityFrameworkOutbox<CampaignsDbContext>(context);
             endpoint.ConcurrentMessageLimit = 8;
-            endpoint.ConfigureConsumer<DonationIntentCreatedConsumer>(context);
+            endpoint.ConfigureConsumer<PaymentConfirmedConsumer>(context);
         });
     });
 });

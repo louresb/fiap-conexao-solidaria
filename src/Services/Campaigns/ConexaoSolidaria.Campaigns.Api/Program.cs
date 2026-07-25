@@ -331,6 +331,15 @@ donations.MapPost("/", async (
         return Results.BadRequest(new { error = "Valor da doacao deve ser maior que zero." });
     }
 
+    var paymentMethod = request.PaymentMethod.Trim().ToLowerInvariant();
+    if (paymentMethod is not ("pix" or "credit_card" or "bank_slip"))
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["paymentMethod"] = ["Use pix, credit_card ou bank_slip."]
+        });
+    }
+
     var tenantId = http.TenantId();
     var campaign = await db.Campaigns.FirstOrDefaultAsync(c => c.Id == request.CampaignId && c.TenantId == tenantId, cancellationToken);
     if (campaign is null)
@@ -350,6 +359,7 @@ donations.MapPost("/", async (
         DonorId = request.DonorId ?? "demo-donor",
         DonorEmail = request.DonorEmail ?? "doador@demo.org",
         Amount = request.Amount,
+        PaymentMethod = paymentMethod,
         Status = "Pending"
     };
 
@@ -360,7 +370,8 @@ donations.MapPost("/", async (
         donation.DonorId,
         donation.DonorEmail,
         donation.Amount,
-        tenantId);
+        tenantId,
+        paymentMethod);
 
     await publishEndpoint.Publish(
         IntegrationEvent.Create(

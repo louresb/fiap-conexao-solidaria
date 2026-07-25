@@ -37,6 +37,7 @@ public sealed class CampaignsDbContext : DbContext
             builder.Property(d => d.DonorId).HasMaxLength(120).IsRequired();
             builder.Property(d => d.DonorEmail).HasMaxLength(180).IsRequired();
             builder.Property(d => d.Amount).HasPrecision(18, 2);
+            builder.Property(d => d.PaymentMethod).HasMaxLength(32).IsRequired();
             builder.Property(d => d.Status).HasMaxLength(40).IsRequired();
             builder.HasOne(d => d.Campaign)
                 .WithMany(c => c.Donations)
