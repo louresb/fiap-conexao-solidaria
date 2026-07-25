@@ -10,7 +10,6 @@ Cada tenant deve ter configuracao visual propria, mas compartilhar o mesmo produ
 |---|---|---|---|---|
 | Esperanca Solidaria | Alimentacao, escola e inclusao digital | `#2E7D5A`, `#D96C4A` | Campanhas, transparencia e risco | Humano e institucional |
 | Mare Limpa | Educacao ambiental e recuperacao costeira | `#0F5E9C`, `#58B7B2` | Mutiroes, quilos coletados e voluntarios | Educativo e mobilizador |
-| Aurora Mulher | Protecao e autonomia de mulheres | `#6E4AA3`, `#E67C73` | Atendimentos, rede de apoio e oficinas | Acolhedor e firme |
 | Futuro em Rede | Tecnologia e juventude | `#3246A8`, `#A8D65E` | Trilhas, mentorias e certificacoes | Jovem e orientado a futuro |
 
 ## Campos de configuracao
@@ -27,4 +26,3 @@ Cada tenant deve ter configuracao visual propria, mas compartilhar o mesmo produ
 - `moduleLabels`
 - `defaultCampaignCategory`
 - `aiDisclosureText`
-

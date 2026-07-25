@@ -26,19 +26,6 @@
     "status": "active"
   },
   {
-    "id": "tnt_aurora",
-    "name": "Rede Aurora Mulher",
-    "publicBrand": "Aurora Mulher",
-    "slug": "aurora-mulher",
-    "city": "Salvador",
-    "state": "BA",
-    "cause": "Protecao, autonomia e empregabilidade de mulheres",
-    "primaryColor": "#6E4AA3",
-    "secondaryColor": "#E67C73",
-    "accentColor": "#F8F4F7",
-    "status": "active"
-  },
-  {
     "id": "tnt_futuro",
     "name": "Instituto Futuro em Rede",
     "publicBrand": "Futuro em Rede",

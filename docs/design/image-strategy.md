@@ -9,7 +9,7 @@ Usar imagens que tornem a plataforma crivel, humana e respeitosa sem explorar so
 1. Usar imagens geradas para hero, campanhas e tenants, porque a ONG e ficticia.
 2. Manter consistencia visual: luz natural, composicao horizontal, pessoas em colaboracao, nenhum close de sofrimento.
 3. Evitar rostos identificaveis de criancas quando a cena sugerir vulnerabilidade.
-4. Usar assets por tenant: Esperanca Solidaria, Mare Limpa, Aurora Mulher, Futuro em Rede.
+4. Usar assets por tenant: Esperanca Solidaria, Mare Limpa e Futuro em Rede.
 5. Salvar prompts e origem dos assets em `docs/design/assets-log.md`.
 
 ## Prompts base para gerar imagens
@@ -38,12 +38,6 @@ Imagem de produto digital clean mostrando uma pessoa adulta usando celular para 
 Foto documental realista de mutirao de limpeza costeira com voluntarios adultos usando luvas e sacos de coleta, praia urbana brasileira ao fundo, tom educativo e positivo, sem lixo extremo, sem marcas reais, cores azul oceano e verde agua.
 ```
 
-### Aurora Mulher
-
-```text
-Foto documental realista de roda de formacao profissional para mulheres adultas em sala acolhedora, notebooks e cadernos sobre a mesa, facilitadora orientando o grupo, clima de autonomia e seguranca, sem dramatizacao, paleta roxo e coral.
-```
-
 ### Futuro em Rede
 
 ```text
@@ -62,4 +56,3 @@ Se for buscar imagens existentes, pesquisar por termos em ingles tende a retorna
 - youth technology workshop nonprofit
 
 Usar apenas imagens com licenca adequada e registrar a origem.
-

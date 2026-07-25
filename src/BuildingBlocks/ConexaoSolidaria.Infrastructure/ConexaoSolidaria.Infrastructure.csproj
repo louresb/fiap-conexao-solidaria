@@ -2,7 +2,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ConexaoSolidaria.Application\ConexaoSolidaria.Application.csproj" />
+    <ProjectReference Include="..\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
     <ProjectReference Include="..\ConexaoSolidaria.SharedKernel\ConexaoSolidaria.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
   </ItemGroup>
 
   <PropertyGroup>
