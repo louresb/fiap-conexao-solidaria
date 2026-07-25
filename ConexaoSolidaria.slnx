@@ -34,6 +34,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ConexaoSolidaria.Architecture.Tests/ConexaoSolidaria.Architecture.Tests.csproj" />
+    <Project Path="tests/ConexaoSolidaria.Component.Tests/ConexaoSolidaria.Component.Tests.csproj" />
     <Project Path="tests/ConexaoSolidaria.Domain.Tests/ConexaoSolidaria.Tests.csproj" />
   </Folder>
 </Solution>
