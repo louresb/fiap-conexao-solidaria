@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+.local/
 
 # Local operational scripts and API helpers
 tools/

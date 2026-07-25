@@ -1,13 +1,15 @@
+fullnameOverride: conexao-solidaria
+
 global:
-  environment: local
-  cloudProvider: local
-  tenant:
-    defaultId: esperanca-solidaria
+  environment: production
+  cloudProvider: kubernetes
+  defaultTenantId: esperanca-solidaria
+  existingSecret: conexao-solidaria-runtime
+  imagePullSecrets: []
 
 image:
-  registry: ghcr.io
-  repository: louresb/fiap-conexao-solidaria-web
-  tag: dev
+  registry: ghcr.io/louresb
+  tag: latest
   pullPolicy: IfNotPresent
 
 serviceAccount:
@@ -15,41 +17,10 @@ serviceAccount:
   name: ""
   annotations: {}
 
-web:
-  replicaCount: 1
-  port: 8080
-  service:
-    type: ClusterIP
-    port: 80
-  ingress:
-    enabled: false
-    className: nginx
-    host: conexao-solidaria.local
-    path: /
-  probes:
-    enabled: false
-    readinessPath: /health/ready
-    livenessPath: /health/live
-  env:
-    ASPNETCORE_ENVIRONMENT: Production
-
-observability:
-  enabled: true
-  otlpEndpoint: ""
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
-
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 64198
-  runAsGroup: 64198
-  fsGroup: 64198
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -57,3 +28,208 @@ securityContext:
   capabilities:
     drop:
       - ALL
+
+defaults:
+  replicaCount: 1
+  port: 8080
+  revisionHistoryLimit: 3
+  terminationGracePeriodSeconds: 30
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 750m
+      memory: 512Mi
+  probes:
+    startup:
+      path: /health/live
+      failureThreshold: 30
+      periodSeconds: 5
+    readiness:
+      path: /health/ready
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      path: /health/live
+      initialDelaySeconds: 15
+      periodSeconds: 15
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  disruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+components:
+  web:
+    imageRepository: conexao-solidaria-web
+    replicaCount: 2
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "false"
+      DemoAccess__Enabled: "false"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__Redis: redis-connection
+      Auth__ClientSecret: keycloak-client-secret
+      DemoAccess__ManagerPassword: demo-manager-password
+      DemoAccess__DonorPassword: demo-donor-password
+
+  gateway:
+    imageRepository: conexao-solidaria-gateway
+    replicaCount: 2
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Auth__RequireHttpsMetadata: "false"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+      ReverseProxy__Clusters__identity__Destinations__primary__Address: http://conexao-solidaria-identity-api:8080/
+      ReverseProxy__Clusters__campaigns__Destinations__primary__Address: http://conexao-solidaria-campaigns-api:8080/
+      ReverseProxy__Clusters__payments__Destinations__primary__Address: http://conexao-solidaria-payments-api:8080/
+      ReverseProxy__Clusters__audit__Destinations__primary__Address: http://conexao-solidaria-audit-api:8080/
+      ReverseProxy__Clusters__knowledge__Destinations__primary__Address: http://conexao-solidaria-knowledge-api:8080/
+      Readiness__Dependencies__identity: http://conexao-solidaria-identity-api:8080/health/ready
+      Readiness__Dependencies__campaigns: http://conexao-solidaria-campaigns-api:8080/health/ready
+      Readiness__Dependencies__payments: http://conexao-solidaria-payments-api:8080/health/ready
+      Readiness__Dependencies__audit: http://conexao-solidaria-audit-api:8080/health/ready
+      Readiness__Dependencies__knowledge: http://conexao-solidaria-knowledge-api:8080/health/ready
+
+  identity-api:
+    imageRepository: conexao-solidaria-identity-api
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      Keycloak__Enabled: "true"
+      Keycloak__BaseUrl: http://conexao-solidaria-keycloak:8080
+      Keycloak__AdminUser: admin
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__IdentityDb: identity-db-connection
+      RabbitMq__Password: rabbitmq-password
+      Keycloak__AdminPassword: keycloak-admin-password
+
+  campaigns-api:
+    imageRepository: conexao-solidaria-campaigns-api
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      OpenSearch__Enabled: "true"
+      OpenSearch__BaseUrl: http://conexao-solidaria-opensearch:9200
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Auth__Enforce: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__CampaignsDb: campaigns-db-connection
+      ConnectionStrings__Redis: redis-connection
+      RabbitMq__Password: rabbitmq-password
+
+  payments-api:
+    imageRepository: conexao-solidaria-payments-api
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Auth__Enforce: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__PaymentsDb: payments-db-connection
+      RabbitMq__Password: rabbitmq-password
+      FakePayment__WebhookSecret: payment-webhook-secret
+
+  donations-worker:
+    imageRepository: conexao-solidaria-donations-worker
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__CampaignsDb: campaigns-db-connection
+      RabbitMq__Password: rabbitmq-password
+
+  audit-api:
+    imageRepository: conexao-solidaria-audit-api
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      Mongo__Database: conexao_audit
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__Mongo: mongo-connection
+      RabbitMq__Password: rabbitmq-password
+
+  knowledge-api:
+    imageRepository: conexao-solidaria-knowledge-api
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      RabbitMq__Password: rabbitmq-password
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  host: conexao-solidaria.local
+  tls: []
+
+networkPolicy:
+  enabled: false
+
+topologySpreadConstraints:
+  enabled: true

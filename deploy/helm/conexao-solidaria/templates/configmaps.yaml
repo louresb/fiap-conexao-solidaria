@@ -1,0 +1,20 @@
+{{- range $name, $component := .Values.components }}
+{{- if ne ($component.enabled | toString) "false" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "conexao-solidaria.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+data:
+  ASPNETCORE_URLS: {{ printf "http://+:%v" ($component.port | default $.Values.defaults.port) | quote }}
+  CS_DEFAULT_TENANT_ID: {{ $.Values.global.defaultTenantId | quote }}
+  CS_CLOUD_PROVIDER: {{ $.Values.global.cloudProvider | quote }}
+  CS_ENVIRONMENT: {{ $.Values.global.environment | quote }}
+  {{- range $key, $value := $component.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

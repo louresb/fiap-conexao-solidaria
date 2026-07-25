@@ -1,23 +1,69 @@
 global:
-  environment: aws
+  environment: production
   cloudProvider: aws
 
 image:
-  registry: "<aws-account-id>.dkr.ecr.us-east-1.amazonaws.com"
-  repository: conexao-solidaria-web
+  registry: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
   tag: latest
-  pullPolicy: IfNotPresent
 
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: ""
+    eks.amazonaws.com/role-arn: arn:aws:iam::<aws-account-id>:role/conexao-solidaria-workload
 
-web:
-  replicaCount: 2
-  ingress:
-    enabled: true
-    className: alb
-    host: conexao-solidaria.example.com
+components:
+  web:
+    autoscaling: &autoscaling
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    disruptionBudget: &pdb
+      enabled: true
+      minAvailable: 1
+    env:
+      Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
+      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+  gateway:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: &awsAuth
+      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__Issuer: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+  identity-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  campaigns-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  payments-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  audit-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  knowledge-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+  donations-worker:
+    replicaCount: 2
+    disruptionBudget: *pdb
 
-observability:
-  otlpEndpoint: http://otel-collector.observability:4317
+ingress:
+  enabled: true
+  className: alb
+  host: conexao-solidaria.example.com
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+
+networkPolicy:
+  enabled: true

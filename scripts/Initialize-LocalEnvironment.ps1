@@ -6,11 +6,6 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $environmentFile = Join-Path $root ".env"
 
-if ((Test-Path $environmentFile) -and -not $Force) {
-    Write-Host "O arquivo .env já existe. Use -Force para gerar novas credenciais."
-    exit 0
-}
-
 function New-HexSecret([int]$ByteCount = 24) {
     $bytes = [byte[]]::new($ByteCount)
     $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
@@ -24,6 +19,19 @@ function New-HexSecret([int]$ByteCount = 24) {
     return ([BitConverter]::ToString($bytes) -replace "-", "").ToLowerInvariant()
 }
 
+if ((Test-Path $environmentFile) -and -not $Force) {
+    $existing = Get-Content $environmentFile -Raw | ConvertFrom-StringData
+    if (-not $existing.ContainsKey("KEYCLOAK_CLIENT_SECRET")) {
+        Add-Content -Path $environmentFile -Value "KEYCLOAK_CLIENT_SECRET=$(New-HexSecret 32)" -Encoding UTF8
+        Write-Host "Segredo confidencial do cliente Keycloak adicionado ao .env."
+    }
+    else {
+        Write-Host "O arquivo .env ja existe. Use -Force para gerar novas credenciais."
+    }
+
+    exit 0
+}
+
 $managerPassword = "Cs1!$(New-HexSecret 8)"
 $donorPassword = "Cs1!$(New-HexSecret 8)"
 $lines = @(
@@ -32,6 +40,7 @@ $lines = @(
     "REDIS_PASSWORD=$(New-HexSecret)",
     "MONGO_PASSWORD=$(New-HexSecret)",
     "KEYCLOAK_ADMIN_PASSWORD=$(New-HexSecret)",
+    "KEYCLOAK_CLIENT_SECRET=$(New-HexSecret 32)",
     "GRAFANA_ADMIN_PASSWORD=$(New-HexSecret)",
     "ZABBIX_DB_PASSWORD=$(New-HexSecret)",
     "PAYMENT_WEBHOOK_SECRET=$(New-HexSecret)",

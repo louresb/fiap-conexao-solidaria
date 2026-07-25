@@ -27,11 +27,15 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "http://localhost:5000/signin-oidc",
-        "http://127.0.0.1:5000/signin-oidc"
+        "http://127.0.0.1:5000/signin-oidc",
+        "http://localhost:31080/signin-oidc",
+        "https://conexao-solidaria.example.com/signin-oidc"
       ],
       "webOrigins": [
         "http://localhost:5000",
-        "http://127.0.0.1:5000"
+        "http://127.0.0.1:5000",
+        "http://localhost:31080",
+        "https://conexao-solidaria.example.com"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",

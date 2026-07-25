@@ -34,3 +34,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "conexao-solidaria.image" -}}
+{{- $registry := trimSuffix "/" .root.Values.image.registry -}}
+{{- if $registry -}}
+{{- printf "%s/%s:%s" $registry .component.imageRepository .root.Values.image.tag -}}
+{{- else -}}
+{{- printf "%s:%s" .component.imageRepository .root.Values.image.tag -}}
+{{- end -}}
+{{- end -}}

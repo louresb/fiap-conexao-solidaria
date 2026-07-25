@@ -1,19 +1,61 @@
 global:
-  environment: azure
+  environment: production
   cloudProvider: azure
 
 image:
-  registry: "<acr-name>.azurecr.io"
-  repository: conexao-solidaria-web
+  registry: <acr-name>.azurecr.io
   tag: latest
-  pullPolicy: IfNotPresent
 
-web:
-  replicaCount: 2
-  ingress:
-    enabled: true
-    className: webapprouting.kubernetes.azure.com
-    host: conexao-solidaria.example.com
+components:
+  web:
+    autoscaling: &autoscaling
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    disruptionBudget: &pdb
+      enabled: true
+      minAvailable: 1
+    env:
+      Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
+      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+  gateway:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: &azureAuth
+      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__Issuer: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+  identity-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *azureAuth
+  campaigns-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *azureAuth
+  payments-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *azureAuth
+  audit-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *azureAuth
+  knowledge-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+  donations-worker:
+    replicaCount: 2
+    disruptionBudget: *pdb
 
-observability:
-  otlpEndpoint: http://otel-collector.observability:4317
+ingress:
+  enabled: true
+  className: webapprouting.kubernetes.azure.com
+  host: conexao-solidaria.example.com
+
+networkPolicy:
+  enabled: true

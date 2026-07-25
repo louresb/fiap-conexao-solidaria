@@ -2,7 +2,7 @@
 set -euo pipefail
 
 KCADM=/opt/keycloak/bin/kcadm.sh
-SERVER=http://keycloak:8080
+SERVER=${KEYCLOAK_SERVER:-http://keycloak:8080}
 REALM=conexao-solidaria
 
 until "$KCADM" config credentials \
@@ -14,6 +14,14 @@ until "$KCADM" config credentials \
 done
 
 "$KCADM" update users/profile -r "$REALM" -f /seed/user-profile.json >/dev/null
+
+if [[ -n "${KEYCLOAK_WEB_CLIENT_SECRET:-}" ]]; then
+  web_client_id=$("$KCADM" get clients -r "$REALM" -q clientId=conexao-web --fields id --format csv --noquotes | tail -n 1)
+  "$KCADM" update "clients/$web_client_id" -r "$REALM" \
+    -s publicClient=false \
+    -s clientAuthenticatorType=client-secret \
+    -s "secret=$KEYCLOAK_WEB_CLIENT_SECRET" >/dev/null
+fi
 
 create_user() {
   local username="$1"
@@ -44,11 +52,11 @@ create_user() {
   "$KCADM" add-roles -r "$REALM" --uusername "$username" --rolename "$role" >/dev/null
 }
 
-create_user "gestor.esperanca@conexaosolidaria.local" "Gestor" "Esperança" "esperanca-solidaria" "GestorONG" "$DEMO_MANAGER_PASSWORD"
-create_user "doador.esperanca@conexaosolidaria.local" "Doador" "Esperança" "esperanca-solidaria" "Doador" "$DEMO_DONOR_PASSWORD"
-create_user "gestor.mare@conexaosolidaria.local" "Gestor" "Maré Limpa" "mare-limpa" "GestorONG" "$DEMO_MANAGER_PASSWORD"
-create_user "doador.mare@conexaosolidaria.local" "Doador" "Maré Limpa" "mare-limpa" "Doador" "$DEMO_DONOR_PASSWORD"
+create_user "gestor.esperanca@conexaosolidaria.local" "Gestor" "Esperanca" "esperanca-solidaria" "GestorONG" "$DEMO_MANAGER_PASSWORD"
+create_user "doador.esperanca@conexaosolidaria.local" "Doador" "Esperanca" "esperanca-solidaria" "Doador" "$DEMO_DONOR_PASSWORD"
+create_user "gestor.mare@conexaosolidaria.local" "Gestor" "Mare Limpa" "mare-limpa" "GestorONG" "$DEMO_MANAGER_PASSWORD"
+create_user "doador.mare@conexaosolidaria.local" "Doador" "Mare Limpa" "mare-limpa" "Doador" "$DEMO_DONOR_PASSWORD"
 create_user "gestor.futuro@conexaosolidaria.local" "Gestor" "Futuro em Rede" "futuro-em-rede" "GestorONG" "$DEMO_MANAGER_PASSWORD"
 create_user "doador.futuro@conexaosolidaria.local" "Doador" "Futuro em Rede" "futuro-em-rede" "Doador" "$DEMO_DONOR_PASSWORD"
 
-echo "Usuários locais do Keycloak configurados."
+echo "Usuarios locais do Keycloak configurados."

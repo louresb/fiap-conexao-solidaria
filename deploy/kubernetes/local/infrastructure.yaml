@@ -1,0 +1,468 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-postgres
+  labels: &postgresLabels
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *postgresLabels
+  ports:
+    - name: postgres
+      port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conexao-solidaria-postgres
+  labels: &postgresLabels
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  serviceName: conexao-solidaria-postgres
+  replicas: 1
+  selector:
+    matchLabels: *postgresLabels
+  template:
+    metadata:
+      labels: *postgresLabels
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: conexao
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: postgres-password
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U conexao -d postgres"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U conexao -d postgres"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 750m, memory: 768Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: init
+          configMap:
+            name: conexao-solidaria-postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-redis
+  labels: &redisLabels
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *redisLabels
+  ports:
+    - name: redis
+      port: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-redis
+  labels: &redisLabels
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *redisLabels
+  template:
+    metadata:
+      labels: *redisLabels
+    spec:
+      containers:
+        - name: redis
+          image: redis:8-alpine
+          command: ["sh", "-c"]
+          args: ["exec redis-server --appendonly yes --requirepass \"$REDIS_PASSWORD\""]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: redis-password
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep PONG"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep PONG"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 300m, memory: 256Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-redis
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-rabbitmq
+  labels: &rabbitLabels
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/component: messaging
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *rabbitLabels
+  ports:
+    - name: amqp
+      port: 5672
+    - name: management
+      port: 15672
+    - name: metrics
+      port: 15692
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-rabbitmq
+  labels: &rabbitLabels
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/component: messaging
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *rabbitLabels
+  template:
+    metadata:
+      labels: *rabbitLabels
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:4-management
+          ports:
+            - { name: amqp, containerPort: 5672 }
+            - { name: management, containerPort: 15672 }
+            - { name: metrics, containerPort: 15692 }
+          env:
+            - { name: RABBITMQ_DEFAULT_USER, value: conexao }
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: rabbitmq-password
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            timeoutSeconds: 5
+            periodSeconds: 8
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 750m, memory: 768Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+            - name: plugins
+              mountPath: /etc/rabbitmq/enabled_plugins
+              subPath: enabled_plugins
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-rabbitmq
+        - name: plugins
+          configMap:
+            name: conexao-solidaria-rabbitmq-config
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-rabbitmq
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-mongodb
+  labels: &mongoLabels
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/component: audit-store
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *mongoLabels
+  ports:
+    - name: mongodb
+      port: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conexao-solidaria-mongodb
+  labels: &mongoLabels
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/component: audit-store
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  serviceName: conexao-solidaria-mongodb
+  replicas: 1
+  selector:
+    matchLabels: *mongoLabels
+  template:
+    metadata:
+      labels: *mongoLabels
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:8
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - { name: MONGO_INITDB_ROOT_USERNAME, value: conexao }
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: mongo-password
+          readinessProbe:
+            exec:
+              command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+            timeoutSeconds: 5
+            periodSeconds: 8
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 500m, memory: 640Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-opensearch
+  labels: &openSearchLabels
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/component: search
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *openSearchLabels
+  ports:
+    - name: http
+      port: 9200
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conexao-solidaria-opensearch
+  labels: &openSearchLabels
+    app.kubernetes.io/name: opensearch
+    app.kubernetes.io/component: search
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  serviceName: conexao-solidaria-opensearch
+  replicas: 1
+  selector:
+    matchLabels: *openSearchLabels
+  template:
+    metadata:
+      labels: *openSearchLabels
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: opensearch
+          image: opensearchproject/opensearch:3
+          ports:
+            - name: http
+              containerPort: 9200
+          env:
+            - { name: discovery.type, value: single-node }
+            - { name: plugins.security.disabled, value: "true" }
+            - { name: DISABLE_INSTALL_DEMO_CONFIG, value: "true" }
+            - { name: OPENSEARCH_JAVA_OPTS, value: "-Xms512m -Xmx512m" }
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 20
+          resources:
+            requests: { cpu: 250m, memory: 768Mi }
+            limits: { cpu: "1", memory: 1280Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/opensearch/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-keycloak
+  labels: &keycloakLabels
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *keycloakLabels
+  ports:
+    - name: http
+      port: 8080
+    - name: management
+      port: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-keycloak
+  labels: &keycloakLabels
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *keycloakLabels
+  template:
+    metadata:
+      labels: *keycloakLabels
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.2
+          args: ["start-dev", "--import-realm"]
+          ports:
+            - { name: http, containerPort: 8080 }
+            - { name: management, containerPort: 9000 }
+          env:
+            - { name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin }
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: keycloak-admin-password
+            - { name: KC_HEALTH_ENABLED, value: "true" }
+            - { name: KC_METRICS_ENABLED, value: "true" }
+            - { name: KC_HOSTNAME, value: "http://localhost:31082" }
+            - { name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC, value: "true" }
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: management
+            timeoutSeconds: 5
+            periodSeconds: 8
+            failureThreshold: 30
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: management
+            timeoutSeconds: 5
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: management
+            timeoutSeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 200m, memory: 384Mi }
+            limits: { cpu: "1", memory: 896Mi }
+          volumeMounts:
+            - name: realm
+              mountPath: /opt/keycloak/data/import/conexao-solidaria-realm.json
+              subPath: conexao-solidaria-realm.json
+              readOnly: true
+            - name: data
+              mountPath: /opt/keycloak/data/h2
+      volumes:
+        - name: realm
+          configMap:
+            name: conexao-solidaria-keycloak-realm
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-keycloak
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-keycloak
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi

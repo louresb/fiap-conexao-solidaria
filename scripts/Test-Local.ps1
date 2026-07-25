@@ -2,12 +2,17 @@ param(
     [ValidatePattern("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
     [string]$TenantId = "esperanca-solidaria",
     [ValidateRange(1, 10000)]
-    [decimal]$DonationAmount = 73.25
+    [decimal]$DonationAmount = 73.25,
+    [ValidateSet("Compose", "Kubernetes")]
+    [string]$Runtime = "Compose"
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
+
+$gateway = if ($Runtime -eq "Kubernetes") { "http://localhost:31081" } else { "http://localhost:5100" }
+$keycloak = if ($Runtime -eq "Kubernetes") { "http://localhost:31082" } else { "http://localhost:8080" }
 
 function Write-Step([string]$Message) {
     Write-Host "[check] $Message" -ForegroundColor Cyan
@@ -22,7 +27,7 @@ function Assert-True([bool]$Condition, [string]$Message) {
 function Get-AccessToken([string]$Username, [string]$Password) {
     $request = @{
         Method = "Post"
-        Uri = "http://localhost:8080/realms/conexao-solidaria/protocol/openid-connect/token"
+        Uri = "$keycloak/realms/conexao-solidaria/protocol/openid-connect/token"
         Body = @{
             client_id = "conexao-cli"
             grant_type = "password"
@@ -53,7 +58,6 @@ if (-not (Test-Path ".env")) {
 }
 
 $environment = Get-Content ".env" -Raw | ConvertFrom-StringData
-$gateway = "http://localhost:5100"
 $tenantHeader = @{ "X-Tenant-Id" = $TenantId }
 
 Write-Step "Readiness agregado"
@@ -62,7 +66,13 @@ Assert-True ($readiness.status -eq "Healthy") "Gateway ou dependencias indisponi
 
 Write-Step "Cache Redis MISS/HIT"
 $cacheKey = "active-campaigns:$TenantId"
-docker compose exec -T redis redis-cli --no-auth-warning -a $environment.REDIS_PASSWORD DEL $cacheKey *> $null
+if ($Runtime -eq "Kubernetes") {
+    kubectl exec -n conexao-solidaria deployment/conexao-solidaria-redis -- `
+        redis-cli --no-auth-warning -a $environment.REDIS_PASSWORD DEL $cacheKey *> $null
+}
+else {
+    docker compose exec -T redis redis-cli --no-auth-warning -a $environment.REDIS_PASSWORD DEL $cacheKey *> $null
+}
 Assert-True ($LASTEXITCODE -eq 0) "Nao foi possivel limpar a chave de teste no Redis."
 
 $firstTimer = [Diagnostics.Stopwatch]::StartNew()
@@ -165,6 +175,23 @@ $knowledge = Invoke-RestMethod `
 Assert-True $knowledge.answered "A base de conhecimento nao respondeu."
 Assert-True ($knowledge.sources.Count -gt 0) "A resposta deve indicar pelo menos uma fonte."
 
+if ($Runtime -eq "Kubernetes") {
+    Write-Step "Pods e coleta de metricas"
+    $pods = kubectl get pods -n conexao-solidaria -o json | ConvertFrom-Json
+    $unreadyPods = @($pods.items | Where-Object {
+        $_.status.phase -ne "Succeeded" -and
+        @($_.status.containerStatuses | Where-Object { -not $_.ready }).Count -gt 0
+    })
+    Assert-True ($unreadyPods.Count -eq 0) "Existem pods Kubernetes sem readiness."
+
+    $prometheus = Invoke-RestMethod "http://localhost:31091/api/v1/query?query=up"
+    $downTargets = @($prometheus.data.result | Where-Object { $_.value[1] -ne "1" })
+    Assert-True ($downTargets.Count -eq 0) "O Prometheus encontrou targets indisponiveis."
+
+    $grafana = Invoke-RestMethod "http://localhost:31090/api/health"
+    Assert-True ($grafana.database -eq "ok") "O Grafana nao esta saudavel."
+}
+
 Write-Host ""
 Write-Host "Smoke test concluido com sucesso." -ForegroundColor Green
 [pscustomobject]@{
@@ -180,4 +207,5 @@ Write-Host "Smoke test concluido com sucesso." -ForegroundColor Green
     CampaignTotalAfter = $updatedCampaign.totalRaised
     CorrelatedAuditEvents = $auditEvents.Count
     KnowledgeSources = $knowledge.sources.Count
+    Runtime = $Runtime
 } | Format-List

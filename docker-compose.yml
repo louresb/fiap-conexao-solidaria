@@ -117,6 +117,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
+      KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?execute scripts/Initialize-LocalEnvironment.ps1}
       DEMO_MANAGER_PASSWORD: ${DEMO_MANAGER_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
       DEMO_DONOR_PASSWORD: ${DEMO_DONOR_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
     volumes: ["./infra/keycloak:/seed:ro"]
@@ -323,6 +324,7 @@ services:
       Gateway__BaseUrl: http://gateway:8080
       ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD},abortConnect=false"
       Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
+      Auth__ClientSecret: ${KEYCLOAK_CLIENT_SECRET}
       Auth__RequireHttpsMetadata: "false"
       DemoAccess__Enabled: "true"
       DemoAccess__ManagerPassword: ${DEMO_MANAGER_PASSWORD}

@@ -1,21 +1,29 @@
-{{- if .Values.web.ingress.enabled }}
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "conexao-solidaria.fullname" . }}-web
+  name: {{ include "conexao-solidaria.fullname" . }}
   labels:
     {{- include "conexao-solidaria.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  ingressClassName: {{ .Values.web.ingress.className | quote }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
   rules:
-    - host: {{ .Values.web.ingress.host | quote }}
+    - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          - path: {{ .Values.web.ingress.path | quote }}
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: {{ include "conexao-solidaria.fullname" . }}-web
                 port:
                   name: http
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
