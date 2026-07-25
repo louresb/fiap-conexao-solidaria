@@ -1,7 +1,12 @@
 {
   "realm": "conexao-solidaria",
-  "displayName": "Conexão Solidária",
+  "displayName": "Conexao Solidaria",
+  "displayNameHtml": "Conex&atilde;o Solid&aacute;ria",
   "enabled": true,
+  "loginTheme": "conexao-solidaria",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["pt-BR"],
+  "defaultLocale": "pt-BR",
   "registrationAllowed": false,
   "resetPasswordAllowed": true,
   "rememberMe": true,

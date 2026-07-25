@@ -29,9 +29,21 @@ spec:
     metadata:
       labels: *postgresLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: postgres:17-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - name: postgres
               containerPort: 5432
@@ -100,15 +112,29 @@ metadata:
     app.kubernetes.io/part-of: conexao-solidaria
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: *redisLabels
   template:
     metadata:
       labels: *redisLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
           image: redis:8-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           command: ["sh", "-c"]
           args: ["exec redis-server --appendonly yes --requirepass \"$REDIS_PASSWORD\""]
           env:
@@ -178,15 +204,29 @@ metadata:
     app.kubernetes.io/part-of: conexao-solidaria
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: *rabbitLabels
   template:
     metadata:
       labels: *rabbitLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: rabbitmq
           image: rabbitmq:4-management
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - { name: amqp, containerPort: 5672 }
             - { name: management, containerPort: 15672 }
@@ -268,9 +308,21 @@ spec:
     metadata:
       labels: *mongoLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: mongodb
           image: mongo:8
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - name: mongodb
               containerPort: 27017
@@ -333,10 +385,20 @@ spec:
       labels: *openSearchLabels
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: opensearch
           image: opensearchproject/opensearch:3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - name: http
               containerPort: 9200
@@ -401,9 +463,21 @@ spec:
     metadata:
       labels: *keycloakLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           args: ["start-dev", "--import-realm"]
           ports:
             - { name: http, containerPort: 8080 }
@@ -447,12 +521,25 @@ spec:
               mountPath: /opt/keycloak/data/import/conexao-solidaria-realm.json
               subPath: conexao-solidaria-realm.json
               readOnly: true
+            - name: theme
+              mountPath: /opt/keycloak/themes/conexao-solidaria/login
+              readOnly: true
             - name: data
               mountPath: /opt/keycloak/data/h2
       volumes:
         - name: realm
           configMap:
             name: conexao-solidaria-keycloak-realm
+        - name: theme
+          configMap:
+            name: conexao-solidaria-keycloak-theme
+            items:
+              - key: theme.properties
+                path: theme.properties
+              - key: login.css
+                path: resources/css/login.css
+              - key: messages_pt_BR.properties
+                path: messages/messages_pt_BR.properties
         - name: data
           persistentVolumeClaim:
             claimName: conexao-solidaria-keycloak

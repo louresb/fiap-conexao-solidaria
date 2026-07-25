@@ -13,6 +13,14 @@ until "$KCADM" config credentials \
   sleep 3
 done
 
+"$KCADM" update "realms/$REALM" \
+  -s 'displayName=Conexao Solidaria' \
+  -s 'displayNameHtml=Conex&atilde;o Solid&aacute;ria' \
+  -s 'loginTheme=conexao-solidaria' \
+  -s 'internationalizationEnabled=true' \
+  -s 'supportedLocales=["pt-BR"]' \
+  -s 'defaultLocale=pt-BR' >/dev/null
+
 "$KCADM" update users/profile -r "$REALM" -f /seed/user-profile.json >/dev/null
 
 if [[ -n "${KEYCLOAK_WEB_CLIENT_SECRET:-}" ]]; then

@@ -195,6 +195,14 @@ Apply-FileConfigMap "conexao-solidaria-rabbitmq-config" "enabled_plugins=infra/r
 Apply-FileConfigMap "conexao-solidaria-keycloak-realm" "conexao-solidaria-realm.json=infra/keycloak/conexao-solidaria-realm.json"
 Apply-FileConfigMap "conexao-solidaria-keycloak-seed" "seed-users.sh=infra/keycloak/seed-users.sh"
 Apply-FileConfigMap "conexao-solidaria-keycloak-profile" "user-profile.json=infra/keycloak/user-profile.json"
+$themeYaml = kubectl create configmap conexao-solidaria-keycloak-theme `
+    -n $namespace `
+    --from-file="theme.properties=infra/keycloak/themes/conexao-solidaria/login/theme.properties" `
+    --from-file="login.css=infra/keycloak/themes/conexao-solidaria/login/resources/css/login.css" `
+    --from-file="messages_pt_BR.properties=infra/keycloak/themes/conexao-solidaria/login/messages/messages_pt_BR.properties" `
+    --dry-run=client `
+    -o yaml
+Apply-Generated $themeYaml "Nao foi possivel aplicar o tema do Keycloak."
 Apply-FileConfigMap "conexao-solidaria-prometheus-config" "prometheus.yml=deploy/kubernetes/local/prometheus.yml"
 Apply-FileConfigMap "conexao-solidaria-grafana-datasources" "datasources.yml=deploy/kubernetes/local/grafana-datasources.yml"
 Apply-FileConfigMap "conexao-solidaria-grafana-dashboard-provider" "dashboards.yml=infra/grafana/provisioning/dashboards/dashboards.yml"

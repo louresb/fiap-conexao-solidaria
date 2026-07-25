@@ -22,15 +22,29 @@ metadata:
     app.kubernetes.io/part-of: conexao-solidaria
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: *lokiLabels
   template:
     metadata:
       labels: *lokiLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: loki
           image: grafana/loki:3.5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           args: ["-config.file=/etc/loki/local-config.yaml"]
           ports:
             - name: http
@@ -86,15 +100,29 @@ metadata:
     app.kubernetes.io/part-of: conexao-solidaria
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: *prometheusLabels
   template:
     metadata:
       labels: *prometheusLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: prometheus
           image: prom/prometheus:v3.4.1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           args:
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.retention.time=7d
@@ -159,15 +187,29 @@ metadata:
     app.kubernetes.io/part-of: conexao-solidaria
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: *grafanaLabels
   template:
     metadata:
       labels: *grafanaLabels
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: grafana
           image: grafana/grafana:12.0.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - name: http
               containerPort: 3000

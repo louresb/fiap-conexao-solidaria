@@ -42,11 +42,49 @@
                     <a class="button button-outline" href="/acesso">Entrar</a>
                 </NotAuthorized>
             </AuthorizeView>
+            <div class="mobile-menu">
+                <button type="button" aria-label="Abrir navegação" aria-expanded="@(MobileMenuOpen ? "true" : "false")" @onclick="ToggleMobileMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </button>
+                @if (MobileMenuOpen)
+                {
+                    <div class="mobile-menu-popover">
+                        <nav aria-label="Navegação móvel">
+                            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">Campanhas</NavLink>
+                            <NavLink href="/transparencia" @onclick="CloseMobileMenu">Transparência</NavLink>
+                            <NavLink href="/assistente" @onclick="CloseMobileMenu">Assistente</NavLink>
+                            <AuthorizeView Roles="GestorONG">
+                                <Authorized>
+                                    <NavLink href="/gestao" @onclick="CloseMobileMenu">Gestão</NavLink>
+                                    <NavLink href="/gestao/auditoria" @onclick="CloseMobileMenu">Auditoria</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                        </nav>
+                        <div class="mobile-tenant-list">
+                            <strong>Organizações</strong>
+                            @foreach (var tenant in TenantCatalog.All)
+                            {
+                                <a href="/?tenant=@tenant.Id" @onclick="CloseMobileMenu">
+                                    <span>@tenant.Name</span>
+                                    <small>@tenant.Location</small>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </header>
 
 @code {
+    private bool MobileMenuOpen { get; set; }
+
+    private void ToggleMobileMenu() => MobileMenuOpen = !MobileMenuOpen;
+    private void CloseMobileMenu() => MobileMenuOpen = false;
+
     private static string DisplayName(System.Security.Claims.ClaimsPrincipal user) =>
         user.FindFirst("given_name")?.Value
         ?? user.Identity?.Name

@@ -17,9 +17,19 @@ spec:
         app.kubernetes.io/part-of: conexao-solidaria
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: seed
           image: quay.io/keycloak/keycloak:26.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           command: ["/bin/bash", "/seed/seed-users.sh"]
           env:
             - { name: KEYCLOAK_SERVER, value: http://conexao-solidaria-keycloak:8080 }
