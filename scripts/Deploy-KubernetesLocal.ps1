@@ -69,6 +69,7 @@ function Start-PortForwards {
         @{ Service = "conexao-solidaria-rabbitmq"; Local = 32672; Remote = 15672 },
         @{ Service = "conexao-solidaria-grafana"; Local = 31090; Remote = 3000 },
         @{ Service = "conexao-solidaria-prometheus"; Local = 31091; Remote = 9090 },
+        @{ Service = "conexao-solidaria-zabbix-web"; Local = 31092; Remote = 8080 },
         @{ Service = "conexao-solidaria-identity-api"; Local = 31101; Remote = 8080 },
         @{ Service = "conexao-solidaria-campaigns-api"; Local = 31102; Remote = 8080 },
         @{ Service = "conexao-solidaria-payments-api"; Local = 31103; Remote = 8080 },
@@ -178,6 +179,7 @@ $secretYaml = kubectl create secret generic conexao-solidaria-runtime `
     --from-literal="keycloak-admin-password=$($environment.KEYCLOAK_ADMIN_PASSWORD)" `
     --from-literal="keycloak-client-secret=$($environment.KEYCLOAK_CLIENT_SECRET)" `
     --from-literal="grafana-admin-password=$($environment.GRAFANA_ADMIN_PASSWORD)" `
+    --from-literal="zabbix-db-password=$($environment.ZABBIX_DB_PASSWORD)" `
     --from-literal="payment-webhook-secret=$($environment.PAYMENT_WEBHOOK_SECRET)" `
     --from-literal="demo-manager-password=$($environment.DEMO_MANAGER_PASSWORD)" `
     --from-literal="demo-donor-password=$($environment.DEMO_DONOR_PASSWORD)" `
@@ -210,6 +212,7 @@ Apply-FileConfigMap "conexao-solidaria-grafana-dashboard" "conexao-solidaria.jso
 
 Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/infrastructure.yaml } "Falha ao aplicar a infraestrutura local."
 Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/monitoring.yaml } "Falha ao aplicar a observabilidade local."
+Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/zabbix.yaml } "Falha ao aplicar o Zabbix local."
 
 $infrastructureWorkloads = @(
     "statefulset/conexao-solidaria-postgres",
@@ -220,7 +223,10 @@ $infrastructureWorkloads = @(
     "deployment/conexao-solidaria-keycloak",
     "deployment/conexao-solidaria-loki",
     "deployment/conexao-solidaria-prometheus",
-    "deployment/conexao-solidaria-grafana"
+    "deployment/conexao-solidaria-grafana",
+    "statefulset/conexao-solidaria-zabbix-db",
+    "deployment/conexao-solidaria-zabbix-server",
+    "deployment/conexao-solidaria-zabbix-web"
 )
 
 foreach ($workload in $infrastructureWorkloads) {
@@ -255,6 +261,11 @@ foreach ($component in $applicationWorkloads) {
 }
 
 Start-PortForwards
+& "$PSScriptRoot\Initialize-Zabbix.ps1" `
+    -BaseUrl "http://localhost:31092" `
+    -GatewayUrl "http://conexao-solidaria-gateway:8080" `
+    -WebUrl "http://conexao-solidaria-web" `
+    -AdminPassword $environment.ZABBIX_ADMIN_PASSWORD
 
 Write-Host ""
 Write-Host "Conexao Solidaria esta pronta no Kubernetes local." -ForegroundColor Green
@@ -265,6 +276,7 @@ Write-Host "Keycloak:   http://localhost:31082"
 Write-Host "RabbitMQ:   http://localhost:32672"
 Write-Host "Grafana:    http://localhost:31090"
 Write-Host "Prometheus: http://localhost:31091"
+Write-Host "Zabbix:     http://localhost:31092 (Admin / senha em .env)"
 Write-Host "API docs:   http://localhost:31101/scalar/v1 (Identity)"
 Write-Host "            http://localhost:31102/scalar/v1 (Campaigns)"
 Write-Host "            http://localhost:31103/scalar/v1 (Payments)"

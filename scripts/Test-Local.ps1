@@ -40,14 +40,44 @@ function Get-AccessToken([string]$Username, [string]$Password) {
     return $response.access_token
 }
 
-function Wait-Until([scriptblock]$Probe, [string]$FailureMessage, [int]$Attempts = 30) {
+function Invoke-ZabbixApi([string]$Method, [hashtable]$Parameters, [string]$AuthToken) {
+    $request = [ordered]@{
+        jsonrpc = "2.0"
+        method = $Method
+        params = $Parameters
+        id = 1
+    }
+    $headers = @{}
+    if ($AuthToken) {
+        $headers.Authorization = "Bearer $AuthToken"
+    }
+
+    $response = Invoke-RestMethod `
+        -Method Post `
+        -Uri "http://localhost:31092/api_jsonrpc.php" `
+        -Headers $headers `
+        -ContentType "application/json-rpc" `
+        -Body ($request | ConvertTo-Json -Depth 8 -Compress)
+    if ($response.error) {
+        throw "Zabbix API $Method falhou: $($response.error.data)"
+    }
+
+    return $response.result
+}
+
+function Wait-Until(
+    [scriptblock]$Probe,
+    [string]$FailureMessage,
+    [int]$Attempts = 30,
+    [int]$DelayMilliseconds = 500
+) {
     for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
         $result = & $Probe
         if ($null -ne $result) {
             return $result
         }
 
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds $DelayMilliseconds
     }
 
     throw $FailureMessage
@@ -190,6 +220,45 @@ if ($Runtime -eq "Kubernetes") {
 
     $grafana = Invoke-RestMethod "http://localhost:31090/api/health"
     Assert-True ($grafana.database -eq "ok") "O Grafana nao esta saudavel."
+
+    $zabbixPage = Invoke-WebRequest -UseBasicParsing "http://localhost:31092/"
+    Assert-True ($zabbixPage.StatusCode -eq 200) "A interface do Zabbix nao esta saudavel."
+    $zabbixToken = Invoke-ZabbixApi -Method "user.login" -Parameters @{
+        username = "Admin"
+        password = $environment.ZABBIX_ADMIN_PASSWORD
+    }
+    try {
+        $zabbixScenarios = @(Invoke-ZabbixApi -Method "httptest.get" -AuthToken $zabbixToken -Parameters @{
+            output = @("httptestid", "name", "hostid")
+            filter = @{ name = @("Jornada publica da plataforma") }
+        })
+        Assert-True ($zabbixScenarios.Count -eq 1) "O web scenario da plataforma nao esta configurado no Zabbix."
+
+        $zabbixResponseCodes = Wait-Until `
+            -Attempts 120 `
+            -DelayMilliseconds 1000 `
+            -FailureMessage "O Zabbix nao coletou a jornada publica com sucesso." `
+            -Probe {
+                $items = @(Invoke-ZabbixApi -Method "item.get" -AuthToken $zabbixToken -Parameters @{
+                    output = @("name", "key_", "lastvalue", "lastclock")
+                    hostids = @($zabbixScenarios[0].hostid)
+                    webitems = $true
+                })
+                $responseCodes = @($items | Where-Object { $_.key_ -like "web.test.rspcode*" })
+                $failures = @($responseCodes | Where-Object {
+                    $_.lastvalue -ne "200" -or [int64]$_.lastclock -eq 0
+                })
+                if ($responseCodes.Count -eq 3 -and $failures.Count -eq 0) {
+                    return $responseCodes
+                }
+
+                return $null
+            }
+        Assert-True ($zabbixResponseCodes.Count -eq 3) "O Zabbix nao confirmou os tres passos da jornada."
+    }
+    finally {
+        Invoke-ZabbixApi -Method "user.logout" -Parameters @{} -AuthToken $zabbixToken | Out-Null
+    }
 }
 
 Write-Host ""

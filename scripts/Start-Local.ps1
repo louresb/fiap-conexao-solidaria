@@ -57,6 +57,14 @@ if (-not $ready) {
 }
 
 $environment = Get-Content ".env" -Raw | ConvertFrom-StringData
+if ($Operations) {
+    & "$PSScriptRoot\Initialize-Zabbix.ps1" `
+        -BaseUrl "http://localhost:8085" `
+        -GatewayUrl "http://gateway:8080" `
+        -WebUrl "http://web:8080" `
+        -AdminPassword $environment.ZABBIX_ADMIN_PASSWORD
+}
+
 Write-Host ""
 Write-Host "Conexao Solidaria esta pronta." -ForegroundColor Green
 Write-Host "Produto:    http://localhost:5000"
@@ -64,6 +72,9 @@ Write-Host "Keycloak:   http://localhost:8080"
 Write-Host "RabbitMQ:   http://localhost:15672 (conexao / senha em .env)"
 Write-Host "Grafana:    http://localhost:3000 (admin / $($environment.GRAFANA_ADMIN_PASSWORD))"
 Write-Host "Prometheus: http://localhost:9090"
+if ($Operations) {
+    Write-Host "Zabbix:     http://localhost:8085 (Admin / senha em .env)"
+}
 Write-Host "Gestor:     gestor.esperanca@conexaosolidaria.local / $($environment.DEMO_MANAGER_PASSWORD)"
 Write-Host "Doador:     doador.esperanca@conexaosolidaria.local / $($environment.DEMO_DONOR_PASSWORD)"
 Write-Host ""

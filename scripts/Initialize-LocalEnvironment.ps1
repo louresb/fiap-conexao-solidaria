@@ -21,12 +21,25 @@ function New-HexSecret([int]$ByteCount = 24) {
 
 if ((Test-Path $environmentFile) -and -not $Force) {
     $existing = Get-Content $environmentFile -Raw | ConvertFrom-StringData
-    if (-not $existing.ContainsKey("KEYCLOAK_CLIENT_SECRET")) {
-        Add-Content -Path $environmentFile -Value "KEYCLOAK_CLIENT_SECRET=$(New-HexSecret 32)" -Encoding UTF8
-        Write-Host "Segredo confidencial do cliente Keycloak adicionado ao .env."
+    $missingSecrets = @{
+        KEYCLOAK_CLIENT_SECRET = { New-HexSecret 32 }
+        ZABBIX_ADMIN_PASSWORD = { "Cs1!$(New-HexSecret 12)" }
+    }
+    $added = @()
+
+    foreach ($name in $missingSecrets.Keys) {
+        if (-not $existing.ContainsKey($name)) {
+            $value = & $missingSecrets[$name]
+            Add-Content -Path $environmentFile -Value "$name=$value" -Encoding UTF8
+            $added += $name
+        }
+    }
+
+    if ($added.Count -eq 0) {
+        Write-Host "O arquivo .env ja existe. Use -Force para gerar novas credenciais."
     }
     else {
-        Write-Host "O arquivo .env ja existe. Use -Force para gerar novas credenciais."
+        Write-Host "Credenciais locais adicionadas ao .env: $($added -join ', ')."
     }
 
     exit 0
@@ -43,6 +56,7 @@ $lines = @(
     "KEYCLOAK_CLIENT_SECRET=$(New-HexSecret 32)",
     "GRAFANA_ADMIN_PASSWORD=$(New-HexSecret)",
     "ZABBIX_DB_PASSWORD=$(New-HexSecret)",
+    "ZABBIX_ADMIN_PASSWORD=Cs1!$(New-HexSecret 12)",
     "PAYMENT_WEBHOOK_SECRET=$(New-HexSecret)",
     "DEMO_MANAGER_PASSWORD=$managerPassword",
     "DEMO_DONOR_PASSWORD=$donorPassword"
