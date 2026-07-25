@@ -10,5 +10,6 @@ public static class EventTypes
     public const string PaymentConfirmed = "PaymentConfirmed";
     public const string DonationProcessed = "DonationProcessed";
     public const string CampaignGoalReached = "CampaignGoalReached";
+    public const string KnowledgeQuestionAnswered = "KnowledgeQuestionAnswered";
     public const string AuditRecorded = "AuditRecorded";
 }
