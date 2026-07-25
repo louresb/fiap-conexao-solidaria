@@ -9,6 +9,17 @@ $root = Split-Path -Parent $PSScriptRoot
 $namespace = "conexao-solidaria"
 $stateDirectory = Join-Path $root ".local"
 $portForwardState = Join-Path $stateDirectory "kubernetes-port-forwards.json"
+$imageTagState = Join-Path $stateDirectory "kubernetes-image-tag.txt"
+$applicationWorkloads = @(
+    "audit-api",
+    "campaigns-api",
+    "donations-worker",
+    "gateway",
+    "identity-api",
+    "knowledge-api",
+    "payments-api",
+    "web"
+)
 Set-Location $root
 
 function Invoke-Checked([scriptblock]$Command, [string]$FailureMessage) {
@@ -57,7 +68,12 @@ function Start-PortForwards {
         @{ Service = "conexao-solidaria-keycloak"; Local = 31082; Remote = 8080 },
         @{ Service = "conexao-solidaria-rabbitmq"; Local = 32672; Remote = 15672 },
         @{ Service = "conexao-solidaria-grafana"; Local = 31090; Remote = 3000 },
-        @{ Service = "conexao-solidaria-prometheus"; Local = 31091; Remote = 9090 }
+        @{ Service = "conexao-solidaria-prometheus"; Local = 31091; Remote = 9090 },
+        @{ Service = "conexao-solidaria-identity-api"; Local = 31101; Remote = 8080 },
+        @{ Service = "conexao-solidaria-campaigns-api"; Local = 31102; Remote = 8080 },
+        @{ Service = "conexao-solidaria-payments-api"; Local = 31103; Remote = 8080 },
+        @{ Service = "conexao-solidaria-audit-api"; Local = 31104; Remote = 8080 },
+        @{ Service = "conexao-solidaria-knowledge-api"; Local = 31105; Remote = 8080 }
     )
     $processIds = @()
 
@@ -133,6 +149,22 @@ if ($LASTEXITCODE -ne 0) {
 
 if (-not $SkipBuild) {
     Invoke-Checked { docker compose build } "O build das imagens locais falhou."
+
+    $imageTag = "local-$([DateTimeOffset]::UtcNow.ToString('yyyyMMddHHmmss'))"
+    foreach ($component in $applicationWorkloads) {
+        Invoke-Checked {
+            docker tag "conexao-solidaria-${component}:latest" "conexao-solidaria-${component}:$imageTag"
+        } "Nao foi possivel versionar a imagem local de $component."
+    }
+
+    New-Item -ItemType Directory -Path $stateDirectory -Force | Out-Null
+    [System.IO.File]::WriteAllText($imageTagState, $imageTag, [System.Text.UTF8Encoding]::new($false))
+}
+elseif (Test-Path $imageTagState) {
+    $imageTag = (Get-Content $imageTagState -Raw).Trim()
+}
+else {
+    $imageTag = "latest"
 }
 
 Invoke-Checked { kubectl apply -f deploy/kubernetes/local/namespace.yaml } "Nao foi possivel criar o namespace local."
@@ -189,7 +221,11 @@ foreach ($workload in $infrastructureWorkloads) {
 
 $seedSucceeded = kubectl get job conexao-solidaria-keycloak-seed `
     -n $namespace `
-    -o jsonpath='{.status.succeeded}' 2>$null
+    --ignore-not-found `
+    -o jsonpath='{.status.succeeded}'
+if ($LASTEXITCODE -ne 0) {
+    throw "Nao foi possivel consultar o job de seed do Keycloak."
+}
 if ($Reseed -or $seedSucceeded -ne "1") {
     kubectl delete job conexao-solidaria-keycloak-seed -n $namespace --ignore-not-found=true --wait=true
     Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/keycloak-seed-job.yaml } "Falha ao aplicar o seed do Keycloak."
@@ -202,19 +238,9 @@ $renderedChart = docker run --rm `
     alpine/helm:3.18.4 `
     template conexao-solidaria deploy/helm/conexao-solidaria `
     -f deploy/helm/conexao-solidaria/values.local.yaml `
+    --set-string image.tag=$imageTag `
     --namespace $namespace
 Apply-Generated $renderedChart "Falha ao aplicar o chart da aplicacao."
-
-$applicationWorkloads = @(
-    "audit-api",
-    "campaigns-api",
-    "donations-worker",
-    "gateway",
-    "identity-api",
-    "knowledge-api",
-    "payments-api",
-    "web"
-)
 
 foreach ($component in $applicationWorkloads) {
     Invoke-Checked { kubectl rollout status "deployment/conexao-solidaria-$component" -n $namespace --timeout=6m } "$component nao ficou pronto."
@@ -224,11 +250,17 @@ Start-PortForwards
 
 Write-Host ""
 Write-Host "Conexao Solidaria esta pronta no Kubernetes local." -ForegroundColor Green
+Write-Host "Imagens:    $imageTag"
 Write-Host "Produto:    http://localhost:31080"
 Write-Host "Gateway:    http://localhost:31081"
 Write-Host "Keycloak:   http://localhost:31082"
 Write-Host "RabbitMQ:   http://localhost:32672"
 Write-Host "Grafana:    http://localhost:31090"
 Write-Host "Prometheus: http://localhost:31091"
+Write-Host "API docs:   http://localhost:31101/scalar/v1 (Identity)"
+Write-Host "            http://localhost:31102/scalar/v1 (Campaigns)"
+Write-Host "            http://localhost:31103/scalar/v1 (Payments)"
+Write-Host "            http://localhost:31104/scalar/v1 (Audit)"
+Write-Host "            http://localhost:31105/scalar/v1 (Knowledge)"
 Write-Host ""
 Write-Host "Valide o fluxo com: .\scripts\Test-KubernetesLocal.ps1"
