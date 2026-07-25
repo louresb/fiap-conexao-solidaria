@@ -3,6 +3,7 @@ using System.Text.Json;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Knowledge;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Knowledge.Api.Retrieval;
 using ConexaoSolidaria.Knowledge.Api.Services;
 
@@ -13,6 +14,7 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -47,7 +49,9 @@ builder.Services.AddMassTransit(bus =>
             });
     });
 });
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Knowledge API",
+    "Respostas baseadas em fontes institucionais verificaveis e rastreaveis.");
 
 var app = builder.Build();
 
@@ -57,9 +61,13 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "knowledge-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "knowledge-api" }))
+    .WithTags("Operacao")
+    .WithName("KnowledgeLiveness")
+    .WithSummary("Verifica se a Knowledge API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", (
     IKnowledgeRetriever retriever,
@@ -69,7 +77,10 @@ app.MapGet("/health/ready", (
     return documentCount > 0
         ? Results.Ok(new { status = "Healthy", documents = documentCount })
         : Results.Json(new { status = "Degraded", documents = 0 }, statusCode: StatusCodes.Status503ServiceUnavailable);
-});
+})
+    .WithTags("Operacao")
+    .WithName("KnowledgeReadiness")
+    .WithSummary("Verifica se a base institucional possui fontes carregadas.");
 
 app.MapPost("/api/knowledge/ask", async (
     AskKnowledgeRequest request,
@@ -106,7 +117,10 @@ app.MapPost("/api/knowledge/ask", async (
         cancellationToken);
 
     return Results.Ok(answer);
-});
+})
+    .WithTags("Conhecimento")
+    .WithName("AskInstitutionalKnowledge")
+    .WithSummary("Responde uma pergunta com fontes institucionais rastreaveis.");
 
 app.Run();
 

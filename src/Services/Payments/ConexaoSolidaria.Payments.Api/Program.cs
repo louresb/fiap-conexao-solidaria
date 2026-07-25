@@ -1,6 +1,7 @@
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Payments;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Payments.Api.Consumers;
 using ConexaoSolidaria.Payments.Api.Data;
 using ConexaoSolidaria.Payments.Api.Providers;
@@ -13,6 +14,7 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,7 +96,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DonorsOrManagers", policy =>
         policy.RequireRole(AuthDefaults.DonorRole, AuthDefaults.ManagerRole));
 });
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Payments API",
+    "Orquestracao segura de intencoes e confirmacoes de pagamento em sandbox.");
 
 var app = builder.Build();
 var enforceAuth = app.Configuration.GetValue("Auth:Enforce", true);
@@ -107,17 +111,24 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "payments-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "payments-api" }))
+    .WithTags("Operacao")
+    .WithName("PaymentsLiveness")
+    .WithSummary("Verifica se a Payments API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", async (PaymentsDbContext db, CancellationToken cancellationToken) =>
 {
     await db.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
     return Results.Ok(new { status = "Healthy", dependencies = new[] { "postgres", "rabbitmq" } });
-});
+})
+    .WithTags("Operacao")
+    .WithName("PaymentsReadiness")
+    .WithSummary("Verifica as dependencias criticas da Payments API.");
 
-var payments = app.MapGroup("/api/payments");
+var payments = app.MapGroup("/api/payments").WithTags("Pagamentos");
 if (enforceAuth)
 {
     payments.RequireAuthorization("DonorsOrManagers");
@@ -135,7 +146,9 @@ payments.MapGet("/donations/{donationId:guid}", async (
         cancellationToken);
 
     return payment is null ? Results.NotFound() : Results.Ok(ToDto(payment));
-});
+})
+    .WithName("GetPaymentByDonation")
+    .WithSummary("Consulta o pagamento associado a uma doacao do tenant atual.");
 
 payments.MapPost("/{paymentId:guid}/simulate-confirmation", async (
     Guid paymentId,
@@ -161,7 +174,9 @@ payments.MapPost("/{paymentId:guid}/simulate-confirmation", async (
         cancellationToken);
 
     return Results.Ok(new { status = result.ToString(), payment = ToDto(payment) });
-});
+})
+    .WithName("SimulatePaymentConfirmation")
+    .WithSummary("Confirma um pagamento no provider sandbox de forma idempotente.");
 
 app.MapPost("/api/payment-webhooks/fake", async (
     FakePaymentWebhookRequest request,
@@ -197,7 +212,11 @@ app.MapPost("/api/payment-webhooks/fake", async (
         http.CorrelationId(),
         cancellationToken);
     return Results.Ok(new { status = result.ToString() });
-}).AllowAnonymous();
+})
+    .AllowAnonymous()
+    .WithTags("Webhooks")
+    .WithName("ReceiveFakePaymentWebhook")
+    .WithSummary("Recebe uma confirmacao assinada do provider sandbox.");
 
 using (var scope = app.Services.CreateScope())
 {

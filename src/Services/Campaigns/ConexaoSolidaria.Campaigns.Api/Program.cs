@@ -8,6 +8,7 @@ using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.OpenApi;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -106,7 +108,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ManagersOnly", policy => policy.RequireRole(AuthDefaults.ManagerRole));
     options.AddPolicy("DonorsOnly", policy => policy.RequireRole(AuthDefaults.DonorRole));
 });
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Campaigns API",
+    "Gestao de campanhas, catalogo publico, busca e projecoes de transparencia.");
 
 var app = builder.Build();
 var enforceAuth = app.Configuration.GetValue("Auth:Enforce", false);
@@ -119,17 +123,24 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "campaigns-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "campaigns-api" }))
+    .WithTags("Operacao")
+    .WithName("CampaignsLiveness")
+    .WithSummary("Verifica se a Campaigns API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", async (CampaignsDbContext db, CancellationToken cancellationToken) =>
 {
     await db.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
     return Results.Ok(new { status = "Healthy", dependencies = new[] { "postgres", "rabbitmq", "redis" } });
-});
+})
+    .WithTags("Operacao")
+    .WithName("CampaignsReadiness")
+    .WithSummary("Verifica as dependencias criticas da Campaigns API.");
 
-var management = app.MapGroup("/api/management/campaigns");
+var management = app.MapGroup("/api/management/campaigns").WithTags("Gestao de campanhas");
 if (enforceAuth)
 {
     management.RequireAuthorization("ManagersOnly");
@@ -155,7 +166,9 @@ management.MapGet("/", async (CampaignsDbContext db, HttpContext http, Cancellat
         .ToListAsync(cancellationToken);
 
     return Results.Ok(campaigns);
-});
+})
+    .WithName("ListManagedCampaigns")
+    .WithSummary("Lista todas as campanhas do tenant autenticado.");
 
 management.MapPost("/", async (
     CreateCampaignRequest request,
@@ -197,7 +210,9 @@ management.MapPost("/", async (
     await search.IndexAsync(campaign, cancellationToken);
 
     return Results.Created($"/api/management/campaigns/{campaign.Id}", ToDto(campaign));
-});
+})
+    .WithName("CreateCampaign")
+    .WithSummary("Cria uma campanha e publica seu evento de dominio.");
 
 management.MapPut("/{id:guid}", async (
     Guid id,
@@ -242,7 +257,9 @@ management.MapPut("/{id:guid}", async (
     await search.IndexAsync(campaign, cancellationToken);
 
     return Results.Ok(ToDto(campaign));
-});
+})
+    .WithName("UpdateCampaign")
+    .WithSummary("Atualiza uma campanha e sua projecao de busca.");
 
 management.MapDelete("/{id:guid}", async (
     Guid id,
@@ -280,7 +297,9 @@ management.MapDelete("/{id:guid}", async (
     await db.SaveChangesAsync(cancellationToken);
     await search.IndexAsync(campaign, cancellationToken);
     return Results.NoContent();
-});
+})
+    .WithName("CancelCampaign")
+    .WithSummary("Cancela logicamente uma campanha do tenant atual.");
 
 app.MapGet("/api/public/campaigns", async (
     string? tenantId,
@@ -322,7 +341,10 @@ app.MapGet("/api/public/campaigns", async (
 
     http.Response.Headers["X-Cache"] = "MISS";
     return Results.Text(json, "application/json");
-});
+})
+    .WithTags("Campanhas publicas")
+    .WithName("ListActiveCampaigns")
+    .WithSummary("Lista campanhas ativas com projecao cacheada de transparencia.");
 
 app.MapGet("/api/public/campaigns/search", async (
     string q,
@@ -359,9 +381,12 @@ app.MapGet("/api/public/campaigns/search", async (
     }
 
     return Results.Ok(results);
-});
+})
+    .WithTags("Campanhas publicas")
+    .WithName("SearchCampaigns")
+    .WithSummary("Pesquisa campanhas por titulo e descricao com tolerancia a erros.");
 
-var donations = app.MapGroup("/api/donations");
+var donations = app.MapGroup("/api/donations").WithTags("Doacoes");
 if (enforceAuth)
 {
     donations.RequireAuthorization("DonorsOnly");
@@ -448,7 +473,9 @@ donations.MapPost("/", async (
         donation.Status,
         message = "Doacao recebida e enviada para processamento assincrono."
     });
-});
+})
+    .WithName("CreateDonationIntent")
+    .WithSummary("Registra a intencao de doacao e inicia o processamento assincrono.");
 
 using (var scope = app.Services.CreateScope())
 {

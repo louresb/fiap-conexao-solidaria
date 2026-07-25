@@ -7,6 +7,7 @@ using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Identity.Api.Data;
 using ConexaoSolidaria.Identity.Api.Keycloak;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.OpenApi;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,7 +90,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Identity API",
+    "Cadastro de doadores, perfis e integracao de identidade multi-tenant.");
 
 var app = builder.Build();
 
@@ -100,15 +104,22 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "identity-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "identity-api" }))
+    .WithTags("Operacao")
+    .WithName("IdentityLiveness")
+    .WithSummary("Verifica se a Identity API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", async (IdentityDbContext db, CancellationToken cancellationToken) =>
 {
     await db.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
     return Results.Ok(new { status = "Healthy", dependencies = new[] { "postgres" } });
-});
+})
+    .WithTags("Operacao")
+    .WithName("IdentityReadiness")
+    .WithSummary("Verifica a dependencia transacional da Identity API.");
 
 app.MapPost("/api/donors/register", async (
     DonorRegistrationRequest request,
@@ -179,7 +190,10 @@ app.MapPost("/api/donors/register", async (
     await db.SaveChangesAsync(cancellationToken);
 
     return Results.Created($"/api/donors/{donor.Id}", new DonorProfileDto(donor.Id, donor.TenantId, donor.FullName, donor.Email, MaskCpf(donor.Cpf)));
-});
+})
+    .WithTags("Doadores")
+    .WithName("RegisterDonor")
+    .WithSummary("Cadastra um doador no tenant atual e provisiona sua identidade.");
 
 app.MapGet("/api/donors/{id:guid}", async (Guid id, IdentityDbContext db, HttpContext http, CancellationToken cancellationToken) =>
 {
@@ -188,7 +202,11 @@ app.MapGet("/api/donors/{id:guid}", async (Guid id, IdentityDbContext db, HttpCo
     return donor is null
         ? Results.NotFound()
         : Results.Ok(new DonorProfileDto(donor.Id, donor.TenantId, donor.FullName, donor.Email, MaskCpf(donor.Cpf)));
-}).RequireAuthorization();
+})
+    .RequireAuthorization()
+    .WithTags("Doadores")
+    .WithName("GetDonorProfile")
+    .WithSummary("Consulta o perfil mascarado de um doador do tenant atual.");
 
 using (var scope = app.Services.CreateScope())
 {

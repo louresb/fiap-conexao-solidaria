@@ -3,6 +3,7 @@ using ConexaoSolidaria.Audit.Api.Data;
 using ConexaoSolidaria.Contracts.Audit;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.OpenApi;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,7 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,7 +75,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization(options =>
     options.AddPolicy("ManagersOnly", policy => policy.RequireRole(AuthDefaults.ManagerRole)));
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Audit API",
+    "Trilha append-only de eventos correlacionados e isolados por tenant.");
 
 var app = builder.Build();
 
@@ -85,17 +89,26 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "audit-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "audit-api" }))
+    .WithTags("Operacao")
+    .WithName("AuditLiveness")
+    .WithSummary("Verifica se a Audit API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", async (AuditMongoContext mongo, CancellationToken cancellationToken) =>
 {
     await mongo.Database.RunCommandAsync((Command<MongoDB.Bson.BsonDocument>)"{ping:1}", cancellationToken: cancellationToken);
     return Results.Ok(new { status = "Healthy", dependencies = new[] { "mongodb", "rabbitmq" } });
-});
+})
+    .WithTags("Operacao")
+    .WithName("AuditReadiness")
+    .WithSummary("Verifica as dependencias criticas da Audit API.");
 
-var audit = app.MapGroup("/api/audit").RequireAuthorization("ManagersOnly");
+var audit = app.MapGroup("/api/audit")
+    .RequireAuthorization("ManagersOnly")
+    .WithTags("Auditoria");
 
 audit.MapGet("/", async (
     int? limit,
@@ -121,7 +134,9 @@ audit.MapGet("/", async (
         d.CausationId,
         d.PayloadJson,
         d.Timestamp)));
-});
+})
+    .WithName("ListAuditEvents")
+    .WithSummary("Lista os eventos mais recentes do tenant autenticado.");
 
 audit.MapGet("/{correlationId}", async (
     string correlationId,
@@ -146,7 +161,9 @@ audit.MapGet("/{correlationId}", async (
         d.CausationId,
         d.PayloadJson,
         d.Timestamp)));
-});
+})
+    .WithName("GetAuditTrailByCorrelation")
+    .WithSummary("Reconstrui a trilha ordenada de uma correlacao no tenant atual.");
 
 await app.Services.GetRequiredService<AuditMongoContext>().EnsureIndexesAsync();
 
