@@ -1,8 +1,11 @@
 using System.Text.Json;
+
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Payments.Api.Data;
 using ConexaoSolidaria.Payments.Api.Providers;
+
 using MassTransit;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Payments.Api.Consumers;

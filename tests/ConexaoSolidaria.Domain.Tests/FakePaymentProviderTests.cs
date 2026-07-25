@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Payments.Api.Providers;
+
 using Microsoft.Extensions.Options;
 
 namespace ConexaoSolidaria.Tests;

@@ -1,9 +1,12 @@
 using System.Text.Json;
+
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Donations.Worker.Observability;
+
 using MassTransit;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Donations.Worker.Consumers;

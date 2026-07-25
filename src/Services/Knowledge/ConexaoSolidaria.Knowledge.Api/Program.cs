@@ -11,10 +11,11 @@ using MassTransit;
 
 using Prometheus;
 
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);

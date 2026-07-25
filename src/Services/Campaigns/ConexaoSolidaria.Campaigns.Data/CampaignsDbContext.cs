@@ -1,5 +1,7 @@
 using ConexaoSolidaria.Contracts.Campaigns;
+
 using MassTransit;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Campaigns.Data;

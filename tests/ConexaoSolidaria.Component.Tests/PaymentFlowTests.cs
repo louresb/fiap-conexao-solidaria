@@ -1,10 +1,13 @@
 using System.Text.Json;
+
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Payments.Api.Consumers;
 using ConexaoSolidaria.Payments.Api.Data;
 using ConexaoSolidaria.Payments.Api.Providers;
 using ConexaoSolidaria.Payments.Api.Services;
+
 using MassTransit.Testing;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

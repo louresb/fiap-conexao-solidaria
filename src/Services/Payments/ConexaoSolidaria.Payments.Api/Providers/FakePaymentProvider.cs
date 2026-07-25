@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Payments.Api.Data;
+
 using Microsoft.Extensions.Options;
 
 namespace ConexaoSolidaria.Payments.Api.Providers;

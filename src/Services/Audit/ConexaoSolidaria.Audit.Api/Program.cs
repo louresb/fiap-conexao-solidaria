@@ -4,15 +4,21 @@ using ConexaoSolidaria.Contracts.Audit;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Infrastructure.Http;
 using ConexaoSolidaria.Infrastructure.OpenApi;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+
 using MongoDB.Driver;
+
 using Prometheus;
+
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 

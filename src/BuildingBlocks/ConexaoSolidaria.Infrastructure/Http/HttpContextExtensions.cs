@@ -1,4 +1,5 @@
 using ConexaoSolidaria.Contracts.Auth;
+
 using Microsoft.AspNetCore.Http;
 
 namespace ConexaoSolidaria.Infrastructure.Http;

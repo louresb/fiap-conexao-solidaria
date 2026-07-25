@@ -6,15 +6,20 @@ using ConexaoSolidaria.Payments.Api.Consumers;
 using ConexaoSolidaria.Payments.Api.Data;
 using ConexaoSolidaria.Payments.Api.Providers;
 using ConexaoSolidaria.Payments.Api.Services;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Prometheus;
+
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 

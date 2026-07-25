@@ -1,10 +1,13 @@
 using System.Text.Json;
+
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Donations.Worker.Consumers;
+
 using MassTransit;
 using MassTransit.Testing;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

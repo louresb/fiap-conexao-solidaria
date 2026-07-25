@@ -1,7 +1,9 @@
 using ConexaoSolidaria.Audit.Api.Data;
-using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Audit.Api.Security;
+using ConexaoSolidaria.Contracts.Events;
+
 using MassTransit;
+
 using MongoDB.Driver;
 
 namespace ConexaoSolidaria.Audit.Api.Consumers;

@@ -1,4 +1,5 @@
 using MassTransit;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Payments.Api.Data;

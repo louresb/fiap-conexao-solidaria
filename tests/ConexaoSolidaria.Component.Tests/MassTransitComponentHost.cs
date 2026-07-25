@@ -1,5 +1,6 @@
 using MassTransit;
 using MassTransit.Testing;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 

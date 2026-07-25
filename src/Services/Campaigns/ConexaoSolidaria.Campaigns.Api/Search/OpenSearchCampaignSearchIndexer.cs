@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Campaigns;
+
 using Microsoft.Extensions.Options;
 
 namespace ConexaoSolidaria.Campaigns.Api.Search;

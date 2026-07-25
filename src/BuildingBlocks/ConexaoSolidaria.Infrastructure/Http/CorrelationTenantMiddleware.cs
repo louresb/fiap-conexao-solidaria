@@ -1,6 +1,9 @@
 using System.Security.Claims;
+
 using ConexaoSolidaria.Contracts.Auth;
+
 using Microsoft.AspNetCore.Http;
+
 using Serilog.Context;
 
 namespace ConexaoSolidaria.Infrastructure.Http;

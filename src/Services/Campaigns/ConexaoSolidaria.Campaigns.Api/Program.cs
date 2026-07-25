@@ -1,7 +1,8 @@
-using System.Text.Json;
 using System.Security.Claims;
-using ConexaoSolidaria.Campaigns.Api.Search;
+using System.Text.Json;
+
 using ConexaoSolidaria.Campaigns.Api.Consumers;
+using ConexaoSolidaria.Campaigns.Api.Search;
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Campaigns;
@@ -9,16 +10,21 @@ using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Infrastructure.Http;
 using ConexaoSolidaria.Infrastructure.OpenApi;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
+
 using Prometheus;
+
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -72,7 +78,7 @@ builder.Services.AddMassTransit(bus =>
             {
                 host.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
                 host.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
-        });
+            });
 
         cfg.ReceiveEndpoint("campaign-projections", endpoint =>
         {

@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Identity;
+
 using Microsoft.Extensions.Options;
 
 namespace ConexaoSolidaria.Identity.Api.Keycloak;

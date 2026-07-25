@@ -1,5 +1,7 @@
 using System.Text.Json;
+
 using BCrypt.Net;
+
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Identity;
@@ -8,15 +10,20 @@ using ConexaoSolidaria.Identity.Api.Data;
 using ConexaoSolidaria.Identity.Api.Keycloak;
 using ConexaoSolidaria.Infrastructure.Http;
 using ConexaoSolidaria.Infrastructure.OpenApi;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Prometheus;
+
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
