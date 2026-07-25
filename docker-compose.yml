@@ -321,6 +321,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Gateway__BaseUrl: http://gateway:8080
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD},abortConnect=false"
       Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
       Auth__RequireHttpsMetadata: "false"
       DemoAccess__Enabled: "true"
@@ -330,6 +331,7 @@ services:
     ports: ["5000:8080"]
     depends_on:
       gateway: { condition: service_started }
+      redis: { condition: service_healthy }
       keycloak-seed: { condition: service_completed_successfully }
 
 volumes:

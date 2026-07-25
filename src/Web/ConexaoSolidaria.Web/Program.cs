@@ -7,6 +7,7 @@ using ConexaoSolidaria.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -15,6 +16,8 @@ using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +88,22 @@ builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+    builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+    builder.Services.AddDataProtection()
+        .SetApplicationName("conexao-solidaria-web")
+        .PersistKeysToStackExchangeRedis(redis, "conexao-solidaria:data-protection");
+}
+else
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName("conexao-solidaria-web");
+}
+
 builder.Services.AddHttpClient<SolidariaApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:5000");
