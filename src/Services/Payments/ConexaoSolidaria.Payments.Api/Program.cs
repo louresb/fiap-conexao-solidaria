@@ -74,6 +74,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         var authority = builder.Configuration["Auth:Authority"]
             ?? throw new InvalidOperationException("Auth:Authority is required.");
         var audience = builder.Configuration["Auth:Audience"] ?? "conexao-solidaria";
+        options.MapInboundClaims = false;
         options.Authority = authority;
         options.Audience = audience;
         options.RequireHttpsMetadata = false;

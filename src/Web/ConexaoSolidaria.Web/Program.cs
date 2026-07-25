@@ -53,6 +53,11 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["Auth:ClientId"] ?? "conexao-web";
     options.ClientSecret = builder.Configuration["Auth:ClientSecret"];
     options.RequireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata", true);
+    if (!options.RequireHttpsMetadata)
+    {
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.None;
+    }
     options.ResponseType = OpenIdConnectResponseType.Code;
     options.UsePkce = true;
     options.SaveTokens = true;

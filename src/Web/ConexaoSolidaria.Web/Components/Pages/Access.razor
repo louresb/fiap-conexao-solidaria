@@ -1,4 +1,6 @@
 @page "/acesso"
+@inject IConfiguration Configuration
+@inject IHostEnvironment HostEnvironment
 
 <PageTitle>Acessar | Conexão Solidária</PageTitle>
 
@@ -26,9 +28,33 @@
             <i aria-hidden="true">→</i>
         </a>
         <p class="access-security">Autenticação protegida por OpenID Connect e controle de acesso por perfil.</p>
+        @if (ShowLocalAccess)
+        {
+            <details class="access-help local-access">
+                <summary>Acesso ao ambiente local</summary>
+                <div>
+                    <strong>Gestor Esperança</strong>
+                    <code>gestor.esperanca@conexaosolidaria.local</code>
+                    <code>@Configuration["DemoAccess:ManagerPassword"]</code>
+                </div>
+                <div>
+                    <strong>Doador Esperança</strong>
+                    <code>doador.esperanca@conexaosolidaria.local</code>
+                    <code>@Configuration["DemoAccess:DonorPassword"]</code>
+                </div>
+            </details>
+        }
         <details class="access-help">
             <summary>Precisa de ajuda para acessar?</summary>
             <p>Use uma conta vinculada à organização desejada. O perfil e o tenant são aplicados automaticamente após a autenticação.</p>
         </details>
     </div>
 </section>
+
+@code {
+    private bool ShowLocalAccess =>
+        HostEnvironment.IsDevelopment()
+        && Configuration.GetValue("DemoAccess:Enabled", false)
+        && !string.IsNullOrWhiteSpace(Configuration["DemoAccess:ManagerPassword"])
+        && !string.IsNullOrWhiteSpace(Configuration["DemoAccess:DonorPassword"]);
+}

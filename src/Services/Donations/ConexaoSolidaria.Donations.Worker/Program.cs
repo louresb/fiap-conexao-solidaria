@@ -1,28 +1,28 @@
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Donations.Worker.Consumers;
+
 using MassTransit;
+
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+
+using Prometheus;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
-
-builder.Services.AddSerilog((services, configuration) =>
+builder.Host.UseSerilog((context, configuration) =>
 {
     configuration
         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
         .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", "donations-worker")
         .WriteTo.Console();
 
-    var config = services.GetRequiredService<IConfiguration>();
-    var lokiUrl = config["Observability:LokiUrl"];
+    var lokiUrl = context.Configuration["Observability:LokiUrl"];
     if (!string.IsNullOrWhiteSpace(lokiUrl))
     {
         configuration.WriteTo.GrafanaLoki(lokiUrl);
@@ -31,16 +31,6 @@ builder.Services.AddSerilog((services, configuration) =>
 
 builder.Services.AddDbContext<CampaignsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("CampaignsDb")));
-
-var redisConnection = builder.Configuration.GetConnectionString("Redis");
-if (string.IsNullOrWhiteSpace(redisConnection))
-{
-    builder.Services.AddDistributedMemoryCache();
-}
-else
-{
-    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnection);
-}
 
 builder.Services.AddMassTransit(bus =>
 {
@@ -60,7 +50,7 @@ builder.Services.AddMassTransit(bus =>
             host =>
             {
                 host.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
-                host.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
+                host.Password(builder.Configuration["RabbitMq:Password"] ?? string.Empty);
             });
 
         cfg.ReceiveEndpoint("donations-worker", endpoint =>
@@ -72,8 +62,14 @@ builder.Services.AddMassTransit(bus =>
         });
     });
 });
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+app.UseHttpMetrics();
+app.MapMetrics();
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "donations-worker" }));
+app.MapHealthChecks("/health/ready", new HealthCheckOptions());
 
 using (var scope = app.Services.CreateScope())
 {

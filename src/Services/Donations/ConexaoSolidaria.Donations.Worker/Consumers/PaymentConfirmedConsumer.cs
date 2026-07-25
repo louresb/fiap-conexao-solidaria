@@ -2,15 +2,14 @@ using System.Text.Json;
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
+using ConexaoSolidaria.Donations.Worker.Observability;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 
 namespace ConexaoSolidaria.Donations.Worker.Consumers;
 
 public sealed class PaymentConfirmedConsumer(
     CampaignsDbContext db,
-    IDistributedCache cache,
     ILogger<PaymentConfirmedConsumer> logger) : IConsumer<IntegrationEvent>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -40,6 +39,7 @@ public sealed class PaymentConfirmedConsumer(
 
         if (donation.Status == "Processed")
         {
+            DonationMetrics.Processed.WithLabels(payment.TenantId, "duplicate").Inc();
             logger.LogInformation("Donation {DonationId} was already processed", donation.Id);
             return;
         }
@@ -49,6 +49,7 @@ public sealed class PaymentConfirmedConsumer(
             donation.Status = "Rejected";
             donation.ProcessedAtUtc = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(context.CancellationToken);
+            DonationMetrics.Processed.WithLabels(payment.TenantId, "rejected").Inc();
             logger.LogWarning("Confirmed payment {PaymentId} rejected due to campaign state or amount mismatch", payment.PaymentId);
             return;
         }
@@ -96,7 +97,10 @@ public sealed class PaymentConfirmedConsumer(
         }
 
         await db.SaveChangesAsync(context.CancellationToken);
-        await cache.RemoveAsync($"active-campaigns:{payment.TenantId}", context.CancellationToken);
+        DonationMetrics.Processed.WithLabels(payment.TenantId, "processed").Inc();
+        DonationMetrics.ProcessingLatency
+            .WithLabels(payment.TenantId)
+            .Observe(Math.Max(0, (DateTimeOffset.UtcNow - message.OccurredAtUtc).TotalSeconds));
 
         logger.LogInformation(
             "Donation {DonationId} processed for campaign {CampaignId}. TotalRaised={TotalRaised}",

@@ -333,6 +333,10 @@ textarea { min-height: 120px; resize: vertical; }
 .role-initial.manager { background: #fff0cf; color: #765918; }
 .access-security { margin: 22px 0; color: var(--ink-soft); font-size: .76rem; }
 .access-register { margin: -2px 0 22px; display: inline-block; font-size: .82rem; }
+.local-access { margin-bottom: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-soft); }
+.local-access div { margin-top: 12px; display: grid; gap: 3px; }
+.local-access strong { font-size: .78rem; }
+.local-access code { overflow: hidden; color: var(--ink-soft); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
 
 .registration-page { min-height: calc(100vh - 76px); display: grid; grid-template-columns: .85fr 1.15fr; }
 .registration-intro { padding: 90px max(44px, calc((100vw - var(--section-width))/2)); padding-right: 60px; background: var(--green-dark); color: #fff; }

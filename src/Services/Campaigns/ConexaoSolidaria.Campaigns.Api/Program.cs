@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Security.Claims;
 using ConexaoSolidaria.Campaigns.Api.Search;
+using ConexaoSolidaria.Campaigns.Api.Consumers;
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Campaigns;
@@ -53,6 +54,7 @@ builder.Services.AddScoped<ICampaignSearchIndexer, OpenSearchCampaignSearchIndex
 
 builder.Services.AddMassTransit(bus =>
 {
+    bus.AddConsumer<CampaignProjectionInvalidationConsumer>();
     bus.AddEntityFrameworkOutbox<CampaignsDbContext>(outbox =>
     {
         outbox.UsePostgres();
@@ -68,7 +70,13 @@ builder.Services.AddMassTransit(bus =>
             {
                 host.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
                 host.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
-            });
+        });
+
+        cfg.ReceiveEndpoint("campaign-projections", endpoint =>
+        {
+            endpoint.UseMessageRetry(retry => retry.Intervals(200, 500, 1000, 5000));
+            endpoint.ConfigureConsumer<CampaignProjectionInvalidationConsumer>(context);
+        });
     });
 });
 
@@ -78,6 +86,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         var authority = builder.Configuration["Auth:Authority"]
             ?? throw new InvalidOperationException("Auth:Authority is required.");
         var audience = builder.Configuration["Auth:Audience"] ?? "conexao-solidaria";
+        options.MapInboundClaims = false;
         options.Authority = authority;
         options.Audience = audience;
         options.RequireHttpsMetadata = false;
@@ -445,6 +454,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CampaignsDbContext>();
     await CampaignsDbContext.SeedDemoDataAsync(db);
+    var search = scope.ServiceProvider.GetRequiredService<ICampaignSearchIndexer>();
+    var seededCampaigns = await db.Campaigns.AsNoTracking().ToListAsync();
+    foreach (var campaign in seededCampaigns)
+    {
+        await search.IndexAsync(campaign, CancellationToken.None);
+    }
 }
 
 app.Run();

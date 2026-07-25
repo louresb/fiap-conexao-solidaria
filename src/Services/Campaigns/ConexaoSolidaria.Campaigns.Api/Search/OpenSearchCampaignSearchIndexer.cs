@@ -73,7 +73,7 @@ public sealed class OpenSearchCampaignSearchIndexer : ICampaignSearchIndexer
                         filter = new object[]
                         {
                             new { term = new Dictionary<string, object> { ["tenantId.keyword"] = tenantId } },
-                            new { term = new Dictionary<string, object> { ["status"] = CampaignStatus.Ativa.ToString() } }
+                            new { term = new Dictionary<string, object> { ["status.keyword"] = CampaignStatus.Ativa.ToString() } }
                         },
                         must = new object[]
                         {
@@ -122,10 +122,10 @@ public sealed class OpenSearchCampaignSearchIndexer : ICampaignSearchIndexer
         }
     }
 
-    private static ActiveCampaignDto ToDto(Campaign campaign)
+    private static CampaignSearchDocument ToDto(Campaign campaign)
     {
         var progress = campaign.GoalAmount <= 0 ? 0 : Math.Round(campaign.TotalRaised / campaign.GoalAmount * 100, 2);
-        return new ActiveCampaignDto(
+        return new CampaignSearchDocument(
             campaign.Id,
             campaign.TenantId,
             campaign.Title,
@@ -133,6 +133,18 @@ public sealed class OpenSearchCampaignSearchIndexer : ICampaignSearchIndexer
             campaign.GoalAmount,
             campaign.TotalRaised,
             progress,
-            campaign.EndDate);
+            campaign.EndDate,
+            campaign.Status.ToString());
     }
+
+    private sealed record CampaignSearchDocument(
+        Guid Id,
+        string TenantId,
+        string Title,
+        string Description,
+        decimal GoalAmount,
+        decimal TotalRaised,
+        decimal ProgressPercent,
+        DateOnly EndDate,
+        string Status);
 }
