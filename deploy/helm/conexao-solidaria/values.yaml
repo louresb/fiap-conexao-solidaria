@@ -6,6 +6,8 @@ global:
   defaultTenantId: esperanca-solidaria
   existingSecret: conexao-solidaria-runtime
   imagePullSecrets: []
+  observability:
+    otlpEndpoint: ""
 
 image:
   registry: ghcr.io/louresb

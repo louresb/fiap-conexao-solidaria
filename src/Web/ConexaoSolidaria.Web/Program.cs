@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using ConexaoSolidaria.Contracts.Auth;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Web.Components;
 using ConexaoSolidaria.Web.Services;
 
@@ -34,6 +35,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "web");
 
 builder.Services.AddAuthentication(options =>
 {

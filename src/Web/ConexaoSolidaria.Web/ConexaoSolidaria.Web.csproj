@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\ConexaoSolidaria.Infrastructure\ConexaoSolidaria.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

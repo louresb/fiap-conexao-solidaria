@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Claims;
 
 using ConexaoSolidaria.Contracts.Auth;
@@ -31,6 +32,9 @@ public sealed class CorrelationTenantMiddleware
         context.Response.Headers[TenantHeader] = tenantId;
         context.Items[CorrelationHeader] = correlationId;
         context.Items[TenantHeader] = tenantId;
+
+        Activity.Current?.SetTag("app.correlation_id", correlationId);
+        Activity.Current?.SetTag("app.tenant.id", tenantId);
 
         using (LogContext.PushProperty("CorrelationId", correlationId))
         using (LogContext.PushProperty("TenantId", tenantId))

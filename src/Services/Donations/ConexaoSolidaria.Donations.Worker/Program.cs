@@ -1,5 +1,6 @@
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Donations.Worker.Consumers;
+using ConexaoSolidaria.Infrastructure.Observability;
 
 using MassTransit;
 
@@ -28,6 +29,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "donations-worker");
 
 builder.Services.AddDbContext<CampaignsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("CampaignsDb")));

@@ -9,6 +9,7 @@ using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Identity.Api.Data;
 using ConexaoSolidaria.Identity.Api.Keycloak;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Infrastructure.OpenApi;
 
 using MassTransit;
@@ -40,6 +41,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "identity-api");
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityDb")));

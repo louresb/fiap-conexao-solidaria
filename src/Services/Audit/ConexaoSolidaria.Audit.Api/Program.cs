@@ -3,6 +3,7 @@ using ConexaoSolidaria.Audit.Api.Data;
 using ConexaoSolidaria.Contracts.Audit;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Infrastructure.OpenApi;
 
 using MassTransit;
@@ -35,6 +36,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "audit-api");
 
 builder.Services.AddSingleton<AuditMongoContext>();
 builder.Services.AddMassTransit(bus =>

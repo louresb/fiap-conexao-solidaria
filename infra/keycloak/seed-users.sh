@@ -5,13 +5,23 @@ KCADM=/opt/keycloak/bin/kcadm.sh
 SERVER=${KEYCLOAK_SERVER:-http://keycloak:8080}
 REALM=conexao-solidaria
 
-until "$KCADM" config credentials \
-  --server "$SERVER" \
-  --realm master \
-  --user "$KEYCLOAK_ADMIN" \
-  --password "$KEYCLOAK_ADMIN_PASSWORD" >/dev/null 2>&1; do
+authenticated=false
+for _ in $(seq 1 12); do
+  if timeout 20 "$KCADM" config credentials \
+    --server "$SERVER" \
+    --realm master \
+    --user "$KEYCLOAK_ADMIN" \
+    --password "$KEYCLOAK_ADMIN_PASSWORD" >/dev/null 2>&1; then
+    authenticated=true
+    break
+  fi
   sleep 3
 done
+
+if [[ "$authenticated" != true ]]; then
+  echo "Nao foi possivel autenticar no Keycloak em $SERVER." >&2
+  exit 1
+fi
 
 "$KCADM" update "realms/$REALM" \
   -s 'displayName=Conexao Solidaria' \

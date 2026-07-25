@@ -1,6 +1,8 @@
 global:
   environment: local
   cloudProvider: docker-desktop
+  observability:
+    otlpEndpoint: http://conexao-solidaria-otel-collector:4317
 
 image:
   registry: ""

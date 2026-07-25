@@ -42,11 +42,14 @@ digraph ConexaoSolidaria {
   subgraph cluster_observability {
     label="OBSERVABILIDADE OPERACIONAL";
     style="rounded,filled"; color="#C9D5D9"; fillcolor="#EFF4F6"; fontcolor="#304D58";
-    telemetry [label="SERILOG • CORRELATION ID • MÉTRICAS\nInstrumentação transversal de todos os serviços"];
-    grafana [label="PROMETHEUS + GRAFANA\nMétricas e dashboards reais", fillcolor="#E6F0F3", color="#477589"];
+    telemetry [label="SERILOG • CORRELATION ID • OPENTELEMETRY\nInstrumentação transversal de todos os serviços"];
+    collector [label="OTEL COLLECTOR\nOTLP • Batch • Export", fillcolor="#E7EDF8", color="#4B6FA8"];
+    tempo [label="TEMPO\nTracing distribuído ponta a ponta", fillcolor="#E9E4F5", color="#7458A6"];
+    grafana [label="PROMETHEUS + GRAFANA\nMétricas • Dashboards • Traces", fillcolor="#E6F0F3", color="#477589"];
     loki [label="LOKI\nLogs estruturados", fillcolor="#E6F0F3", color="#477589"];
     zabbix [label="ZABBIX\nReadiness • Campanhas • Produto web", fillcolor="#F5E5E7", color="#A84D58"];
-    { rank=same; telemetry; grafana; loki; zabbix; }
+    { rank=same; telemetry; collector; tempo; }
+    { rank=same; grafana; loki; zabbix; }
   }
 
   personas -> web [label="HTTPS"];
@@ -75,7 +78,11 @@ digraph ConexaoSolidaria {
 
   postgres -> telemetry [style=dashed, arrowhead=none];
   rabbit -> telemetry [style=dashed, arrowhead=none];
-  telemetry -> grafana;
-  telemetry -> loki;
-  zabbix -> telemetry [label="web scenarios", style=dashed];
+  telemetry -> collector [label="OTLP", weight=100];
+  collector -> tempo [weight=100];
+  tempo -> grafana [label="datasource", constraint=false];
+  telemetry -> grafana [label="/metrics", constraint=false];
+  telemetry -> loki [label="logs", constraint=false];
+  zabbix -> telemetry [label="web scenarios", style=dashed, constraint=false];
+  grafana -> loki -> zabbix [style=invis, weight=100];
 }

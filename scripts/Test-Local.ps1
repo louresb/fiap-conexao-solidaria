@@ -13,6 +13,7 @@ Set-Location $root
 
 $gateway = if ($Runtime -eq "Kubernetes") { "http://localhost:31081" } else { "http://localhost:5100" }
 $keycloak = if ($Runtime -eq "Kubernetes") { "http://localhost:31082" } else { "http://localhost:8080" }
+$tempo = if ($Runtime -eq "Kubernetes") { "http://localhost:31093" } else { "http://localhost:3200" }
 
 function Write-Step([string]$Message) {
     Write-Host "[check] $Message" -ForegroundColor Cyan
@@ -205,6 +206,40 @@ $knowledge = Invoke-RestMethod `
 Assert-True $knowledge.answered "A base de conhecimento nao respondeu."
 Assert-True ($knowledge.sources.Count -gt 0) "A resposta deve indicar pelo menos uma fonte."
 
+Write-Step "Tracing distribuido no Tempo"
+$tempoReady = Invoke-WebRequest -UseBasicParsing "$tempo/ready"
+Assert-True ($tempoReady.StatusCode -eq 200) "O Tempo nao esta saudavel."
+$expectedTraceServices = @("gateway", "campaigns-api", "payments-api", "audit-api", "knowledge-api")
+$tracedServices = Wait-Until `
+    -Attempts 120 `
+    -DelayMilliseconds 1000 `
+    -FailureMessage "Os traces da jornada nao foram materializados no Tempo." `
+    -Probe {
+        $tagResponse = Invoke-RestMethod "$tempo/api/search/tag/service.name/values"
+        $values = @($tagResponse.tagValues | ForEach-Object {
+            if ($_ -is [string]) { $_ } elseif ($_.value) { $_.value }
+        })
+        $missing = @($expectedTraceServices | Where-Object { $_ -notin $values })
+        if ($missing.Count -eq 0) { return $values }
+        return $null
+    }
+$journeyTraceServices = @("gateway", "campaigns-api", "payments-api", "donations-worker", "audit-api")
+$traceQuery = [uri]::EscapeDataString("{ span.app.correlation_id = `"$($donorHeaders['X-Correlation-Id'])`" }")
+$journeyTrace = Wait-Until `
+    -Attempts 120 `
+    -DelayMilliseconds 1000 `
+    -FailureMessage "O trace distribuido da doacao nao percorreu todos os servicos esperados." `
+    -Probe {
+        $traceSearch = Invoke-RestMethod "$tempo/api/search?q=$traceQuery&limit=20"
+        $candidate = @($traceSearch.traces | Where-Object {
+            $traceServices = @($_.serviceStats.PSObject.Properties.Name)
+            $_.rootTraceName -like "POST /api/donations/*" -and
+            @($journeyTraceServices | Where-Object { $_ -notin $traceServices }).Count -eq 0
+        } | Select-Object -First 1)
+        if ($candidate.Count -eq 1) { return $candidate[0] }
+        return $null
+    }
+
 if ($Runtime -eq "Kubernetes") {
     Write-Step "Pods e coleta de metricas"
     $pods = kubectl get pods -n conexao-solidaria -o json | ConvertFrom-Json
@@ -220,6 +255,13 @@ if ($Runtime -eq "Kubernetes") {
 
     $grafana = Invoke-RestMethod "http://localhost:31090/api/health"
     Assert-True ($grafana.database -eq "ok") "O Grafana nao esta saudavel."
+    $grafanaCredentials = [Convert]::ToBase64String(
+        [Text.Encoding]::ASCII.GetBytes("admin:$($environment.GRAFANA_ADMIN_PASSWORD)"))
+    $tempoDatasource = Invoke-WebRequest `
+        -UseBasicParsing `
+        -Headers @{ Authorization = "Basic $grafanaCredentials" } `
+        -Uri "http://localhost:31090/api/datasources/proxy/uid/Tempo/ready"
+    Assert-True ($tempoDatasource.StatusCode -eq 200) "O datasource Tempo nao esta acessivel pelo Grafana."
 
     $zabbixPage = Invoke-WebRequest -UseBasicParsing "http://localhost:31092/"
     Assert-True ($zabbixPage.StatusCode -eq 200) "A interface do Zabbix nao esta saudavel."
@@ -276,5 +318,7 @@ Write-Host "Smoke test concluido com sucesso." -ForegroundColor Green
     CampaignTotalAfter = $updatedCampaign.totalRaised
     CorrelatedAuditEvents = $auditEvents.Count
     KnowledgeSources = $knowledge.sources.Count
+    TracedServices = @($tracedServices).Count
+    DistributedTraceId = $journeyTrace.traceID
     Runtime = $Runtime
 } | Format-List

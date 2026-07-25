@@ -142,6 +142,25 @@ services:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
 
+  tempo:
+    image: grafana/tempo:2.10.5
+    restart: unless-stopped
+    user: "10001:10001"
+    command: ["-config.file=/etc/tempo.yml"]
+    ports: ["3200:3200"]
+    volumes:
+      - ./infra/opentelemetry/tempo.yml:/etc/tempo.yml:ro
+      - tempo-data:/var/tempo
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.153.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    ports: ["4317:4317", "4318:4318", "13133:13133"]
+    volumes:
+      - ./infra/opentelemetry/collector-config.compose.yml:/etc/otelcol-contrib/config.yml:ro
+    depends_on: [tempo]
+
   grafana:
     image: grafana/grafana:12.0.2
     restart: unless-stopped
@@ -153,7 +172,7 @@ services:
     volumes:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana
-    depends_on: [prometheus, loki]
+    depends_on: [prometheus, loki, tempo]
 
   zabbix-db:
     image: postgres:17-alpine
@@ -223,6 +242,7 @@ services:
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
       Keycloak__Enabled: "true"
       Keycloak__BaseUrl: http://keycloak:8080
       Keycloak__AdminUser: admin
@@ -249,6 +269,7 @@ services:
       OpenSearch__Enabled: "true"
       OpenSearch__BaseUrl: http://opensearch:9200
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
       Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
       Auth__Issuer: http://localhost:8080/realms/conexao-solidaria
       Auth__Audience: conexao-solidaria
@@ -272,6 +293,7 @@ services:
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       FakePayment__WebhookSecret: ${PAYMENT_WEBHOOK_SECRET}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
       Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
       Auth__Issuer: http://localhost:8080/realms/conexao-solidaria
       Auth__Audience: conexao-solidaria
@@ -292,6 +314,7 @@ services:
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
     ports: ["5106:8080"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -308,6 +331,7 @@ services:
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
       Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
       Auth__Issuer: http://localhost:8080/realms/conexao-solidaria
       Auth__Audience: conexao-solidaria
@@ -326,6 +350,7 @@ services:
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
     ports: ["5105:8080"]
     depends_on:
       rabbitmq: { condition: service_healthy }
@@ -340,6 +365,7 @@ services:
       Auth__Audience: conexao-solidaria
       Auth__RequireHttpsMetadata: "false"
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
     ports: ["5100:8080"]
     depends_on: [identity-api, campaigns-api, payments-api, audit-api, knowledge-api]
 
@@ -357,6 +383,7 @@ services:
       DemoAccess__ManagerPassword: ${DEMO_MANAGER_PASSWORD}
       DemoAccess__DonorPassword: ${DEMO_DONOR_PASSWORD}
       Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
     ports: ["5000:8080"]
     depends_on:
       gateway: { condition: service_started }
@@ -373,4 +400,5 @@ volumes:
   loki-data:
   prometheus-data:
   grafana-data:
+  tempo-data:
   zabbix-db-data:

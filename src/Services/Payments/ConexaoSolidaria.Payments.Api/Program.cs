@@ -1,6 +1,7 @@
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Payments;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Payments.Api.Consumers;
 using ConexaoSolidaria.Payments.Api.Data;
@@ -36,6 +37,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "payments-api");
 
 builder.Services.AddDbContext<PaymentsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PaymentsDb")));

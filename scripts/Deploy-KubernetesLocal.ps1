@@ -51,11 +51,28 @@ function Stop-PortForwards {
     }
 
     $processIds = Get-Content $portForwardState -Raw | ConvertFrom-Json
-    foreach ($processId in @($processIds)) {
+    foreach ($processId in $processIds) {
         Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
     }
 
     Remove-Item $portForwardState -Force -ErrorAction SilentlyContinue
+}
+
+function Stop-StaleKubectlPortForward([int]$LocalPort) {
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $LocalPort -ErrorAction SilentlyContinue)
+    foreach ($listener in $listeners) {
+        $candidate = Get-CimInstance Win32_Process `
+            -Filter "ProcessId = $($listener.OwningProcess)" `
+            -ErrorAction SilentlyContinue
+        if ($candidate.Name -eq "kubectl.exe" -and $candidate.CommandLine -match "\bport-forward\b") {
+            Stop-Process -Id $listener.OwningProcess -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    $remaining = @(Get-NetTCPConnection -State Listen -LocalPort $LocalPort -ErrorAction SilentlyContinue)
+    if ($remaining.Count -gt 0) {
+        throw "A porta local $LocalPort esta em uso por outro processo. Libere-a antes do deploy."
+    }
 }
 
 function Start-PortForwards {
@@ -70,6 +87,7 @@ function Start-PortForwards {
         @{ Service = "conexao-solidaria-grafana"; Local = 31090; Remote = 3000 },
         @{ Service = "conexao-solidaria-prometheus"; Local = 31091; Remote = 9090 },
         @{ Service = "conexao-solidaria-zabbix-web"; Local = 31092; Remote = 8080 },
+        @{ Service = "conexao-solidaria-tempo"; Local = 31093; Remote = 3200 },
         @{ Service = "conexao-solidaria-identity-api"; Local = 31101; Remote = 8080 },
         @{ Service = "conexao-solidaria-campaigns-api"; Local = 31102; Remote = 8080 },
         @{ Service = "conexao-solidaria-payments-api"; Local = 31103; Remote = 8080 },
@@ -77,46 +95,65 @@ function Start-PortForwards {
         @{ Service = "conexao-solidaria-knowledge-api"; Local = 31105; Remote = 8080 }
     )
     $processIds = @()
+    $processesByPort = @{}
 
-    foreach ($forward in $forwards) {
-        $logPrefix = Join-Path $stateDirectory "port-forward-$($forward.Local)"
-        $process = Start-Process `
-            -FilePath "kubectl" `
-            -ArgumentList @(
-                "port-forward",
-                "-n", $namespace,
-                "service/$($forward.Service)",
-                "$($forward.Local):$($forward.Remote)",
-                "--address=127.0.0.1") `
-            -WindowStyle Hidden `
-            -RedirectStandardOutput "$logPrefix.out.log" `
-            -RedirectStandardError "$logPrefix.err.log" `
-            -PassThru
-        $processIds += $process.Id
+    try {
+        foreach ($forward in $forwards) {
+            Stop-StaleKubectlPortForward $forward.Local
+            $logPrefix = Join-Path $stateDirectory "port-forward-$($forward.Local)"
+            Remove-Item "$logPrefix.out.log", "$logPrefix.err.log" -Force -ErrorAction SilentlyContinue
+            $process = Start-Process `
+                -FilePath "kubectl" `
+                -ArgumentList @(
+                    "port-forward",
+                    "-n", $namespace,
+                    "service/$($forward.Service)",
+                    "$($forward.Local):$($forward.Remote)",
+                    "--address=127.0.0.1") `
+                -WindowStyle Hidden `
+                -RedirectStandardOutput "$logPrefix.out.log" `
+                -RedirectStandardError "$logPrefix.err.log" `
+                -PassThru
+            $processIds += $process.Id
+            $processesByPort[$forward.Local] = $process
+        }
+
+        [System.IO.File]::WriteAllText(
+            $portForwardState,
+            ($processIds | ConvertTo-Json),
+            [System.Text.UTF8Encoding]::new($false))
+
+        foreach ($forward in $forwards) {
+            $available = $false
+            $process = $processesByPort[$forward.Local]
+            for ($attempt = 1; $attempt -le 30 -and -not $available; $attempt++) {
+                $process.Refresh()
+                if ($process.HasExited) {
+                    $errorLog = Get-Content ".local/port-forward-$($forward.Local).err.log" -Raw -ErrorAction SilentlyContinue
+                    throw "O port-forward local $($forward.Local) encerrou durante a inicializacao. $errorLog"
+                }
+
+                $listeners = @(Get-NetTCPConnection `
+                    -State Listen `
+                    -LocalPort $forward.Local `
+                    -ErrorAction SilentlyContinue)
+                $available = @($listeners | Where-Object OwningProcess -eq $process.Id).Count -gt 0
+                if (-not $available) {
+                    Start-Sleep -Milliseconds 500
+                }
+            }
+
+            if (-not $available) {
+                throw "O port-forward local $($forward.Local) nao ficou disponivel."
+            }
+        }
     }
-
-    [System.IO.File]::WriteAllText(
-        $portForwardState,
-        ($processIds | ConvertTo-Json),
-        [System.Text.UTF8Encoding]::new($false))
-
-    foreach ($forward in $forwards) {
-        $available = $false
-        for ($attempt = 1; $attempt -le 30 -and -not $available; $attempt++) {
-            try {
-                $client = [System.Net.Sockets.TcpClient]::new()
-                $client.Connect("127.0.0.1", $forward.Local)
-                $client.Dispose()
-                $available = $true
-            }
-            catch {
-                Start-Sleep -Milliseconds 500
-            }
+    catch {
+        foreach ($processId in $processIds) {
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
         }
-
-        if (-not $available) {
-            throw "O port-forward local $($forward.Local) nao ficou disponivel."
-        }
+        Remove-Item $portForwardState -Force -ErrorAction SilentlyContinue
+        throw
     }
 }
 
@@ -206,13 +243,29 @@ $themeYaml = kubectl create configmap conexao-solidaria-keycloak-theme `
     -o yaml
 Apply-Generated $themeYaml "Nao foi possivel aplicar o tema do Keycloak."
 Apply-FileConfigMap "conexao-solidaria-prometheus-config" "prometheus.yml=deploy/kubernetes/local/prometheus.yml"
+Apply-FileConfigMap "conexao-solidaria-otel-collector-config" "config.yml=infra/opentelemetry/collector-config.yml"
+Apply-FileConfigMap "conexao-solidaria-tempo-config" "tempo.yml=infra/opentelemetry/tempo.yml"
 Apply-FileConfigMap "conexao-solidaria-grafana-datasources" "datasources.yml=deploy/kubernetes/local/grafana-datasources.yml"
 Apply-FileConfigMap "conexao-solidaria-grafana-dashboard-provider" "dashboards.yml=infra/grafana/provisioning/dashboards/dashboards.yml"
 Apply-FileConfigMap "conexao-solidaria-grafana-dashboard" "conexao-solidaria.json=infra/grafana/provisioning/dashboards/conexao-solidaria.json"
 
 Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/infrastructure.yaml } "Falha ao aplicar a infraestrutura local."
+Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/tracing.yaml } "Falha ao aplicar o tracing local."
 Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/monitoring.yaml } "Falha ao aplicar a observabilidade local."
 Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/zabbix.yaml } "Falha ao aplicar o Zabbix local."
+Invoke-Checked {
+    kubectl rollout restart statefulset/conexao-solidaria-tempo -n $namespace
+} "Falha ao recarregar a configuracao do Tempo."
+Invoke-Checked {
+    kubectl rollout status statefulset/conexao-solidaria-tempo -n $namespace --timeout=6m
+} "O Tempo nao ficou pronto apos recarregar a configuracao."
+Invoke-Checked {
+    kubectl rollout restart `
+        deployment/conexao-solidaria-otel-collector `
+        deployment/conexao-solidaria-prometheus `
+        deployment/conexao-solidaria-grafana `
+        -n $namespace
+} "Falha ao recarregar as configuracoes de observabilidade."
 
 $infrastructureWorkloads = @(
     "statefulset/conexao-solidaria-postgres",
@@ -222,6 +275,8 @@ $infrastructureWorkloads = @(
     "statefulset/conexao-solidaria-opensearch",
     "deployment/conexao-solidaria-keycloak",
     "deployment/conexao-solidaria-loki",
+    "statefulset/conexao-solidaria-tempo",
+    "deployment/conexao-solidaria-otel-collector",
     "deployment/conexao-solidaria-prometheus",
     "deployment/conexao-solidaria-grafana",
     "statefulset/conexao-solidaria-zabbix-db",
@@ -277,6 +332,7 @@ Write-Host "RabbitMQ:   http://localhost:32672"
 Write-Host "Grafana:    http://localhost:31090"
 Write-Host "Prometheus: http://localhost:31091"
 Write-Host "Zabbix:     http://localhost:31092 (Admin / senha em .env)"
+Write-Host "Tempo:      http://localhost:31093"
 Write-Host "API docs:   http://localhost:31101/scalar/v1 (Identity)"
 Write-Host "            http://localhost:31102/scalar/v1 (Campaigns)"
 Write-Host "            http://localhost:31103/scalar/v1 (Payments)"

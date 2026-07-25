@@ -72,6 +72,7 @@ Write-Host "Keycloak:   http://localhost:8080"
 Write-Host "RabbitMQ:   http://localhost:15672 (conexao / senha em .env)"
 Write-Host "Grafana:    http://localhost:3000 (admin / $($environment.GRAFANA_ADMIN_PASSWORD))"
 Write-Host "Prometheus: http://localhost:9090"
+Write-Host "Tempo:      http://localhost:3200"
 if ($Operations) {
     Write-Host "Zabbix:     http://localhost:8085 (Admin / senha em .env)"
 }

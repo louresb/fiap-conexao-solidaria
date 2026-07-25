@@ -3,6 +3,7 @@ using System.Text.Json;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Knowledge;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Knowledge.Api.Retrieval;
 using ConexaoSolidaria.Knowledge.Api.Services;
@@ -33,6 +34,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "knowledge-api");
 
 builder.Services.AddSingleton<IKnowledgeRetriever, KnowledgeRetriever>();
 builder.Services.AddSingleton<KnowledgeAnswerService>();

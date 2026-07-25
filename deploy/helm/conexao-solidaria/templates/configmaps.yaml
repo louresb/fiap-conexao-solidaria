@@ -13,6 +13,9 @@ data:
   CS_DEFAULT_TENANT_ID: {{ $.Values.global.defaultTenantId | quote }}
   CS_CLOUD_PROVIDER: {{ $.Values.global.cloudProvider | quote }}
   CS_ENVIRONMENT: {{ $.Values.global.environment | quote }}
+  {{- with $.Values.global.observability.otlpEndpoint }}
+  Observability__OtlpEndpoint: {{ . | quote }}
+  {{- end }}
   {{- range $key, $value := $component.env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}

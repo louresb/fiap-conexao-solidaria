@@ -10,7 +10,7 @@ Projeto desenvolvido para o Hackathon da pós-graduação em Arquitetura de Sist
 
 ![Arquitetura da plataforma](docs/architecture/platform-architecture.png)
 
-A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit/RabbitMQ. PostgreSQL mantém o estado transacional, Redis e OpenSearch atendem projeções de leitura e MongoDB preserva a auditoria append-only.
+A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit/RabbitMQ. PostgreSQL mantém o estado transacional, Redis e OpenSearch atendem projeções de leitura, MongoDB preserva a auditoria append-only e OpenTelemetry/Tempo acompanham a jornada entre processos.
 
 - [Diagrama editável em Graphviz](docs/architecture/platform-architecture.dot)
 - [Decisões de persistência em PDF](docs/architecture/data-storage-decisions.pdf)
@@ -26,7 +26,7 @@ A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit
 | Transparência | Campanhas ativas, valor arrecadado, busca fuzzy e cache com `X-Cache: HIT/MISS` |
 | Auditoria | Eventos por tenant e correlação em MongoDB, com consulta autorizada |
 | Conhecimento | Respostas baseadas em documentos verificados, sempre acompanhadas das fontes |
-| Observabilidade | Serilog, Correlation ID, Prometheus, Grafana, Loki e web scenarios no Zabbix |
+| Observabilidade | Serilog, Correlation ID, OpenTelemetry Collector, Tempo, Prometheus, Grafana, Loki e web scenarios no Zabbix |
 | Plataforma | Docker Compose, Kubernetes, Helm, Terraform AWS/Azure e GitHub Actions |
 
 ## Executar no Kubernetes
@@ -47,7 +47,7 @@ kubectl config use-context docker-desktop
 .\scripts\Deploy-KubernetesLocal.ps1 -Reset
 ```
 
-O script gera credenciais locais, constrói imagens imutáveis, aplica os manifests e o Helm chart, aguarda os rollouts, configura usuários no Keycloak, provisiona o cenário do Zabbix e abre os port-forwards.
+O script gera credenciais locais, constrói imagens imutáveis, aplica os manifests e o Helm chart, aguarda os rollouts, configura usuários no Keycloak, provisiona tracing e monitoramento e abre os port-forwards.
 
 > [!NOTE]
 > As credenciais são geradas em `.env`, que não é versionado. Nenhum segredo de runtime está no repositório.
@@ -59,7 +59,7 @@ O script gera credenciais locais, constrói imagens imutáveis, aplica os manife
 kubectl get pods -n conexao-solidaria
 ```
 
-O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamento entre tenants, pagamento, mensageria, atualização assíncrona, auditoria, fontes da Knowledge API, Prometheus, Grafana e Zabbix.
+O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamento entre tenants, pagamento, mensageria, atualização assíncrona, auditoria, fontes da Knowledge API, Prometheus, Grafana e Zabbix. A jornada de doação também precisa aparecer no Tempo com o mesmo `traceId` em gateway, campanhas, pagamentos, worker e auditoria.
 
 > [!TIP]
 > Em uma nova aplicação sem mudanças de código, use `.\scripts\Deploy-KubernetesLocal.ps1 -SkipBuild`.
@@ -75,6 +75,7 @@ O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamen
 | Grafana | http://localhost:31090 |
 | Prometheus | http://localhost:31091 |
 | Zabbix | http://localhost:31092 |
+| Tempo | http://localhost:31093 |
 | Identity API - Scalar | http://localhost:31101/scalar/v1 |
 | Campaigns API - Scalar | http://localhost:31102/scalar/v1 |
 | Payments API - Scalar | http://localhost:31103/scalar/v1 |

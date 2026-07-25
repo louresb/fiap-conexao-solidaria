@@ -9,6 +9,7 @@ using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.Infrastructure.Observability;
 using ConexaoSolidaria.Infrastructure.OpenApi;
 
 using MassTransit;
@@ -42,6 +43,11 @@ builder.Host.UseSerilog((context, configuration) =>
         configuration.WriteTo.GrafanaLoki(lokiUrl);
     }
 });
+
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "campaigns-api");
 
 builder.Services.AddDbContext<CampaignsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("CampaignsDb")));
