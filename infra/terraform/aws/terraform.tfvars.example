@@ -1,0 +1,14 @@
+aws_region          = "us-east-1"
+environment         = "production"
+cluster_name        = "conexao-solidaria"
+single_nat_gateway  = true
+node_instance_types = ["t3.large"]
+
+# Private API access is the secure default. A temporary /32 can be enabled for bootstrap.
+cluster_endpoint_public_access       = false
+cluster_endpoint_public_access_cidrs = ["203.0.113.10/32"]
+
+tags = {
+  Owner      = "platform-team"
+  CostCenter = "social-impact"
+}

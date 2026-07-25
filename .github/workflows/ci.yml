@@ -70,6 +70,28 @@ jobs:
         with:
           version: v3.18.4
 
+      - name: Scan repository configuration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL
+          exit-code: 1
+          trivyignores: .trivyignore.yaml
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Validate Terraform
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform fmt -check -recursive infra/terraform
+          for platform in aws azure; do
+            terraform -chdir="infra/terraform/${platform}" init -backend=false -input=false
+            terraform -chdir="infra/terraform/${platform}" validate -no-color
+          done
+
       - name: Lint environment values
         shell: bash
         run: |
@@ -81,14 +103,6 @@ jobs:
               --values "deploy/helm/conexao-solidaria/${values}" \
               --namespace conexao-solidaria > "/tmp/${values%.yaml}.rendered.yaml"
           done
-
-      - name: Scan repository configuration
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: config
-          scan-ref: .
-          severity: CRITICAL
-          exit-code: 1
 
   containers:
     name: Container - ${{ matrix.component }}

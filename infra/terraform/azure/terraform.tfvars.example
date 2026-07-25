@@ -1,0 +1,13 @@
+location                = "Brazil South"
+environment             = "production"
+name_prefix             = "conexao-solidaria"
+container_registry_name = "conexaosolidariaprod"
+node_vm_size            = "Standard_D2s_v5"
+
+# Replace with the operator or CI egress address before provisioning.
+api_server_authorized_ip_ranges = ["203.0.113.10/32"]
+
+tags = {
+  Owner      = "platform-team"
+  CostCenter = "social-impact"
+}

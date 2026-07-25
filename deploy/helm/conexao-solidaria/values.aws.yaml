@@ -7,8 +7,7 @@ image:
   tag: latest
 
 serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<aws-account-id>:role/conexao-solidaria-workload
+  annotations: {}
 
 components:
   web:
