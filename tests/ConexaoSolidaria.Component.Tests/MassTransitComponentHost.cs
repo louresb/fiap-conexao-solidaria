@@ -23,7 +23,13 @@ internal sealed class MassTransitComponentHost(
         var services = new ServiceCollection();
         services.AddLogging();
         configureServices(services, connection);
-        services.AddMassTransitTestHarness(configureBus);
+        services.AddMassTransitTestHarness(configurator =>
+        {
+            configureBus(configurator);
+            configurator.SetTestTimeouts(
+                testTimeout: TimeSpan.FromSeconds(30),
+                testInactivityTimeout: TimeSpan.FromSeconds(5));
+        });
 
         var provider = services.BuildServiceProvider(validateScopes: true);
         var harness = provider.GetRequiredService<ITestHarness>();
