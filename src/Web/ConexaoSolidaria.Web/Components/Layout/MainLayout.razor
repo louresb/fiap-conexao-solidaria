@@ -1,23 +1,30 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+<div class="site-shell">
+    <NavMenu />
+    <main class="page-content">
+        @Body
     </main>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div>
+                <a class="brand brand-footer" href="/" aria-label="Conexão Solidária">
+                    <span class="brand-mark" aria-hidden="true">CS</span>
+                    <span><strong>Conexão Solidária</strong><small>Transparência que aproxima</small></span>
+                </a>
+            </div>
+            <p>Campanhas, doações e impacto acompanhados de ponta a ponta.</p>
+            <nav aria-label="Rodapé">
+                <a href="/transparencia">Transparência</a>
+                <a href="/assistente">Tire suas dúvidas</a>
+                <a href="/acesso">Acessar plataforma</a>
+            </nav>
+        </div>
+    </footer>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    A conexão foi interrompida.
+    <a href="." class="reload">Recarregar</a>
+    <button type="button" class="dismiss" aria-label="Fechar">×</button>
 </div>

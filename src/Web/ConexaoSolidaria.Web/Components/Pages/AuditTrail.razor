@@ -1,0 +1,111 @@
+@page "/gestao/auditoria"
+@attribute [Authorize(Roles = "GestorONG")]
+@using System.Text.Json
+@using ConexaoSolidaria.Contracts.Audit
+@inject SolidariaApiClient Api
+
+<PageTitle>Auditoria | Gestão</PageTitle>
+
+<section class="management-heading">
+    <div class="section-inner split-heading">
+        <div><p class="eyebrow">Governança</p><h1>Trilha de auditoria</h1><p>Eventos append-only segregados por organização e correlação.</p></div>
+        <button class="button button-outline" type="button" @onclick="LoadAsync" disabled="@Loading">Atualizar</button>
+    </div>
+</section>
+
+<section class="section-inner audit-page">
+    <div class="audit-toolbar">
+        <div class="search-control compact-search">
+            <label for="event-filter">Filtrar eventos</label>
+            <input id="event-filter" @bind="Filter" @bind:event="oninput" placeholder="Tipo, serviço ou correlação" />
+        </div>
+        <span>@FilteredEvents.Count() registros visíveis</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="notice notice-error">@Error</div>
+    }
+    else
+    {
+        <div class="audit-timeline">
+            @foreach (var item in FilteredEvents)
+            {
+                <article>
+                    <span class="event-dot"></span>
+                    <div class="audit-event-heading">
+                        <div><strong>@EventLabel(item.EventType)</strong><span>@item.EventType</span></div>
+                        <time datetime="@item.Timestamp.ToString("O")">@item.Timestamp.LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss")</time>
+                    </div>
+                    <dl>
+                        <div><dt>Origem</dt><dd>@item.Source</dd></div>
+                        <div><dt>Tenant</dt><dd>@item.TenantId</dd></div>
+                        <div><dt>Correlação</dt><dd><code>@item.CorrelationId</code></dd></div>
+                    </dl>
+                    <details>
+                        <summary>Inspecionar payload protegido</summary>
+                        <pre>@PrettyJson(item.PayloadJson)</pre>
+                    </details>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<AuditEventDto> Events { get; set; } = [];
+    private string Filter { get; set; } = string.Empty;
+    private string Error { get; set; } = string.Empty;
+    private bool Loading { get; set; }
+    private IEnumerable<AuditEventDto> FilteredEvents => string.IsNullOrWhiteSpace(Filter)
+        ? Events
+        : Events.Where(item => $"{item.EventType} {item.Source} {item.CorrelationId}".Contains(Filter, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        Loading = true;
+        Error = string.Empty;
+        try
+        {
+            Events = await Api.GetAuditAsync(100, CancellationToken.None);
+        }
+        catch
+        {
+            Error = "Não foi possível consultar a trilha de auditoria.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private static string PrettyJson(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
+    }
+
+    private static string EventLabel(string eventType) => eventType switch
+    {
+        "DonorRegistered" => "Doador cadastrado",
+        "CampaignCreated" => "Campanha criada",
+        "CampaignUpdated" => "Campanha atualizada",
+        "CampaignCancelled" => "Campanha encerrada",
+        "DonationIntentCreated" => "Doação iniciada",
+        "PaymentAwaitingConfirmation" => "Pagamento criado",
+        "PaymentConfirmed" => "Pagamento confirmado",
+        "DonationProcessed" => "Doação processada",
+        "CampaignGoalReached" => "Meta alcançada",
+        "KnowledgeQuestionAnswered" => "Pergunta respondida",
+        _ => eventType
+    };
+}

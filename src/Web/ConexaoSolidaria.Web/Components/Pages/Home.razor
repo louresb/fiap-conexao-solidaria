@@ -1,7 +1,164 @@
-﻿@page "/"
+@page "/"
+@using ConexaoSolidaria.Contracts.Campaigns
+@inject SolidariaApiClient Api
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@Tenant.Name | Conexão Solidária</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="tenant-hero @Tenant.AccentClass" style="background-image: linear-gradient(90deg, rgba(10, 35, 29, .9) 0%, rgba(10, 35, 29, .7) 38%, rgba(10, 35, 29, .08) 72%), url('@Tenant.HeroImage')">
+    <div class="hero-inner">
+        <p class="eyebrow">@Tenant.Location</p>
+        <h1>@Tenant.Name</h1>
+        <p class="hero-copy">@Tenant.Purpose</p>
+        <div class="hero-actions">
+            <a class="button button-primary" href="#campanhas">Conhecer campanhas</a>
+            <a class="button button-on-dark" href="/transparencia?tenant=@Tenant.Id">Ver transparência</a>
+        </div>
+        <div class="hero-trust" aria-label="Compromissos da organização">
+            <span>Impacto acompanhado</span>
+            <span>Prestação de contas</span>
+            <span>Doação segura</span>
+        </div>
+    </div>
+</section>
 
-Welcome to your new app.
+<section class="impact-band" aria-label="Resumo de impacto">
+    <div class="section-inner impact-grid">
+        <div><strong>@Campaigns.Count</strong><span>campanhas ativas</span></div>
+        <div><strong>@TotalRaised.ToString("C0", Culture)</strong><span>arrecadados</span></div>
+        <div><strong>@AverageProgress.ToString("0")%</strong><span>da meta média</span></div>
+        <div><strong>100%</strong><span>dos eventos auditáveis</span></div>
+    </div>
+</section>
+
+<section class="campaigns-section" id="campanhas">
+    <div class="section-inner">
+        <div class="section-heading split-heading">
+            <div>
+                <p class="eyebrow">Escolha onde participar</p>
+                <h2>Campanhas em andamento</h2>
+                <p>Acompanhe a meta, a arrecadação e o impacto esperado antes de contribuir.</p>
+            </div>
+            <div class="search-control">
+                <label for="campaign-search">Buscar campanha</label>
+                <div>
+                    <input id="campaign-search" @bind="SearchTerm" @bind:event="oninput" placeholder="Ex.: educação, alimento, mangue" />
+                    <button class="button button-dark" type="button" @onclick="SearchAsync" disabled="@Loading">Buscar</button>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="notice notice-error" role="alert">@Error</div>
+        }
+        else if (Loading)
+        {
+            <div class="loading-state">Carregando campanhas...</div>
+        }
+        else if (DisplayCampaigns.Count == 0)
+        {
+            <div class="empty-state">
+                <h3>Nenhuma campanha encontrada</h3>
+                <p>Experimente outro termo ou consulte todas as iniciativas.</p>
+                <button class="button button-outline" type="button" @onclick="ClearSearchAsync">Limpar busca</button>
+            </div>
+        }
+        else
+        {
+            <div class="campaign-grid">
+                @foreach (var campaign in DisplayCampaigns)
+                {
+                    <CampaignCard Campaign="campaign" />
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<section class="confidence-band">
+    <div class="section-inner confidence-layout">
+        <div>
+            <p class="eyebrow">Confiança por princípio</p>
+            <h2>Da contribuição ao resultado, sem pontos cegos.</h2>
+        </div>
+        <div class="confidence-list">
+            <div><strong>01</strong><span>Pagamento confirmado pelo provedor</span></div>
+            <div><strong>02</strong><span>Doação processada de forma assíncrona</span></div>
+            <div><strong>03</strong><span>Total e trilha de auditoria atualizados</span></div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "tenant")]
+    public string? TenantId { get; set; }
+
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
+    private IReadOnlyList<ActiveCampaignDto> Campaigns { get; set; } = [];
+    private IReadOnlyList<ActiveCampaignDto> SearchResults { get; set; } = [];
+    private IReadOnlyList<ActiveCampaignDto> DisplayCampaigns => HasSearched ? SearchResults : Campaigns;
+    private string SearchTerm { get; set; } = string.Empty;
+    private string Error { get; set; } = string.Empty;
+    private bool Loading { get; set; }
+    private bool HasSearched { get; set; }
+    private decimal TotalRaised => Campaigns.Sum(campaign => campaign.TotalRaised);
+    private decimal AverageProgress => Campaigns.Count == 0 ? 0 : Campaigns.Average(campaign => campaign.ProgressPercent);
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        Loading = true;
+        Error = string.Empty;
+        SearchTerm = string.Empty;
+        SearchResults = [];
+        HasSearched = false;
+        try
+        {
+            Campaigns = (await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None)).Items;
+        }
+        catch
+        {
+            Error = "Não foi possível carregar as campanhas agora. Tente novamente em instantes.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            SearchResults = [];
+            HasSearched = false;
+            return;
+        }
+
+        Loading = true;
+        Error = string.Empty;
+        try
+        {
+            SearchResults = await Api.SearchCampaignsAsync(Tenant.Id, SearchTerm.Trim(), CancellationToken.None);
+            HasSearched = true;
+        }
+        catch
+        {
+            Error = "A busca está temporariamente indisponível.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        SearchTerm = string.Empty;
+        SearchResults = [];
+        HasSearched = false;
+        await Task.CompletedTask;
+    }
+}

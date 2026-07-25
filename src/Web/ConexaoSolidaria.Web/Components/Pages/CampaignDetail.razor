@@ -1,0 +1,231 @@
+@page "/campanhas/{Id:guid}"
+@using ConexaoSolidaria.Contracts.Campaigns
+@using ConexaoSolidaria.Contracts.Payments
+@inject SolidariaApiClient Api
+
+<PageTitle>@(Campaign?.Title ?? "Campanha") | Conexão Solidária</PageTitle>
+
+@if (Loading)
+{
+    <div class="page-loading">Carregando campanha...</div>
+}
+else if (Campaign is null)
+{
+    <section class="narrow-page empty-state">
+        <h1>Campanha não encontrada</h1>
+        <p>Ela pode ter sido encerrada ou não pertence a esta organização.</p>
+        <a class="button button-dark" href="/?tenant=@Tenant.Id">Voltar às campanhas</a>
+    </section>
+}
+else
+{
+    var visual = CampaignPresentations.For(Campaign);
+    <section class="campaign-detail-hero @Tenant.AccentClass">
+        <div class="detail-image"><img src="@visual.Image" alt="" /></div>
+        <div class="detail-summary">
+            <a class="back-link" href="/?tenant=@Tenant.Id">← Todas as campanhas</a>
+            <p class="eyebrow">@visual.Category · @Tenant.Name</p>
+            <h1>@Campaign.Title</h1>
+            <p class="detail-description">@Campaign.Description</p>
+            <div class="detail-progress">
+                <div class="progress-track"><span style="width:@Math.Min(Campaign.ProgressPercent, 100).ToString("0.##", Invariant)%"></span></div>
+                <div><strong>@Campaign.TotalRaised.ToString("C0", Culture)</strong><span> arrecadados de @Campaign.GoalAmount.ToString("C0", Culture)</span></div>
+            </div>
+            <dl class="detail-facts">
+                <div><dt>Prazo</dt><dd>@Campaign.EndDate.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Progresso</dt><dd>@Campaign.ProgressPercent.ToString("0")%</dd></div>
+                <div><dt>Prestação</dt><dd>Atualização contínua</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <section class="detail-content section-inner">
+        <article class="campaign-story">
+            <p class="eyebrow">Impacto esperado</p>
+            <h2>Uma contribuição com destino visível.</h2>
+            <p>@Campaign.Description A execução financeira e os marcos de impacto permanecem disponíveis no painel público de transparência.</p>
+            <div class="process-steps">
+                <div><span>1</span><strong>Você escolhe</strong><p>Defina o valor e a forma de pagamento.</p></div>
+                <div><span>2</span><strong>Nós confirmamos</strong><p>O provedor confirma e o processamento ocorre por eventos.</p></div>
+                <div><span>3</span><strong>Todos acompanham</strong><p>O total e a auditoria registram a evolução.</p></div>
+            </div>
+        </article>
+
+        <aside class="donation-panel" aria-labelledby="donation-title">
+            <p class="eyebrow">Contribuir</p>
+            <h2 id="donation-title">Faça parte desta campanha</h2>
+
+            @if (!User.IsAuthenticated)
+            {
+                <p>Entre como doador para continuar com segurança.</p>
+                <a class="button button-primary button-full" href="/auth/login?returnUrl=@Uri.EscapeDataString($"/campanhas/{Id}?tenant={Tenant.Id}")">Entrar para doar</a>
+                <a class="text-link" href="/acesso">Ainda não tenho cadastro</a>
+            }
+            else if (!User.IsDonor)
+            {
+                <div class="notice">O perfil de gestor acompanha resultados, mas não inicia doações.</div>
+            }
+            else if (!string.Equals(User.TenantId, Tenant.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="notice">Sua conta pertence a outra organização. Selecione uma campanha de @TenantCatalog.Resolve(User.TenantId).Name.</div>
+            }
+            else if (Payment is null)
+            {
+                <label>Valor da contribuição</label>
+                <div class="amount-options">
+                    @foreach (var value in SuggestedAmounts)
+                    {
+                        <button type="button" class="@(Amount == value ? "selected" : null)" @onclick="() => Amount = value">@value.ToString("C0", Culture)</button>
+                    }
+                </div>
+                <input class="amount-input" type="number" min="5" step="5" @bind="Amount" aria-label="Outro valor" />
+
+                <fieldset class="payment-methods">
+                    <legend>Forma de pagamento</legend>
+                    <label><input type="radio" name="payment" value="pix" @onchange="SelectPix" checked="@(PaymentMethod == "pix")" /> Pix</label>
+                    <label><input type="radio" name="payment" value="credit_card" @onchange="SelectCreditCard" checked="@(PaymentMethod == "credit_card")" /> Cartão</label>
+                    <label><input type="radio" name="payment" value="bank_slip" @onchange="SelectBankSlip" checked="@(PaymentMethod == "bank_slip")" /> Boleto</label>
+                </fieldset>
+
+                <button class="button button-primary button-full" type="button" @onclick="DonateAsync" disabled="@Submitting">
+                    @(Submitting ? "Preparando pagamento..." : "Continuar contribuição")
+                </button>
+            }
+            else
+            {
+                <div class="payment-status">
+                    <span class="status-pill">@PaymentStatusLabel</span>
+                    <strong>@Payment.Amount.ToString("C2", Culture)</strong>
+                    <p>Referência <code>@Payment.ProviderPaymentId</code></p>
+                    @if (!string.IsNullOrWhiteSpace(Payment.QrCodePayload) && Payment.Status != "Confirmed")
+                    {
+                        <label>Código Pix copia e cola</label>
+                        <code class="pix-code">@Payment.QrCodePayload</code>
+                    }
+                    @if (Payment.Status != "Confirmed")
+                    {
+                        <details class="sandbox-helper">
+                            <summary>Ambiente de pagamento</summary>
+                            <p>Este provedor opera em modo sandbox. A confirmação abaixo reproduz o retorno assinado do gateway.</p>
+                            <button class="button button-dark button-full" type="button" @onclick="ConfirmAsync" disabled="@Submitting">Confirmar no sandbox</button>
+                        </details>
+                    }
+                    else
+                    {
+                        <div class="success-message"><strong>Contribuição confirmada.</strong><span>O impacto já está em processamento.</span></div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div class="notice notice-error" role="alert">@Error</div>
+            }
+            <p class="privacy-note">Seus dados são protegidos e usados somente para processar a contribuição.</p>
+        </aside>
+    </section>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    [SupplyParameterFromQuery(Name = "tenant")] public string? TenantId { get; set; }
+
+    private static readonly decimal[] SuggestedAmounts = [25, 50, 100, 200];
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+    private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
+    private ActiveCampaignDto? Campaign { get; set; }
+    private UserApiContext User { get; set; } = new(false, "", "", "", "", false, false);
+    private PaymentIntentDto? Payment { get; set; }
+    private decimal Amount { get; set; } = 50;
+    private string PaymentMethod { get; set; } = "pix";
+    private string Error { get; set; } = string.Empty;
+    private bool Loading { get; set; } = true;
+    private bool Submitting { get; set; }
+    private string PaymentStatusLabel => Payment?.Status == "Confirmed" ? "Pagamento confirmado" : "Aguardando confirmação";
+
+    private void SelectPix() => PaymentMethod = "pix";
+    private void SelectCreditCard() => PaymentMethod = "credit_card";
+    private void SelectBankSlip() => PaymentMethod = "bank_slip";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Loading = true;
+        User = await Api.GetUserContextAsync();
+        try
+        {
+            var campaigns = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+            Campaign = campaigns.Items.FirstOrDefault(item => item.Id == Id);
+        }
+        catch
+        {
+            Error = "Não foi possível consultar esta campanha.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private async Task DonateAsync()
+    {
+        if (Campaign is null || Amount <= 0)
+        {
+            return;
+        }
+
+        Submitting = true;
+        Error = string.Empty;
+        try
+        {
+            var accepted = await Api.CreateDonationAsync(
+                new DonationIntentRequest(Campaign.Id, Amount, User.Subject, User.Email, PaymentMethod: PaymentMethod),
+                CancellationToken.None);
+            for (var attempt = 0; attempt < 12 && Payment is null; attempt++)
+            {
+                await Task.Delay(500);
+                Payment = await Api.GetPaymentByDonationAsync(accepted.Id, CancellationToken.None);
+            }
+
+            if (Payment is null)
+            {
+                Error = "A doação foi recebida, mas o pagamento ainda está sendo preparado.";
+            }
+        }
+        catch
+        {
+            Error = "Não foi possível iniciar a contribuição. Revise os dados e tente novamente.";
+        }
+        finally
+        {
+            Submitting = false;
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (Payment is null)
+        {
+            return;
+        }
+
+        Submitting = true;
+        Error = string.Empty;
+        try
+        {
+            await Api.ConfirmSandboxPaymentAsync(Payment.Id, CancellationToken.None);
+            await Task.Delay(900);
+            Payment = await Api.GetPaymentByDonationAsync(Payment.DonationId, CancellationToken.None);
+            var campaigns = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+            Campaign = campaigns.Items.FirstOrDefault(item => item.Id == Id);
+        }
+        catch
+        {
+            Error = "A confirmação não foi concluída.";
+        }
+        finally
+        {
+            Submitting = false;
+        }
+    }
+}

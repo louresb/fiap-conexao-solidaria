@@ -1,0 +1,111 @@
+@page "/assistente"
+@using ConexaoSolidaria.Contracts.Knowledge
+@inject SolidariaApiClient Api
+
+<PageTitle>Assistente | Conexão Solidária</PageTitle>
+
+<section class="assistant-page @Tenant.AccentClass">
+    <div class="assistant-intro">
+        <p class="eyebrow">Informação com fonte</p>
+        <h1>Converse com a @Tenant.ShortName.</h1>
+        <p>Consulte políticas, prestação de contas e atuação institucional. As respostas usam somente documentos verificados da organização.</p>
+        <div class="suggested-questions">
+            @foreach (var suggestion in Suggestions)
+            {
+                <button type="button" @onclick="() => AskSuggestionAsync(suggestion)">@suggestion</button>
+            }
+        </div>
+    </div>
+
+    <div class="assistant-conversation" aria-live="polite">
+        @if (Answer is null)
+        {
+            <div class="conversation-empty">
+                <span aria-hidden="true">?</span>
+                <strong>Como podemos ajudar?</strong>
+                <p>Escreva uma pergunta sobre a organização ou uma campanha.</p>
+            </div>
+        }
+        else
+        {
+            <div class="question-bubble">@LastQuestion</div>
+            <div class="answer-block">
+                <p>@Answer.Answer</p>
+                @if (Answer.Sources.Count > 0)
+                {
+                    <div class="source-list">
+                        <strong>Fontes consultadas</strong>
+                        @foreach (var source in Answer.Sources)
+                        {
+                            <details>
+                                <summary>@source.Title</summary>
+                                <p>@source.Excerpt</p>
+                            </details>
+                        }
+                    </div>
+                }
+                <small>Correlação: @Answer.CorrelationId</small>
+            </div>
+        }
+
+        <div class="assistant-composer">
+            <label for="knowledge-question">Sua pergunta</label>
+            <textarea id="knowledge-question" @bind="Question" placeholder="Como a organização presta contas das doações?"></textarea>
+            <button class="button button-primary" type="button" @onclick="AskAsync" disabled="@Loading">@(Loading ? "Consultando fontes..." : "Enviar pergunta")</button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="notice notice-error">@Error</div>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "tenant")] public string? TenantId { get; set; }
+
+    private static readonly string[] Suggestions =
+    [
+        "Como a ONG presta contas?",
+        "Quais dados são públicos?",
+        "Como uma doação é confirmada?"
+    ];
+
+    private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
+    private string Question { get; set; } = string.Empty;
+    private string LastQuestion { get; set; } = string.Empty;
+    private string Error { get; set; } = string.Empty;
+    private bool Loading { get; set; }
+    private KnowledgeAnswerDto? Answer { get; set; }
+
+    private async Task AskSuggestionAsync(string suggestion)
+    {
+        Question = suggestion;
+        await AskAsync();
+    }
+
+    private async Task AskAsync()
+    {
+        if (Question.Trim().Length < 5)
+        {
+            Error = "Escreva uma pergunta um pouco mais completa.";
+            return;
+        }
+
+        Loading = true;
+        Error = string.Empty;
+        try
+        {
+            LastQuestion = Question.Trim();
+            Answer = await Api.AskKnowledgeAsync(Tenant.Id, LastQuestion, CancellationToken.None);
+            Question = string.Empty;
+        }
+        catch
+        {
+            Error = "O assistente está temporariamente indisponível.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+}

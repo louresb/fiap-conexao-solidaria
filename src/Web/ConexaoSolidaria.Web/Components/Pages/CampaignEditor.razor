@@ -1,0 +1,171 @@
+@page "/gestao/campanhas/nova"
+@page "/gestao/campanhas/{Id:guid}/editar"
+@attribute [Authorize(Roles = "GestorONG")]
+@using System.ComponentModel.DataAnnotations
+@using ConexaoSolidaria.Contracts.Campaigns
+@inject SolidariaApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id.HasValue ? "Editar campanha" : "Nova campanha") | Gestão</PageTitle>
+
+<section class="management-heading">
+    <div class="section-inner">
+        <a class="back-link" href="/gestao/campanhas">← Voltar para campanhas</a>
+        <p class="eyebrow">@(Id.HasValue ? "Atualizar iniciativa" : "Nova iniciativa")</p>
+        <h1>@(Id.HasValue ? "Editar campanha" : "Criar campanha")</h1>
+        <p>As informações publicadas ficarão disponíveis para doadores e serão registradas na auditoria.</p>
+    </div>
+</section>
+
+<section class="section-inner editor-page">
+    <EditForm Model="Model" OnValidSubmit="SaveAsync" FormName="campaign-editor">
+        <DataAnnotationsValidator />
+        <div class="editor-layout">
+            <div class="form-section">
+                <div class="section-heading"><p class="eyebrow">Conteúdo público</p><h2>Informações da campanha</h2></div>
+                <div class="form-field">
+                    <label for="title">Título</label>
+                    <InputText id="title" @bind-Value="Model.Title" />
+                    <ValidationMessage For="() => Model.Title" />
+                </div>
+                <div class="form-field">
+                    <label for="description">Descrição</label>
+                    <InputTextArea id="description" @bind-Value="Model.Description" />
+                    <ValidationMessage For="() => Model.Description" />
+                    <small>Explique o destino dos recursos e o impacto esperado.</small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-heading"><p class="eyebrow">Planejamento</p><h2>Meta e período</h2></div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="goal">Meta financeira</label>
+                        <InputNumber id="goal" @bind-Value="Model.GoalAmount" />
+                        <ValidationMessage For="() => Model.GoalAmount" />
+                    </div>
+                    <div class="form-field">
+                        <label for="status">Status</label>
+                        <InputSelect id="status" @bind-Value="Model.Status">
+                            <option value="@CampaignStatus.Ativa">Ativa</option>
+                            <option value="@CampaignStatus.Concluida">Concluída</option>
+                            <option value="@CampaignStatus.Cancelada">Cancelada</option>
+                        </InputSelect>
+                    </div>
+                    <div class="form-field">
+                        <label for="start">Data de início</label>
+                        <InputDate id="start" @bind-Value="Model.StartDate" />
+                        <ValidationMessage For="() => Model.StartDate" />
+                    </div>
+                    <div class="form-field">
+                        <label for="end">Data de encerramento</label>
+                        <InputDate id="end" @bind-Value="Model.EndDate" />
+                        <ValidationMessage For="() => Model.EndDate" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="notice notice-error">@Error</div>
+        }
+        <div class="editor-actions">
+            <a class="button button-outline" href="/gestao/campanhas">Cancelar</a>
+            <button class="button button-primary" type="submit" disabled="@Saving">@(Saving ? "Salvando..." : "Salvar campanha")</button>
+        </div>
+    </EditForm>
+</section>
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private CampaignFormModel Model { get; set; } = new();
+    private bool Saving { get; set; }
+    private string Error { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Id.HasValue)
+        {
+            Model = new CampaignFormModel();
+            return;
+        }
+
+        try
+        {
+            var campaign = (await Api.GetManagedCampaignsAsync(CancellationToken.None)).FirstOrDefault(item => item.Id == Id);
+            if (campaign is null)
+            {
+                Error = "Campanha não encontrada.";
+                return;
+            }
+
+            Model = new CampaignFormModel
+            {
+                Title = campaign.Title,
+                Description = campaign.Description,
+                StartDate = campaign.StartDate,
+                EndDate = campaign.EndDate,
+                GoalAmount = campaign.GoalAmount,
+                Status = campaign.Status
+            };
+        }
+        catch
+        {
+            Error = "Não foi possível carregar a campanha.";
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        Saving = true;
+        Error = string.Empty;
+        try
+        {
+            if (Id.HasValue)
+            {
+                await Api.UpdateCampaignAsync(
+                    Id.Value,
+                    new UpdateCampaignRequest(Model.Title, Model.Description, Model.StartDate, Model.EndDate, Model.GoalAmount, Model.Status),
+                    CancellationToken.None);
+            }
+            else
+            {
+                await Api.CreateCampaignAsync(
+                    new CreateCampaignRequest(Model.Title, Model.Description, Model.StartDate, Model.EndDate, Model.GoalAmount, Model.Status),
+                    CancellationToken.None);
+            }
+
+            Navigation.NavigateTo("/gestao/campanhas");
+        }
+        catch (SolidariaApiException exception)
+        {
+            Error = exception.Detail.Contains("data", StringComparison.OrdinalIgnoreCase)
+                ? "Revise o período e a meta financeira da campanha."
+                : "Não foi possível salvar a campanha.";
+        }
+        finally
+        {
+            Saving = false;
+        }
+    }
+
+    private sealed class CampaignFormModel
+    {
+        [Required(ErrorMessage = "Informe o título.")]
+        [StringLength(160, MinimumLength = 5, ErrorMessage = "Use entre 5 e 160 caracteres.")]
+        public string Title { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Informe a descrição.")]
+        [StringLength(2000, MinimumLength = 20, ErrorMessage = "Use entre 20 e 2.000 caracteres.")]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(1, 100000000, ErrorMessage = "A meta deve ser maior que zero.")]
+        public decimal GoalAmount { get; set; } = 25000;
+
+        public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+        public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddMonths(3));
+        public CampaignStatus Status { get; set; } = CampaignStatus.Ativa;
+    }
+}

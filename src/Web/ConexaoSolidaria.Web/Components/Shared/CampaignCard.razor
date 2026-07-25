@@ -1,0 +1,30 @@
+@using ConexaoSolidaria.Contracts.Campaigns
+
+<article class="campaign-card">
+    <a class="campaign-image" href="/campanhas/@Campaign.Id?tenant=@Campaign.TenantId" aria-label="Conhecer @Campaign.Title">
+        <img src="@Presentation.Image" alt="" loading="lazy" />
+        <span>@Presentation.Category</span>
+    </a>
+    <div class="campaign-body">
+        <div>
+            <p class="card-kicker">@DaysRemaining dias para contribuir</p>
+            <h3><a href="/campanhas/@Campaign.Id?tenant=@Campaign.TenantId">@Campaign.Title</a></h3>
+            <p>@Campaign.Description</p>
+        </div>
+        <div class="campaign-progress" aria-label="@Campaign.ProgressPercent.ToString("0") por cento da meta">
+            <div class="progress-track"><span style="width:@Math.Min(Campaign.ProgressPercent, 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span></div>
+            <div class="progress-numbers">
+                <strong>@Campaign.TotalRaised.ToString("C0", Culture)</strong>
+                <span>de @Campaign.GoalAmount.ToString("C0", Culture)</span>
+            </div>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public ActiveCampaignDto Campaign { get; set; } = default!;
+
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private CampaignPresentation Presentation => CampaignPresentations.For(Campaign);
+    private int DaysRemaining => Math.Max(0, Campaign.EndDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber);
+}
