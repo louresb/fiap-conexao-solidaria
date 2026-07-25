@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Security.Claims;
 using ConexaoSolidaria.Campaigns.Api.Search;
 using ConexaoSolidaria.Campaigns.Data;
 using ConexaoSolidaria.Contracts.Auth;
@@ -234,6 +235,44 @@ management.MapPut("/{id:guid}", async (
     return Results.Ok(ToDto(campaign));
 });
 
+management.MapDelete("/{id:guid}", async (
+    Guid id,
+    CampaignsDbContext db,
+    ICampaignSearchIndexer search,
+    IPublishEndpoint publishEndpoint,
+    HttpContext http,
+    CancellationToken cancellationToken) =>
+{
+    var tenantId = http.TenantId();
+    var campaign = await db.Campaigns.FirstOrDefaultAsync(
+        item => item.Id == id && item.TenantId == tenantId,
+        cancellationToken);
+    if (campaign is null)
+    {
+        return Results.NotFound();
+    }
+
+    if (campaign.Status == CampaignStatus.Cancelada)
+    {
+        return Results.NoContent();
+    }
+
+    campaign.Status = CampaignStatus.Cancelada;
+    campaign.UpdatedAtUtc = DateTimeOffset.UtcNow;
+    await publishEndpoint.Publish(
+        IntegrationEvent.Create(
+            EventTypes.CampaignCancelled,
+            tenantId,
+            http.CorrelationId(),
+            "campaigns-api",
+            JsonSerializer.Serialize(ToDto(campaign), jsonOptions)),
+        cancellationToken);
+
+    await db.SaveChangesAsync(cancellationToken);
+    await search.IndexAsync(campaign, cancellationToken);
+    return Results.NoContent();
+});
+
 app.MapGet("/api/public/campaigns", async (
     string? tenantId,
     CampaignsDbContext db,
@@ -352,12 +391,22 @@ donations.MapPost("/", async (
         return Results.BadRequest(new { error = "Nao e possivel doar para campanhas concluidas ou canceladas." });
     }
 
+    var donorId = http.User.FindFirstValue("sub") ?? request.DonorId;
+    var donorEmail = http.User.FindFirstValue("email") ?? request.DonorEmail;
+    if (string.IsNullOrWhiteSpace(donorId) || string.IsNullOrWhiteSpace(donorEmail))
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["donor"] = ["A identidade autenticada do doador é obrigatória."]
+        });
+    }
+
     var donation = new Donation
     {
         CampaignId = campaign.Id,
         TenantId = tenantId,
-        DonorId = request.DonorId ?? "demo-donor",
-        DonorEmail = request.DonorEmail ?? "doador@demo.org",
+        DonorId = donorId,
+        DonorEmail = donorEmail,
         Amount = request.Amount,
         PaymentMethod = paymentMethod,
         Status = "Pending"

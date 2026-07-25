@@ -193,18 +193,6 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     await db.Database.EnsureCreatedAsync();
-    if (!await db.Donors.AnyAsync(d => d.Email == "doador@demo.org"))
-    {
-        db.Donors.Add(new Donor
-        {
-            TenantId = AuthDefaults.DefaultTenantId,
-            FullName = "Doador Demo",
-            Email = "doador@demo.org",
-            Cpf = "39053344705",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Doador@123")
-        });
-        await db.SaveChangesAsync();
-    }
 }
 
 app.Run();

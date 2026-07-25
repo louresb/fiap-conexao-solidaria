@@ -9,6 +9,8 @@ public static class AuditPayloadRedactor
     {
         "authorization",
         "cpf",
+        "email",
+        "donorEmail",
         "password",
         "passwordHash",
         "secret",

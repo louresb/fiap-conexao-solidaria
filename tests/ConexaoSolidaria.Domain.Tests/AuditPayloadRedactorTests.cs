@@ -13,7 +13,7 @@ public sealed class AuditPayloadRedactorTests
 
         var redacted = AuditPayloadRedactor.Redact(payload);
 
-        Assert.Contains("doador@example.org", redacted);
+        Assert.DoesNotContain("doador@example.org", redacted);
         Assert.DoesNotContain("39053344705", redacted);
         Assert.DoesNotContain("secret-token", redacted);
         Assert.Contains("[REDACTED]", redacted);

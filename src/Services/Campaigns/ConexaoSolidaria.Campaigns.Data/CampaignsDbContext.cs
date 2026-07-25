@@ -63,36 +63,108 @@ public sealed class CampaignsDbContext : DbContext
             {
                 Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),
                 TenantId = "esperanca-solidaria",
-                Title = "Biblioteca Viva",
-                Description = "Livros, tablets e oficinas de leitura para criancas em contraturno escolar.",
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-5)),
+                Title = "Mesa Cheia nas Férias",
+                Description = "Kits alimentares e acompanhamento nutricional para famílias durante o recesso escolar.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-18)),
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(2)),
-                GoalAmount = 25000,
-                TotalRaised = 8700,
+                GoalAmount = 180000,
+                TotalRaised = 46500,
                 Status = CampaignStatus.Ativa
             },
             new Campaign
             {
                 Id = Guid.Parse("10000000-0000-0000-0000-000000000002"),
                 TenantId = "esperanca-solidaria",
-                Title = "Inverno Sem Frio",
-                Description = "Kits de agasalho, cobertores e alimentos para familias acompanhadas pela ONG.",
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10)),
-                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)),
-                GoalAmount = 18000,
-                TotalRaised = 14320,
+                Title = "Cozinha Parceira",
+                Description = "Refeições comunitárias com rastreio de insumos, custo por refeição e prestação de contas.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-35)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3)),
+                GoalAmount = 90000,
+                TotalRaised = 61200,
                 Status = CampaignStatus.Ativa
             },
             new Campaign
             {
                 Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),
                 TenantId = "esperanca-solidaria",
-                Title = "Laboratorio de Futuros",
-                Description = "Curso introdutorio de tecnologia, logica e cidadania digital para jovens.",
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-20)),
+                Title = "Conexão para Aprender",
+                Description = "Conectividade, equipamentos compartilhados e oficinas digitais para estudantes acompanhados pela ONG.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-12)),
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(4)),
-                GoalAmount = 42000,
-                TotalRaised = 21450,
+                GoalAmount = 250000,
+                TotalRaised = 72300,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000004"),
+                TenantId = "mare-limpa",
+                Title = "Mangue Vivo",
+                Description = "Recuperação de áreas de mangue com mutirões, monitoramento e educação ambiental comunitária.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-28)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3)),
+                GoalAmount = 140000,
+                TotalRaised = 68400,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000005"),
+                TenantId = "mare-limpa",
+                Title = "Praia Limpa, Bairro Vivo",
+                Description = "Mutirões costeiros mensuráveis com triagem de resíduos e participação de escolas parceiras.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-21)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(2)),
+                GoalAmount = 95000,
+                TotalRaised = 38200,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000006"),
+                TenantId = "mare-limpa",
+                Title = "Escola Azul",
+                Description = "Oficinas sobre oceanos, consumo responsável e biodiversidade para estudantes do litoral pernambucano.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-9)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(5)),
+                GoalAmount = 60000,
+                TotalRaised = 21400,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000007"),
+                TenantId = "futuro-em-rede",
+                Title = "Laboratório Aberto",
+                Description = "Laboratório maker e trilhas práticas de tecnologia com mentoria para jovens da comunidade.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-40)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(5)),
+                GoalAmount = 180000,
+                TotalRaised = 84600,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000008"),
+                TenantId = "futuro-em-rede",
+                Title = "Bolsa Dados para Estudar",
+                Description = "Conectividade e suporte técnico para estudantes permanecerem em trilhas de formação profissional.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-16)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3)),
+                GoalAmount = 75000,
+                TotalRaised = 29750,
+                Status = CampaignStatus.Ativa
+            },
+            new Campaign
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000009"),
+                TenantId = "futuro-em-rede",
+                Title = "Primeiro Código",
+                Description = "Formação introdutória em lógica, programação e cidadania digital para novos talentos.",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-8)),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(4)),
+                GoalAmount = 110000,
+                TotalRaised = 41600,
                 Status = CampaignStatus.Ativa
             });
 
