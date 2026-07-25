@@ -1,0 +1,308 @@
+name: Platform CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: platform-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CONTAINER_REGISTRY: ghcr.io
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ConexaoSolidaria.slnx
+
+      - name: Build
+        run: dotnet build ConexaoSolidaria.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: >-
+          dotnet test ConexaoSolidaria.slnx
+          --configuration Release
+          --no-build
+          --no-restore
+          --logger "trx;LogFilePrefix=tests"
+          --results-directory artifacts/test-results
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts/test-results
+          if-no-files-found: error
+          retention-days: 7
+
+  validate-platform:
+    name: Validate Helm and manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.18.4
+
+      - name: Lint environment values
+        shell: bash
+        run: |
+          set -euo pipefail
+          for values in values.local.yaml values.aws.yaml values.azure.yaml; do
+            helm lint deploy/helm/conexao-solidaria \
+              --values "deploy/helm/conexao-solidaria/${values}"
+            helm template conexao-solidaria deploy/helm/conexao-solidaria \
+              --values "deploy/helm/conexao-solidaria/${values}" \
+              --namespace conexao-solidaria > "/tmp/${values%.yaml}.rendered.yaml"
+          done
+
+      - name: Scan repository configuration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL
+          exit-code: 1
+
+  containers:
+    name: Container - ${{ matrix.component }}
+    needs: [build-test, validate-platform]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: web
+            dockerfile: src/Web/ConexaoSolidaria.Web/Dockerfile
+          - component: gateway
+            dockerfile: src/Gateway/ConexaoSolidaria.Gateway/Dockerfile
+          - component: identity-api
+            dockerfile: src/Services/Identity/ConexaoSolidaria.Identity.Api/Dockerfile
+          - component: campaigns-api
+            dockerfile: src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/Dockerfile
+          - component: payments-api
+            dockerfile: src/Services/Payments/ConexaoSolidaria.Payments.Api/Dockerfile
+          - component: donations-worker
+            dockerfile: src/Services/Donations/ConexaoSolidaria.Donations.Worker/Dockerfile
+          - component: audit-api
+            dockerfile: src/Services/Audit/ConexaoSolidaria.Audit.Api/Dockerfile
+          - component: knowledge-api
+            dockerfile: src/Services/Knowledge/ConexaoSolidaria.Knowledge.Api/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Sign in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          load: ${{ github.event_name == 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:${{ github.sha }}
+            ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:latest
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+          provenance: ${{ github.event_name != 'pull_request' }}
+          sbom: ${{ github.event_name != 'pull_request' }}
+
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:${{ github.sha }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+  publish-ecr:
+    name: Mirror ECR - ${{ matrix.component }}
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_PUBLISH == 'true'
+    needs: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [web, gateway, identity-api, campaigns-api, payments-api, donations-worker, audit-api, knowledge-api]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Sign in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Mirror image
+        shell: bash
+        env:
+          SOURCE: ghcr.io/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:${{ github.sha }}
+          TARGET: ${{ steps.ecr.outputs.registry }}/conexao-solidaria-${{ matrix.component }}
+        run: |
+          docker pull "$SOURCE"
+          docker tag "$SOURCE" "$TARGET:${GITHUB_SHA}"
+          docker tag "$SOURCE" "$TARGET:latest"
+          docker push "$TARGET:${GITHUB_SHA}"
+          docker push "$TARGET:latest"
+
+  publish-acr:
+    name: Mirror ACR - ${{ matrix.component }}
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_AZURE_PUBLISH == 'true'
+    needs: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [web, gateway, identity-api, campaigns-api, payments-api, donations-worker, audit-api, knowledge-api]
+    steps:
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Sign in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign in to ACR
+        run: az acr login --name "${{ vars.ACR_NAME }}"
+
+      - name: Mirror image
+        shell: bash
+        env:
+          SOURCE: ghcr.io/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:${{ github.sha }}
+          TARGET: ${{ vars.ACR_NAME }}.azurecr.io/conexao-solidaria-${{ matrix.component }}
+        run: |
+          docker pull "$SOURCE"
+          docker tag "$SOURCE" "$TARGET:${GITHUB_SHA}"
+          docker tag "$SOURCE" "$TARGET:latest"
+          docker push "$TARGET:${GITHUB_SHA}"
+          docker push "$TARGET:latest"
+
+  deploy-eks:
+    name: Deploy to EKS
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_DEPLOY == 'true'
+    needs: publish-ecr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: aws
+    steps:
+      - uses: actions/checkout@v6
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.18.4
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Configure cluster and deploy
+        shell: bash
+        run: |
+          aws eks update-kubeconfig --name "${{ vars.EKS_CLUSTER }}" --region "${{ vars.AWS_REGION }}"
+          helm upgrade --install conexao-solidaria deploy/helm/conexao-solidaria \
+            --namespace "${{ vars.K8S_NAMESPACE }}" \
+            --create-namespace \
+            --values deploy/helm/conexao-solidaria/values.aws.yaml \
+            --set-string image.registry="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com" \
+            --set-string image.tag="${GITHUB_SHA}" \
+            --set-string ingress.host="${{ vars.APP_HOST }}" \
+            --wait --atomic --timeout 10m
+
+  deploy-aks:
+    name: Deploy to AKS
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_AZURE_DEPLOY == 'true'
+    needs: publish-acr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: azure
+    steps:
+      - uses: actions/checkout@v6
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.18.4
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Configure cluster and deploy
+        shell: bash
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+            --name "${{ vars.AKS_CLUSTER }}" \
+            --overwrite-existing
+          helm upgrade --install conexao-solidaria deploy/helm/conexao-solidaria \
+            --namespace "${{ vars.K8S_NAMESPACE }}" \
+            --create-namespace \
+            --values deploy/helm/conexao-solidaria/values.azure.yaml \
+            --set-string image.registry="${{ vars.ACR_NAME }}.azurecr.io" \
+            --set-string image.tag="${GITHUB_SHA}" \
+            --set-string ingress.host="${{ vars.APP_HOST }}" \
+            --wait --atomic --timeout 10m
