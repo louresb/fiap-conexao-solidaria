@@ -6,6 +6,7 @@
 # dotenv files
 .env
 .local/
+/tmp/
 
 # Local operational scripts and API helpers
 tools/
