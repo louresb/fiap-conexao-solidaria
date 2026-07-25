@@ -22,6 +22,8 @@ public sealed class CorrelationTenantMiddleware
         var correlationId = ResolveHeader(context, CorrelationHeader) ?? Guid.NewGuid().ToString("N");
         var tenantId = ResolveTenant(context);
 
+        context.Request.Headers[CorrelationHeader] = correlationId;
+        context.Request.Headers[TenantHeader] = tenantId;
         context.Response.Headers[CorrelationHeader] = correlationId;
         context.Response.Headers[TenantHeader] = tenantId;
         context.Items[CorrelationHeader] = correlationId;
