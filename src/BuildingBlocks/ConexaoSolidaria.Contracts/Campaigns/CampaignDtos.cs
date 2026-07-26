@@ -43,4 +43,5 @@ public sealed record DonationIntentRequest(
     decimal Amount,
     string? DonorId,
     string? DonorEmail,
-    string? TenantId = null);
+    string? TenantId = null,
+    string PaymentMethod = "pix");

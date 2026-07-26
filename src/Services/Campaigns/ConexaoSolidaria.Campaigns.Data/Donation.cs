@@ -8,6 +8,7 @@ public sealed class Donation
     public string DonorId { get; set; } = string.Empty;
     public string DonorEmail { get; set; } = string.Empty;
     public decimal Amount { get; set; }
+    public string PaymentMethod { get; set; } = "pix";
     public string Status { get; set; } = "Pending";
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ProcessedAtUtc { get; set; }
