@@ -7,8 +7,18 @@
     <Project Path="src/BuildingBlocks/ConexaoSolidaria.SharedKernel/ConexaoSolidaria.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Campaigns/">
+    <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/ConexaoSolidaria.Campaigns.Api.csproj" />
+    <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Data/ConexaoSolidaria.Campaigns.Data.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Donations/">
+    <Project Path="src/Services/Donations/ConexaoSolidaria.Donations.Worker/ConexaoSolidaria.Donations.Worker.csproj" />
+  </Folder>
   <Folder Name="/src/Services/Identity/">
     <Project Path="src/Services/Identity/ConexaoSolidaria.Identity.Api/ConexaoSolidaria.Identity.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Payments/">
+    <Project Path="src/Services/Payments/ConexaoSolidaria.Payments.Api/ConexaoSolidaria.Payments.Api.csproj" />
   </Folder>
   <Folder Name="/src/Web/">
     <Project Path="src/Web/ConexaoSolidaria.Web/ConexaoSolidaria.Web.csproj" />
