@@ -7,6 +7,9 @@
     <Project Path="src/BuildingBlocks/ConexaoSolidaria.SharedKernel/ConexaoSolidaria.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Audit/">
+    <Project Path="src/Services/Audit/ConexaoSolidaria.Audit.Api/ConexaoSolidaria.Audit.Api.csproj" />
+  </Folder>
   <Folder Name="/src/Services/Campaigns/">
     <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/ConexaoSolidaria.Campaigns.Api.csproj" />
     <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Data/ConexaoSolidaria.Campaigns.Data.csproj" />
