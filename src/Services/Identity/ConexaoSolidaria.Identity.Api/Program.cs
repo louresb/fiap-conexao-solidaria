@@ -47,6 +47,12 @@ builder.Services.AddScoped<IKeycloakUserProvisioner>(sp =>
 
 builder.Services.AddMassTransit(bus =>
 {
+    bus.AddEntityFrameworkOutbox<IdentityDbContext>(outbox =>
+    {
+        outbox.UsePostgres();
+        outbox.UseBusOutbox();
+    });
+
     bus.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(
@@ -156,7 +162,6 @@ app.MapPost("/api/donors/register", async (
 
     await keycloak.ProvisionDonorAsync(request with { Email = normalizedEmail, Cpf = normalizedCpf }, tenantId, cancellationToken);
     db.Donors.Add(donor);
-    await db.SaveChangesAsync(cancellationToken);
 
     var payload = JsonSerializer.Serialize(new
     {
@@ -169,6 +174,8 @@ app.MapPost("/api/donors/register", async (
     await publishEndpoint.Publish(
         IntegrationEvent.Create(EventTypes.DonorRegistered, tenantId, http.CorrelationId(), "identity-api", payload),
         cancellationToken);
+
+    await db.SaveChangesAsync(cancellationToken);
 
     return Results.Created($"/api/donors/{donor.Id}", new DonorProfileDto(donor.Id, donor.TenantId, donor.FullName, donor.Email, MaskCpf(donor.Cpf)));
 });

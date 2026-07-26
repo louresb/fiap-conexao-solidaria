@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Identity.Api.Data;
@@ -12,6 +13,8 @@ public sealed class IdentityDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Donor>(builder =>
         {
             builder.ToTable("donors");
@@ -24,5 +27,9 @@ public sealed class IdentityDbContext : DbContext
             builder.HasIndex(d => new { d.TenantId, d.Email }).IsUnique();
             builder.HasIndex(d => new { d.TenantId, d.Cpf }).IsUnique();
         });
+
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
     }
 }
