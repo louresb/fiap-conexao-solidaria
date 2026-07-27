@@ -22,7 +22,7 @@
       "title": "Doações processadas",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixedColor", "fixedColor": "green" } } },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(conexao_donations_processed_total{status=\"processed\"})", "legendFormat": "confirmadas" }]
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(conexao_donations_processed_total{status=\"confirmed\"})", "legendFormat": "confirmadas" }]
     },
     {
       "id": 3,
