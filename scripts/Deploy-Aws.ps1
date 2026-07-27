@@ -1,6 +1,6 @@
 param(
     [string]$TerraformDirectory = "infra/terraform/aws",
-    [string]$AwsProfile = "default",
+    [string]$AwsProfile = "conexao-solidaria",
     [string]$ImageTag = "latest",
     [string]$AppHost,
     [string]$AiEndpoint,

@@ -40,7 +40,7 @@ terraform -chdir=infra/terraform/aws plan
 terraform -chdir=infra/terraform/aws apply
 .\scripts\Configure-GitHubCloudVariables.ps1 -Provider aws -AwsAppHost <host-publico> -ConfirmGitHubMutation
 .\scripts\Publish-CloudImages.ps1 -Provider aws -AwsProfile conexao-solidaria -ImageTag <sha-ou-tag>
-.\scripts\Deploy-Aws.ps1 -ImageTag <sha-ou-tag>
+.\scripts\Deploy-Aws.ps1 -AwsProfile conexao-solidaria -ImageTag <sha-ou-tag>
 ```
 
 O bootstrap instala Secrets Store CSI/ASCP, `ingress-nginx`, NLB e `cert-manager`. Sem `-AppHost`, usa um hostname temporário `sslip.io`; para endereço próprio, aponte o DNS ao hostname do NLB e passe `-AppHost doacoes.exemplo.org`.
