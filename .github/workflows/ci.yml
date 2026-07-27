@@ -140,6 +140,9 @@ jobs:
             grep -Fq 'nginx.ingress.kubernetes.io/affinity: cookie' "${rendered}"
             grep -Fq 'nginx.ingress.kubernetes.io/proxy-buffer-size: 32k' "${rendered}"
             grep -Fq 'nginx.ingress.kubernetes.io/session-cookie-secure: "true"' "${rendered}"
+            test "$(grep -c 'stabilizationWindowSeconds: 120' "${rendered}")" -ge 7
+            test "$(grep -c 'selectPolicy: Min' "${rendered}")" -ge 7
+            test "$(grep -c 'periodSeconds: 60' "${rendered}")" -ge 14
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 

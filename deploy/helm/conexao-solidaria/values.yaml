@@ -61,6 +61,8 @@ defaults:
     minReplicas: 2
     maxReplicas: 6
     targetCPUUtilizationPercentage: 70
+    scaleUpStabilizationWindowSeconds: 120
+    scaleDownStabilizationWindowSeconds: 300
   disruptionBudget:
     enabled: false
     minAvailable: 1
