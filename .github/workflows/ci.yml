@@ -34,7 +34,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore ConexaoSolidaria.slnx
+        run: dotnet restore ConexaoSolidaria.slnx --locked-mode
 
       - name: Build
         run: dotnet build ConexaoSolidaria.slnx --configuration Release --no-restore
@@ -45,6 +45,7 @@ jobs:
           --configuration Release
           --no-build
           --no-restore
+          --filter "Category!=E2E"
           --logger "trx;LogFilePrefix=tests"
           --results-directory artifacts/test-results
 
@@ -64,6 +65,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Scan dependencies and secrets
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
 
       - name: Setup Helm
         uses: azure/setup-helm@v4
@@ -126,10 +137,12 @@ jobs:
             dockerfile: src/Services/Identity/ConexaoSolidaria.Identity.Api/Dockerfile
           - component: campaigns-api
             dockerfile: src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/Dockerfile
+          - component: campaigns-worker
+            dockerfile: src/Services/Campaigns/ConexaoSolidaria.Campaigns.Worker/Dockerfile
           - component: payments-api
             dockerfile: src/Services/Payments/ConexaoSolidaria.Payments.Api/Dockerfile
-          - component: donations-worker
-            dockerfile: src/Services/Donations/ConexaoSolidaria.Donations.Worker/Dockerfile
+          - component: donations-api
+            dockerfile: src/Services/Donations/ConexaoSolidaria.Donations.Api/Dockerfile
           - component: audit-api
             dockerfile: src/Services/Audit/ConexaoSolidaria.Audit.Api/Dockerfile
           - component: knowledge-api
@@ -173,26 +186,111 @@ jobs:
           ignore-unfixed: true
           exit-code: 1
 
+  e2e:
+    name: End-to-end donation journey
+    if: github.event_name != 'pull_request'
+    needs: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: read
+    env:
+      APP_IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/conexao-solidaria
+      APP_IMAGE_TAG: ${{ github.sha }}
+      E2E_BASE_URL: http://localhost:5000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Sign in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate ephemeral runtime secrets
+        shell: pwsh
+        run: ./scripts/Initialize-LocalEnvironment.ps1 *> $null
+
+      - name: Start published platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose pull
+          docker compose up -d --no-build
+          for _ in {1..90}; do
+            if curl --fail --silent http://localhost:5000/health/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose ps
+          exit 1
+
+      - name: Build browser tests
+        run: dotnet build tests/ConexaoSolidaria.E2E.Tests/ConexaoSolidaria.E2E.Tests.csproj --configuration Release
+
+      - name: Install Chromium
+        shell: pwsh
+        run: ./tests/ConexaoSolidaria.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Execute browser journeys
+        run: >-
+          dotnet test tests/ConexaoSolidaria.E2E.Tests/ConexaoSolidaria.E2E.Tests.csproj
+          --configuration Release
+          --no-build
+          --filter "Category=E2E"
+          --logger "trx;LogFileName=e2e.trx"
+          --results-directory artifacts/e2e
+
+      - name: Collect runtime diagnostics
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/e2e
+          docker compose ps --all > artifacts/e2e/compose-status.txt
+          docker compose logs --no-color > artifacts/e2e/compose.log
+
+      - name: Publish end-to-end evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-evidence
+          path: artifacts/e2e
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop test platform
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
   publish-ecr:
     name: Mirror ECR - ${{ matrix.component }}
     if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_PUBLISH == 'true'
-    needs: containers
+    needs: [containers, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       packages: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
-        component: [web, gateway, identity-api, campaigns-api, payments-api, donations-worker, audit-api, knowledge-api]
+        component: [web, gateway, identity-api, campaigns-api, campaigns-worker, payments-api, donations-api, audit-api, knowledge-api]
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-to-assume: ${{ vars.AWS_GITHUB_PUBLISH_ROLE_ARN }}
+          role-session-name: github-ecr-${{ github.run_id }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Sign in to GHCR
@@ -211,31 +309,41 @@ jobs:
         env:
           SOURCE: ghcr.io/${{ github.repository_owner }}/conexao-solidaria-${{ matrix.component }}:${{ github.sha }}
           TARGET: ${{ steps.ecr.outputs.registry }}/conexao-solidaria-${{ matrix.component }}
+          REPOSITORY: conexao-solidaria-${{ matrix.component }}
         run: |
           docker pull "$SOURCE"
           docker tag "$SOURCE" "$TARGET:${GITHUB_SHA}"
           docker tag "$SOURCE" "$TARGET:latest"
-          docker push "$TARGET:${GITHUB_SHA}"
+          if aws ecr describe-images \
+            --repository-name "$REPOSITORY" \
+            --image-ids "imageTag=${GITHUB_SHA}" > /dev/null 2>&1; then
+            echo "Immutable image ${REPOSITORY}:${GITHUB_SHA} already exists; reusing it."
+          else
+            docker push "$TARGET:${GITHUB_SHA}"
+          fi
           docker push "$TARGET:latest"
 
   publish-acr:
     name: Mirror ACR - ${{ matrix.component }}
     if: github.ref == 'refs/heads/main' && vars.ENABLE_AZURE_PUBLISH == 'true'
-    needs: containers
+    needs: [containers, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       packages: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
-        component: [web, gateway, identity-api, campaigns-api, payments-api, donations-worker, audit-api, knowledge-api]
+        component: [web, gateway, identity-api, campaigns-api, campaigns-worker, payments-api, donations-api, audit-api, knowledge-api]
     steps:
       - name: Sign in to Azure
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sign in to GHCR
         uses: docker/login-action@v3
@@ -266,6 +374,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: aws
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
       - uses: azure/setup-helm@v4
@@ -273,9 +384,8 @@ jobs:
           version: v3.18.4
       - uses: aws-actions/configure-aws-credentials@v5
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-to-assume: ${{ vars.AWS_GITHUB_DEPLOY_ROLE_ARN }}
+          role-session-name: github-eks-${{ github.run_id }}
           aws-region: ${{ vars.AWS_REGION }}
       - name: Configure cluster and deploy
         shell: bash
@@ -297,6 +407,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: azure
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
       - uses: azure/setup-helm@v4
@@ -304,19 +417,28 @@ jobs:
           version: v3.18.4
       - uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Configure cluster and deploy
         shell: bash
         run: |
-          az aks get-credentials \
+          cd deploy/helm/conexao-solidaria
+          az aks command invoke \
             --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
             --name "${{ vars.AKS_CLUSTER }}" \
-            --overwrite-existing
-          helm upgrade --install conexao-solidaria deploy/helm/conexao-solidaria \
-            --namespace "${{ vars.K8S_NAMESPACE }}" \
-            --create-namespace \
-            --values deploy/helm/conexao-solidaria/values.azure.yaml \
-            --set-string image.registry="${{ vars.ACR_NAME }}.azurecr.io" \
-            --set-string image.tag="${GITHUB_SHA}" \
-            --set-string ingress.host="${{ vars.APP_HOST }}" \
-            --wait --atomic --timeout 10m
+            --file . \
+            --command "helm upgrade --install conexao-solidaria . \
+              --namespace '${{ vars.K8S_NAMESPACE }}' \
+              --create-namespace \
+              --values values.azure.yaml \
+              --set-string image.registry='${{ vars.ACR_NAME }}.azurecr.io' \
+              --set-string image.tag='${GITHUB_SHA}' \
+              --set-string ingress.host='${{ vars.APP_HOST }}' \
+              --set-string azureRouting.publicIpName='${{ vars.AZURE_INGRESS_PUBLIC_IP_NAME }}' \
+              --set-string azureRouting.publicIpResourceGroup='${{ vars.AKS_RESOURCE_GROUP }}' \
+              --wait --atomic --timeout 10m"
+
+      - name: Verify public rollout
+        shell: bash
+        run: curl --fail --silent --show-error --retry 12 --retry-delay 10 "https://${{ vars.APP_HOST }}/health/ready"

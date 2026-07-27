@@ -490,6 +490,8 @@ $RECYCLE.BIN/
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+*.tfvars
+!*.tfvars.example
 *.tfplan
 crash.log
 crash.*.log
