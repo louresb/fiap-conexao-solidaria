@@ -29,15 +29,19 @@ function New-RandomSecret([int]$ByteCount = 32) {
 }
 
 function Get-KeyVaultSecret([string]$VaultName, [string]$Name) {
-    $value = & az keyvault secret show `
-        --vault-name $VaultName `
-        --name $Name `
-        --query value `
-        --output tsv `
-        --only-show-errors 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    if ($script:ExistingSecretNames -notcontains $Name) {
         return $null
     }
+
+    $value = Invoke-Checked {
+        az keyvault secret show `
+            --vault-name $VaultName `
+            --name $Name `
+            --query value `
+            --output tsv `
+            --only-show-errors
+    } "Nao foi possivel consultar o segredo '$Name' no Azure Key Vault."
+
     return ($value | Out-String).Trim()
 }
 
@@ -50,6 +54,10 @@ function Set-KeyVaultSecret([string]$VaultName, [string]$Name, [string]$Value) {
             --output none `
             --only-show-errors
     } "Nao foi possivel gravar o segredo '$Name' no Azure Key Vault."
+
+    if ($script:ExistingSecretNames -notcontains $Name) {
+        $script:ExistingSecretNames += $Name
+    }
 }
 
 function Get-OrCreateSecret([string]$VaultName, [string]$Name, [int]$ByteCount = 32) {
@@ -71,6 +79,15 @@ $null = Invoke-Checked { az account show --output none --only-show-errors } `
 $vaultName = (Invoke-Checked {
     terraform -chdir=$terraformPath output -raw key_vault_name
 } "Nao foi possivel obter o Key Vault. Aplique o Terraform da Azure primeiro.").Trim()
+$script:ExistingSecretNames = @(
+    Invoke-Checked {
+        az keyvault secret list `
+            --vault-name $vaultName `
+            --query "[].name" `
+            --output tsv `
+            --only-show-errors
+    } "Nao foi possivel listar os segredos do Azure Key Vault."
+)
 
 $postgresPassword = Get-OrCreateSecret $vaultName "postgres-password"
 $rabbitPassword = Get-OrCreateSecret $vaultName "rabbitmq-password"

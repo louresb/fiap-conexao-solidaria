@@ -1,6 +1,6 @@
 param(
     [string]$TerraformDirectory = "infra/terraform/aws",
-    [string]$AwsProfile = "default",
+    [string]$AwsProfile = "conexao-solidaria",
     [string]$AiApiKey,
     [switch]$Rotate
 )
@@ -38,18 +38,28 @@ $secretName = (Invoke-Checked {
 
 $existing = $null
 if (-not $Rotate) {
-    $secretString = & aws secretsmanager get-secret-value `
-        --secret-id $secretName `
-        --profile $AwsProfile `
-        --query SecretString `
-        --output text 2>$null
-    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($secretString)) {
-        $existing = $secretString | ConvertFrom-Json
+    try {
+        $secretString = & aws secretsmanager get-secret-value `
+            --secret-id $secretName `
+            --profile $AwsProfile `
+            --query SecretString `
+            --output text 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($secretString)) {
+            $existing = $secretString | ConvertFrom-Json
+        }
+    }
+    catch {
+        $existing = $null
     }
 }
 
 function Get-OrCreate([string]$Name, [int]$ByteCount = 32) {
-    $property = $existing.PSObject.Properties[$Name]
+    $property = if ($null -eq $existing) {
+        $null
+    }
+    else {
+        $existing.PSObject.Properties[$Name]
+    }
     if ($property -and -not [string]::IsNullOrWhiteSpace([string]$property.Value)) {
         return [string]$property.Value
     }
