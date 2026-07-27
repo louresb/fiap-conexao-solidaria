@@ -123,6 +123,18 @@ jobs:
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 
+          kubectl kustomize deploy/kubernetes/cloud/runtime \
+            --load-restrictor LoadRestrictionsNone > /tmp/cloud-runtime.yaml
+          kubectl kustomize deploy/kubernetes/cloud/observability \
+            --load-restrictor LoadRestrictionsNone > /tmp/cloud-observability.yaml
+          test "$(grep -c '^  volumeClaimTemplates:' /tmp/cloud-runtime.yaml)" -eq 3
+          test "$(grep -c '^kind: PersistentVolumeClaim$' /tmp/cloud-runtime.yaml)" -eq 1
+          test "$(grep -c 'emptyDir:' /tmp/cloud-runtime.yaml)" -eq 1
+          ! grep -q 'claimName: conexao-solidaria-redis' /tmp/cloud-runtime.yaml
+          ! grep -q '^  volumeClaimTemplates:' /tmp/cloud-observability.yaml
+          ! grep -q '^kind: PersistentVolumeClaim$' /tmp/cloud-observability.yaml
+          test "$(grep -c 'emptyDir:' /tmp/cloud-observability.yaml)" -ge 5
+
           grep -Fq 'forceSSLRedirect: true' /tmp/values.azure.rendered.yaml
           grep -Fq 'nginx.ingress.kubernetes.io/force-ssl-redirect: "true"' /tmp/values.aws.rendered.yaml
           grep -Fq 'sslRequired=external' infra/keycloak/seed-users.sh

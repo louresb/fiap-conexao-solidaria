@@ -4,7 +4,7 @@ A plataforma usa um único chart Helm e imagens independentes para os nove workl
 
 ## Dependências
 
-PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometheus, Grafana e Zabbix são executados no cluster nesta versão. Os PVCs usam a StorageClass padrão de cada ambiente. A evolução para serviços gerenciados preserva os contratos de conexão e mensageria.
+PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometheus, Grafana e Zabbix são executados no cluster nesta versão. PostgreSQL, RabbitMQ, MongoDB e OpenSearch preservam dados em PVCs da StorageClass padrão. Cache e telemetria usam `emptyDir` no perfil cloud para respeitar os limites de disco do nó econômico; podem perder histórico quando um pod é recriado. A evolução para serviços gerenciados preserva os contratos de conexão, mensageria e observabilidade.
 
 ## Azure
 

@@ -222,9 +222,10 @@ $themeYaml = kubectl create configmap conexao-solidaria-keycloak-theme `
     -o yaml
 Apply-Generated $themeYaml "Nao foi possivel aplicar o tema do Keycloak."
 
-$null = Invoke-Checked {
-    kubectl apply -n $namespace -f deploy/kubernetes/local/infrastructure.yaml
-} "Nao foi possivel aplicar os servicos de dados e mensageria."
+$cloudRuntimeYaml = Invoke-Checked {
+    kubectl kustomize deploy/kubernetes/cloud/runtime --load-restrictor LoadRestrictionsNone
+} "Nao foi possivel renderizar os servicos de dados e mensageria."
+Apply-Generated $cloudRuntimeYaml "Nao foi possivel aplicar os servicos de dados e mensageria."
 $null = Invoke-Checked {
     kubectl set env deployment/conexao-solidaria-keycloak `
         -n $namespace `
@@ -272,9 +273,10 @@ if (-not $SkipObservability) {
     Apply-FileConfigMap "conexao-solidaria-grafana-dashboard-provider" "dashboards.yml=infra/grafana/provisioning/dashboards/dashboards.yml"
     Apply-FileConfigMap "conexao-solidaria-grafana-dashboard" "conexao-solidaria.json=infra/grafana/provisioning/dashboards/conexao-solidaria.json"
 
-    $null = Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/tracing.yaml } "Falha ao aplicar tracing."
-    $null = Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/monitoring.yaml } "Falha ao aplicar monitoramento."
-    $null = Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/zabbix.yaml } "Falha ao aplicar Zabbix."
+    $cloudObservabilityYaml = Invoke-Checked {
+        kubectl kustomize deploy/kubernetes/cloud/observability --load-restrictor LoadRestrictionsNone
+    } "Falha ao renderizar observabilidade."
+    Apply-Generated $cloudObservabilityYaml "Falha ao aplicar observabilidade."
 }
 
 $helmArguments = @(
