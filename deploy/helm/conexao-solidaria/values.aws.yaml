@@ -36,7 +36,9 @@ components:
   identity-api:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
-    env: *awsAuth
+    env:
+      <<: *awsAuth
+      Keycloak__BaseUrl: http://conexao-solidaria-keycloak:8080/auth
   campaigns-api:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
@@ -60,6 +62,7 @@ components:
   donations-api:
     replicaCount: 2
     disruptionBudget: *pdb
+    env: *awsAuth
 
 ingress:
   enabled: true

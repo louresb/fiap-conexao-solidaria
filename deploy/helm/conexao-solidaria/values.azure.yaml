@@ -33,7 +33,9 @@ components:
   identity-api:
     replicaCount: 1
     autoscaling: *autoscaling
-    env: *azureAuth
+    env:
+      <<: *azureAuth
+      Keycloak__BaseUrl: http://conexao-solidaria-keycloak:8080/auth
   campaigns-api:
     replicaCount: 1
     autoscaling: *autoscaling

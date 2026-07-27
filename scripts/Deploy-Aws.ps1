@@ -230,6 +230,7 @@ $null = Invoke-Checked {
         -n $namespace `
         "KC_HOSTNAME=$publicAppUrl/auth" `
         "KC_HTTP_RELATIVE_PATH=/auth" `
+        "KC_HTTP_MANAGEMENT_RELATIVE_PATH=/" `
         "KC_PROXY_HEADERS=xforwarded"
 } "Nao foi possivel configurar o hostname publico do Keycloak."
 

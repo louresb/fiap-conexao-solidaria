@@ -115,6 +115,18 @@ jobs:
               --namespace conexao-solidaria > "/tmp/${values%.yaml}.rendered.yaml"
           done
 
+          for cloud in aws azure; do
+            rendered="/tmp/values.${cloud}.rendered.yaml"
+            test "$(grep -c 'http://conexao-solidaria-keycloak:8080/auth' "${rendered}")" -eq 1
+            test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
+          done
+
+          for script in scripts/Deploy-Aws.ps1 scripts/Deploy-Azure.ps1; do
+            grep -Fq 'KC_HTTP_RELATIVE_PATH=/auth' "${script}"
+            grep -Fq 'KC_HTTP_MANAGEMENT_RELATIVE_PATH=/' "${script}"
+            grep -Fq 'KC_PROXY_HEADERS=xforwarded' "${script}"
+          done
+
   containers:
     name: Container - ${{ matrix.component }}
     needs: [build-test, validate-platform]
