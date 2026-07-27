@@ -50,7 +50,9 @@ public sealed class DonationJourneyTests : PageTest
         await Page.GetByRole(AriaRole.Button, new() { Name = "Confirmar no sandbox" }).ClickAsync();
         await Expect(Page.GetByText("Contribuição confirmada.")).ToBeVisibleAsync(new() { Timeout = 15_000 });
 
-        await Expect(Page.Locator(".detail-progress strong")).Not.ToHaveTextAsync(raisedBefore!);
+        await Expect(Page.Locator(".detail-progress strong")).Not.ToHaveTextAsync(
+            raisedBefore!,
+            new() { Timeout = 15_000 });
         var campaignTitle = (await Page.Locator(".detail-summary h1").TextContentAsync())!.Trim();
 
         await Page.GetByRole(AriaRole.Link, new() { Name = "Minhas doações" }).ClickAsync();

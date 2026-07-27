@@ -215,15 +215,28 @@ else
             return;
         }
 
+        var totalBeforeConfirmation = Campaign?.TotalRaised;
         Submitting = true;
         Error = string.Empty;
         try
         {
             await Api.ConfirmSandboxPaymentAsync(Payment.Id, CancellationToken.None);
-            await Task.Delay(900);
-            Payment = await Api.GetPaymentByDonationAsync(Payment.DonationId, CancellationToken.None);
-            var campaigns = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
-            Campaign = campaigns.Items.FirstOrDefault(item => item.Id == Id);
+
+            for (var attempt = 0; attempt < 24; attempt++)
+            {
+                await Task.Delay(500);
+                Payment = await Api.GetPaymentByDonationAsync(Payment.DonationId, CancellationToken.None);
+                var campaigns = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+                Campaign = campaigns.Items.FirstOrDefault(item => item.Id == Id);
+
+                var paymentConfirmed = Payment?.Status == "Confirmed";
+                var projectionUpdated = totalBeforeConfirmation is null ||
+                    Campaign?.TotalRaised > totalBeforeConfirmation;
+                if (paymentConfirmed && projectionUpdated)
+                {
+                    break;
+                }
+            }
         }
         catch
         {
