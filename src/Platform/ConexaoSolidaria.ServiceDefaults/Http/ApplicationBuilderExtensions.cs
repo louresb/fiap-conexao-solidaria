@@ -37,4 +37,9 @@ public static class ApplicationBuilderExtensions
     {
         return app.UseMiddleware<CorrelationTenantMiddleware>();
     }
+
+    public static IApplicationBuilder UseConexaoSolidariaSecurityHeaders(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<SecurityHeadersMiddleware>();
+    }
 }

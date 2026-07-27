@@ -126,6 +126,7 @@ builder.Services.AddHttpClient("readiness", client =>
 var app = builder.Build();
 
 app.UseConfiguredForwardedHeaders(builder.Configuration);
+app.UseConexaoSolidariaSecurityHeaders();
 
 if (!app.Environment.IsDevelopment())
 {

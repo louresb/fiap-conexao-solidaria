@@ -84,18 +84,12 @@ builder.Services.AddHttpClient("readiness", client => client.Timeout = TimeSpan.
 
 var app = builder.Build();
 
+app.UseConexaoSolidariaSecurityHeaders();
 app.UseAuthentication();
 app.UseCorrelationAndTenant();
 app.UseAuthorization();
 app.UseRateLimiter();
 app.UseHttpMetrics();
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
-    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    await next();
-});
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "gateway" }));
 app.MapMetrics();
