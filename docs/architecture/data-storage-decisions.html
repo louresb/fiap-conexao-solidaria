@@ -157,7 +157,7 @@
       <section>
         <h3>Proteção de dados</h3>
         <ul>
-          <li>Senhas pertencem ao Keycloak e não ao domínio.</li>
+          <li>A autenticação pertence ao Keycloak; o perfil conserva apenas o hash BCrypt exigido pelo cadastro, nunca a senha em texto claro.</li>
           <li>CPF normalizado e protegido no perfil; logs não registram credenciais.</li>
           <li>Auditoria registra contexto técnico sem se tornar fonte de autenticação.</li>
         </ul>
