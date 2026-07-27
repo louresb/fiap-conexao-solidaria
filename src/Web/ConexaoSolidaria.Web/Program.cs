@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.ServiceDefaults.Health;
+using ConexaoSolidaria.ServiceDefaults.Http;
 using ConexaoSolidaria.ServiceDefaults.Observability;
 using ConexaoSolidaria.Web.Components;
 using ConexaoSolidaria.Web.Services;
@@ -138,6 +139,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseAuthentication();
+app.UseCorrelationAndTenant();
 app.UseAuthorization();
 app.UseAntiforgery();
 app.UseHttpMetrics();

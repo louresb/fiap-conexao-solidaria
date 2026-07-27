@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -10,6 +11,7 @@ using ConexaoSolidaria.Contracts.Donations;
 using ConexaoSolidaria.Contracts.Identity;
 using ConexaoSolidaria.Contracts.Knowledge;
 using ConexaoSolidaria.Contracts.Payments;
+using ConexaoSolidaria.ServiceDefaults.Http;
 
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -220,8 +222,10 @@ public sealed class SolidariaApiClient(
             : tenantId ?? authenticatedTenant ?? AuthDefaults.DefaultTenantId;
 
         var request = new HttpRequestMessage(method, path);
-        request.Headers.Add("X-Tenant-Id", resolvedTenant);
-        request.Headers.Add("X-Correlation-Id", Guid.NewGuid().ToString("N"));
+        request.Headers.Add(CorrelationTenantMiddleware.TenantHeader, resolvedTenant);
+        request.Headers.Add(
+            CorrelationTenantMiddleware.CorrelationHeader,
+            Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString("N"));
 
         var accessToken = principal.FindFirstValue("access_token");
         if (!string.IsNullOrWhiteSpace(accessToken))

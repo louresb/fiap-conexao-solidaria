@@ -56,6 +56,7 @@ public sealed class CorrelationTenantMiddleware
         return claimTenant
             ?? ResolveHeader(context, TenantHeader)
             ?? context.Request.Query["tenantId"].FirstOrDefault()
+            ?? context.Request.Query["tenant"].FirstOrDefault()
             ?? AuthDefaults.DefaultTenantId;
     }
 }
