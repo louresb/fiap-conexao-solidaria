@@ -4,12 +4,12 @@
     "net10.0": {
       "MassTransit.EntityFrameworkCore": {
         "type": "Direct",
-        "requested": "[8.5.1, )",
-        "resolved": "8.5.1",
-        "contentHash": "6TnSPHjEMjer3FZBYZpIvD99NC1kojgfEPbC17XgqcPeTNVt/j5wPo8yO7HBiTwj3C/efU49DebGTEVwJ5qiEQ==",
+        "requested": "[9.1.2, )",
+        "resolved": "9.1.2",
+        "contentHash": "qD2Fu/BfKKbdQw/fCoDhZjZNjQtpbENWxhhEacWbZiiLg0Q1Or8mUep3ZmNIAiSUhgjJBUhKnH42Na9Lq1iZ+g==",
         "dependencies": {
-          "MassTransit": "8.5.1",
-          "Microsoft.EntityFrameworkCore.Relational": "9.0.1"
+          "MassTransit": "9.1.2",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.0"
         }
       },
       "MassTransit.RabbitMQ": {
@@ -126,16 +126,16 @@
       },
       "MassTransit": {
         "type": "Transitive",
-        "resolved": "8.5.1",
-        "contentHash": "2Z/kgYvOyq8jv3HRJ9D0A3rGjMY+QuWyJ5kSj+UICqjijjsls/Tp1ZF2SAcBwShJMSs++6bNLapMCUp7AW4AZg==",
+        "resolved": "9.1.2",
+        "contentHash": "7rHsXnvoQ+YpKBlWhkBPwkkbq9kK+mK2hro3Z7m1CfCqVUZPsDh/lmkuVkEXKsr+mY6fgG3rxQLaLTYVYaqsEw==",
         "dependencies": {
-          "MassTransit.Abstractions": "8.5.1"
+          "MassTransit.Abstractions": "9.1.2"
         }
       },
       "MassTransit.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.5.1",
-        "contentHash": "C+uNjaS2EAOfU6n+kTpsgX+C4CdECVWU/giQ2ZS4ejHKd0POAYsd8ja/M+IOwOdW2hW6kbqGlTaKXH3rSiB5Ug=="
+        "resolved": "9.1.2",
+        "contentHash": "o2MymiTaxaJ0LUNm6W/8taD1u6Q/hyee1FwM/XvJ8l4IHgGBOVllPLuViYiI/XDu/t86ErjXOJqXrkOB/+ZrCg=="
       },
       "Microsoft.Build.Framework": {
         "type": "Transitive",
