@@ -119,6 +119,7 @@ jobs:
             rendered="/tmp/values.${cloud}.rendered.yaml"
             grep -Fq 'Keycloak__BaseUrl: "http://conexao-solidaria-keycloak:8080/auth"' "${rendered}"
             grep -Fq 'Readiness__Dependencies__IdentityProvider: "http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration"' "${rendered}"
+            grep -Fq 'Proxy__TrustForwardedHeaders: "true"' "${rendered}"
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 
