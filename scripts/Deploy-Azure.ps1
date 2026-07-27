@@ -229,12 +229,17 @@ $helmArguments = @(
     "--set-string", "azureRouting.publicIpName=$publicIpName",
     "--set-string", "azureRouting.publicIpResourceGroup=$resourceGroup",
     "--wait",
-    "--atomic",
     "--timeout", "10m"
 )
 $helmUpgradeHelp = helm upgrade --help | Out-String
-if ($helmUpgradeHelp -match "--force-conflicts") {
-    $helmArguments += "--force-conflicts"
+if ($helmUpgradeHelp -match "--rollback-on-failure") {
+    $helmArguments += "--rollback-on-failure"
+}
+else {
+    $helmArguments += "--atomic"
+}
+if ($helmUpgradeHelp -match "--force-conflicts" -and $helmUpgradeHelp -match "--server-side") {
+    $helmArguments += @("--server-side=true", "--force-conflicts")
 }
 if ($aiEnabled) {
     $helmArguments += @(

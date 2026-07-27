@@ -83,6 +83,10 @@ ingress:
     nginx.ingress.kubernetes.io/session-cookie-samesite: "Lax"
     nginx.ingress.kubernetes.io/session-cookie-secure: "true"
   additionalPaths:
+    - path: /api
+      pathType: Prefix
+      serviceName: conexao-solidaria-gateway
+      servicePort: 8080
     - path: /auth
       pathType: Prefix
       serviceName: conexao-solidaria-keycloak
