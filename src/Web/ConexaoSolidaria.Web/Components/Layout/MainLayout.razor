@@ -1,6 +1,6 @@
 @inherits LayoutComponentBase
 
-<div class="site-shell">
+<div class="site-shell" data-interactive="@(_interactiveReady ? "ready" : null)">
     <NavMenu />
     <main class="page-content">
         @Body
@@ -22,6 +22,21 @@
         </div>
     </footer>
 </div>
+
+@code {
+    private bool _interactiveReady;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _interactiveReady = true;
+        StateHasChanged();
+    }
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     A conexão foi interrompida.

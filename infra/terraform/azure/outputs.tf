@@ -13,6 +13,11 @@ output "cluster_oidc_issuer_url" {
   value       = azurerm_kubernetes_cluster.platform.oidc_issuer_url
 }
 
+output "workload_node_pool_name" {
+  description = "AKS node pool dedicated to application workloads."
+  value       = azurerm_kubernetes_cluster_node_pool.workloads.name
+}
+
 output "container_registry_name" {
   description = "ACR name used by the delivery pipeline."
   value       = azurerm_container_registry.platform.name

@@ -99,6 +99,23 @@ variable "node_max_count" {
   }
 }
 
+variable "workload_node_vm_size" {
+  description = "Virtual machine size for the AKS application pool."
+  type        = string
+  default     = "Standard_B2as_v2"
+}
+
+variable "workload_node_count" {
+  description = "Fixed number of nodes in the AKS application pool."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.workload_node_count >= 1
+    error_message = "workload_node_count must be at least one."
+  }
+}
+
 variable "ingress_dns_label" {
   description = "Globally unique label used by the public AKS ingress FQDN."
   type        = string

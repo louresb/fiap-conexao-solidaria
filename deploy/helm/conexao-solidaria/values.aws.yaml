@@ -6,6 +6,11 @@ image:
   registry: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
   tag: latest
 
+defaults:
+  resources:
+    requests:
+      cpu: 50m
+
 serviceAccount:
   annotations: {}
 
@@ -72,7 +77,13 @@ ingress:
   host: conexao-solidaria.example.com
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/affinity-mode: "persistent"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
+    nginx.ingress.kubernetes.io/session-cookie-name: "conexao-solidaria-affinity"
+    nginx.ingress.kubernetes.io/session-cookie-samesite: "Lax"
+    nginx.ingress.kubernetes.io/session-cookie-secure: "true"
   additionalPaths:
     - path: /auth
       pathType: Prefix

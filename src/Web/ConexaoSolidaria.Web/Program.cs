@@ -141,7 +141,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 app.UseHttpMetrics();
 
-app.MapGet("/auth/login", (string? returnUrl) =>
+app.MapGet("/account/login", (string? returnUrl) =>
 {
     var destination = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
     return Results.Challenge(
@@ -149,7 +149,7 @@ app.MapGet("/auth/login", (string? returnUrl) =>
         [OpenIdConnectDefaults.AuthenticationScheme]);
 });
 
-app.MapPost("/auth/logout", () => Results.SignOut(
+app.MapPost("/account/logout", () => Results.SignOut(
     new AuthenticationProperties { RedirectUri = "/" },
     [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]))
     .RequireAuthorization();

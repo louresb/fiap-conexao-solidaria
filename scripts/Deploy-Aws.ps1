@@ -105,6 +105,9 @@ $namespaceYaml | kubectl apply -f -
 if ($LASTEXITCODE -ne 0) {
     throw "Nao foi possivel criar o namespace $namespace."
 }
+$null = Invoke-Checked {
+    kubectl apply -f "deploy/kubernetes/cloud/aws-storage-class.yaml"
+} "Nao foi possivel configurar a StorageClass gp3 do EBS CSI."
 
 $null = Invoke-Checked {
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --force-update
@@ -171,6 +174,8 @@ $null = Invoke-Checked {
         --namespace kube-system `
         --set syncSecret.enabled=true `
         --set enableSecretRotation=true `
+        --set-string 'tokenRequests[0].audience=sts.amazonaws.com' `
+        --set-string 'tokenRequests[1].audience=pods.eks.amazonaws.com' `
         --wait `
         --timeout 5m
 } "Nao foi possivel instalar o Secrets Store CSI Driver."
@@ -180,6 +185,7 @@ $null = Invoke-Checked {
 $null = Invoke-Checked {
     helm upgrade --install secrets-provider-aws aws-secrets-manager/secrets-store-csi-driver-provider-aws `
         --namespace kube-system `
+        --set secrets-store-csi-driver.install=false `
         --wait `
         --timeout 5m
 } "Nao foi possivel instalar o provider AWS do Secrets Store CSI."
@@ -256,9 +262,17 @@ $null = Invoke-Checked {
     kubectl wait -n $namespace --for=condition=complete job/conexao-solidaria-keycloak-seed --timeout=8m
 } "O bootstrap do Keycloak nao foi concluido."
 
-$null = Invoke-Checked {
-    kubectl apply --server-side -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.yaml
-} "Nao foi possivel instalar o cert-manager."
+$certManagerCrd = Invoke-Checked {
+    kubectl get crd certificates.cert-manager.io --ignore-not-found -o name
+} "Nao foi possivel verificar a instalacao do cert-manager."
+if ([string]::IsNullOrWhiteSpace(($certManagerCrd | Out-String))) {
+    $null = Invoke-Checked {
+        kubectl apply --server-side -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.yaml
+    } "Nao foi possivel instalar o cert-manager."
+}
+else {
+    Write-Host "cert-manager ja instalado; preservando campos gerenciados pelo cluster."
+}
 foreach ($deployment in @("cert-manager", "cert-manager-cainjector", "cert-manager-webhook")) {
     $null = Invoke-Checked {
         kubectl rollout status "deployment/$deployment" -n cert-manager --timeout=5m

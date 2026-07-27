@@ -46,6 +46,17 @@ $null = Invoke-Checked { az account show --output none --only-show-errors } `
 $null = Invoke-Checked { helm version --short } "Helm 3 nao esta disponivel."
 $null = Invoke-Checked { kubectl version --client=true } "kubectl nao esta disponivel."
 
+if (-not (Get-Command kubelogin -ErrorAction SilentlyContinue)) {
+    $kubeloginDirectory = Join-Path $env:USERPROFILE ".azure-kubelogin"
+    $kubeloginExecutable = Join-Path $kubeloginDirectory "kubelogin.exe"
+    if (Test-Path $kubeloginExecutable) {
+        $env:PATH = "$kubeloginDirectory;$env:PATH"
+    }
+}
+if (-not (Get-Command kubelogin -ErrorAction SilentlyContinue)) {
+    throw "kubelogin nao esta disponivel. Execute 'az aks install-cli' antes do deploy."
+}
+
 $aiEnabled = -not [string]::IsNullOrWhiteSpace($AiEndpoint) -or
     -not [string]::IsNullOrWhiteSpace($AiModel) -or
     -not [string]::IsNullOrWhiteSpace($AiApiKey)
@@ -92,6 +103,9 @@ $null = Invoke-Checked {
         --output none `
         --only-show-errors
 } "Nao foi possivel configurar o acesso ao AKS."
+$null = Invoke-Checked {
+    kubelogin convert-kubeconfig -l azurecli
+} "Nao foi possivel preparar a autenticacao do kubectl no AKS."
 
 $namespaceYaml = kubectl create namespace $namespace --dry-run=client -o yaml
 $namespaceYaml | kubectl apply -f -
@@ -171,9 +185,17 @@ $null = Invoke-Checked {
     kubectl wait -n $namespace --for=condition=complete job/conexao-solidaria-keycloak-seed --timeout=8m
 } "O bootstrap do Keycloak nao foi concluido."
 
-$null = Invoke-Checked {
-    kubectl apply --server-side -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.yaml
-} "Nao foi possivel instalar o cert-manager."
+$certManagerCrd = Invoke-Checked {
+    kubectl get crd certificates.cert-manager.io --ignore-not-found -o name
+} "Nao foi possivel verificar a instalacao do cert-manager."
+if ([string]::IsNullOrWhiteSpace(($certManagerCrd | Out-String))) {
+    $null = Invoke-Checked {
+        kubectl apply --server-side -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.yaml
+    } "Nao foi possivel instalar o cert-manager."
+}
+else {
+    Write-Host "cert-manager ja instalado; preservando campos gerenciados pelo AKS."
+}
 foreach ($deployment in @("cert-manager", "cert-manager-cainjector", "cert-manager-webhook")) {
     $null = Invoke-Checked {
         kubectl rollout status "deployment/$deployment" -n cert-manager --timeout=5m
