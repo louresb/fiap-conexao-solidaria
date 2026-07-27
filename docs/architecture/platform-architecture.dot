@@ -1,12 +1,13 @@
 digraph ConexaoSolidaria {
-  graph [rankdir=TB, bgcolor="#F7F9F8", pad="0.35", nodesep="0.38", ranksep="0.52", splines=polyline, fontname="Arial", fontsize=18, labelloc="t", label="CONEXÃO SOLIDÁRIA  |  ARQUITETURA DA PLATAFORMA"];
-  node [shape=rect, style="rounded,filled", color="#CAD5CF", fillcolor="#FFFFFF", fontname="Arial", fontcolor="#17211D", fontsize=11, margin="0.18,0.12"];
-  edge [color="#75867D", fontname="Arial", fontcolor="#52615A", fontsize=9, arrowsize=0.7];
+  graph [rankdir=TB, bgcolor="#F7F9F8", pad="0.35", nodesep="0.34", ranksep="0.58", splines=polyline, newrank=true, fontname="Arial", fontsize=18, labelloc="t", label="CONEXÃO SOLIDÁRIA  |  ARQUITETURA DA PLATAFORMA"];
+  node [shape=rect, style="rounded,filled", color="#CAD5CF", fillcolor="#FFFFFF", fontname="Arial", fontcolor="#17211D", fontsize=10, margin="0.16,0.11"];
+  edge [color="#75867D", fontname="Arial", fontcolor="#52615A", fontsize=8, arrowsize=0.68];
 
-  personas [label="DOADOR  •  GESTOR ONG  •  PÚBLICO", fillcolor="#FFF4D2", color="#E8BC4B"];
+  personas [label="PÚBLICO  •  DOADOR  •  GESTOR ONG", fillcolor="#FFF4D2", color="#E8BC4B"];
 
   subgraph cluster_access {
-    label="EXPERIÊNCIA E ACESSO";
+    label="EXPERIÊNCIA, IDENTIDADE E BORDA";
+    labeljust="l"; fontsize=14; margin=18;
     style="rounded,filled"; color="#BED3C9"; fillcolor="#EDF4F0"; fontcolor="#164B3C";
     web [label="BLAZOR WEB APP\nPortal público, doador e gestão"];
     gateway [label="YARP GATEWAY / BFF\nRoteamento • Rate limiting • JWT", fillcolor="#DDEEE7", color="#176B50"];
@@ -14,75 +15,81 @@ digraph ConexaoSolidaria {
     { rank=same; web; gateway; keycloak; }
   }
 
-  routing [label="APIs SÍNCRONAS AUTORIZADAS", shape=plain, fontcolor="#52615A"];
-
   subgraph cluster_services {
-    label="CAPACIDADES DE NEGÓCIO  |  .NET 10";
+    label="CAPACIDADES DE NEGÓCIO  |  .NET 10  |  DEPLOY INDEPENDENTE";
+    labeljust="l"; fontsize=14; margin=18;
     style="rounded,filled"; color="#CFD8D3"; fillcolor="#FFFFFF"; fontcolor="#29352F";
+    api_edge [shape=point, width=0.08, label="", fillcolor="#176B50", color="#176B50"];
     identity [label="IDENTITY API\nCadastro e perfil do doador"];
     campaigns [label="CAMPAIGNS API\nCampanhas • Transparência • Busca"];
-    payments [label="PAYMENTS API\nPix • Cartão • Boleto • Webhooks"];
-    worker [label="DONATIONS WORKER\nInbox • Idempotência • Total arrecadado"];
-    audit [label="AUDIT API / WORKER\nTrilha append-only e correlacionada"];
-    knowledge [label="KNOWLEDGE API\nRespostas baseadas em fontes"];
-    { rank=same; identity; campaigns; payments; worker; audit; knowledge; }
+    donations [label="DONATIONS API\nIntenção • Ledger • Idempotência"];
+    payments [label="PAYMENTS API\nPix • Cartão • Boleto • Webhook"];
+    campaign_worker [label="CAMPAIGNS WORKER\nProjeção assíncrona do total"];
+    audit [label="AUDIT API / CONSUMER\nTrilha append-only correlacionada"];
+    knowledge [label="KNOWLEDGE API\nRetrieval com fontes verificadas"];
+    { rank=same; identity; campaigns; donations; payments; audit; knowledge; }
   }
 
   subgraph cluster_data {
-    label="DADOS E INTEGRAÇÃO";
+    label="DADOS, EVENTOS E PROJEÇÕES";
+    labeljust="l"; fontsize=14; margin=18;
     style="rounded,filled"; color="#D8D0BE"; fillcolor="#FBF8F1"; fontcolor="#544A34";
-    postgres [label="POSTGRESQL\nTransações • Ledger • Outbox", fillcolor="#E5EEF8", color="#4B6FA8"];
-    redis [label="REDIS\nCache de leitura", fillcolor="#F8E2E1", color="#B9514C"];
+    postgres [label="POSTGRESQL\nBanco por capacidade • Outbox/Inbox", fillcolor="#E5EEF8", color="#4B6FA8"];
+    redis [label="REDIS\nCache de leitura • Invalidação", fillcolor="#F8E2E1", color="#B9514C"];
     rabbit [label="RABBITMQ + MASSTRANSIT\nEventos • Retry • DLQ", fillcolor="#FCE8D8", color="#D77729"];
-    search [label="OPENSEARCH\nBusca fuzzy • Base documental", fillcolor="#E9E4F5", color="#7458A6"];
+    search [label="OPENSEARCH\nÍndice de campanhas • Busca fuzzy", fillcolor="#E9E4F5", color="#7458A6"];
     mongo [label="MONGODB\nAuditoria append-only", fillcolor="#E5F1DF", color="#5E8D47"];
-    { rank=same; postgres; redis; rabbit; search; mongo; }
+    corpus [label="CORPUS VERSIONADO\nDocumentos institucionais por tenant", fillcolor="#FFF4D2", color="#E8BC4B"];
+    { rank=same; postgres; redis; rabbit; search; mongo; corpus; }
   }
 
   subgraph cluster_observability {
     label="OBSERVABILIDADE OPERACIONAL";
+    labeljust="l"; fontsize=14; margin=18;
     style="rounded,filled"; color="#C9D5D9"; fillcolor="#EFF4F6"; fontcolor="#304D58";
-    telemetry [label="SERILOG • CORRELATION ID • OPENTELEMETRY\nInstrumentação transversal de todos os serviços"];
-    collector [label="OTEL COLLECTOR\nOTLP • Batch • Export", fillcolor="#E7EDF8", color="#4B6FA8"];
-    tempo [label="TEMPO\nTracing distribuído ponta a ponta", fillcolor="#E9E4F5", color="#7458A6"];
-    grafana [label="PROMETHEUS + GRAFANA\nMétricas • Dashboards • Traces", fillcolor="#E6F0F3", color="#477589"];
-    loki [label="LOKI\nLogs estruturados", fillcolor="#E6F0F3", color="#477589"];
-    zabbix [label="ZABBIX\nReadiness • Campanhas • Produto web", fillcolor="#F5E5E7", color="#A84D58"];
-    { rank=same; telemetry; collector; tempo; }
-    { rank=same; grafana; loki; zabbix; }
+    telemetry [label="SERILOG • CORRELATION ID • OPENTELEMETRY\nTenant e correlação em logs, métricas e traces"];
+    collector [label="OTEL COLLECTOR + TEMPO\nPipeline OTLP e tracing distribuído", fillcolor="#E7EDF8", color="#4B6FA8"];
+    ops [label="PROMETHEUS • GRAFANA • LOKI • ZABBIX\nMétricas, dashboards, logs e web scenarios", fillcolor="#E6F0F3", color="#477589"];
+    { rank=same; telemetry; collector; ops; }
   }
 
   personas -> web [label="HTTPS"];
-  web -> gateway [label="BFF"];
   web -> keycloak [label="OIDC"];
+  web -> gateway;
   gateway -> keycloak [label="JWT"];
-  gateway -> routing;
-  routing -> identity;
-  routing -> campaigns;
-  routing -> payments;
-  routing -> audit;
-  routing -> knowledge;
+  gateway -> api_edge [arrowhead=none];
+  api_edge -> identity;
+  api_edge -> campaigns;
+  api_edge -> donations;
+  api_edge -> payments;
+  api_edge -> audit;
+  api_edge -> knowledge;
 
   identity -> postgres;
+  identity -> keycloak [label="provisiona", style=dashed];
   campaigns -> postgres;
   campaigns -> redis;
   campaigns -> search;
+  campaigns -> rabbit [label="Outbox"];
+  donations -> campaigns [label="elegibilidade", style=dashed];
+  donations -> postgres;
+  donations -> rabbit [label="Outbox"];
+  rabbit -> payments [label="intenção"];
   payments -> postgres;
-  payments -> rabbit [label="Outbox"];
-  campaigns -> rabbit [label="eventos"];
-  rabbit -> worker [label="consome"];
-  rabbit -> audit [label="consome"];
-  worker -> postgres [label="atualiza"];
-  knowledge -> search;
+  payments -> rabbit [label="confirmação"];
+  rabbit -> donations [label="confirmação"];
+  rabbit -> campaign_worker [label="doação processada"];
+  campaign_worker -> postgres [label="projeção"];
+  campaign_worker -> redis [label="invalida"];
+  campaign_worker -> search [label="reindexa"];
+  rabbit -> audit [label="fan-out"];
   audit -> mongo;
+  knowledge -> corpus;
+  knowledge -> rabbit [label="audita"];
 
   postgres -> telemetry [style=dashed, arrowhead=none];
   rabbit -> telemetry [style=dashed, arrowhead=none];
-  telemetry -> collector [label="OTLP", weight=100];
-  collector -> tempo [weight=100];
-  tempo -> grafana [label="datasource", constraint=false];
-  telemetry -> grafana [label="/metrics", constraint=false];
-  telemetry -> loki [label="logs", constraint=false];
-  zabbix -> telemetry [label="web scenarios", style=dashed, constraint=false];
-  grafana -> loki -> zabbix [style=invis, weight=100];
+  telemetry -> collector [label="OTLP"];
+  collector -> ops [label="traces"];
+  telemetry -> ops [label="logs + métricas", constraint=false];
 }

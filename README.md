@@ -15,6 +15,7 @@ A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit
 - [Diagrama editável em Graphviz](docs/architecture/platform-architecture.dot)
 - [Decisões de persistência em PDF](docs/architecture/data-storage-decisions.pdf)
 - [Topologia de entrega AWS e Azure](docs/architecture/deployment-topology.png)
+- [Registro de decisões arquiteturais](docs/architecture/decisions/README.md)
 
 ## Capacidades
 
@@ -64,6 +65,12 @@ O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamen
 > [!TIP]
 > Em uma nova aplicação sem mudanças de código, use `.\scripts\Deploy-KubernetesLocal.ps1 -SkipBuild`.
 
+Para liberar os recursos locais sem apagar os PVCs e dados da demonstração:
+
+```powershell
+.\scripts\Stop-KubernetesLocal.ps1
+```
+
 ## Endpoints locais
 
 | Serviço | Endereço |
@@ -81,6 +88,7 @@ O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamen
 | Payments API - Scalar | http://localhost:31103/scalar/v1 |
 | Audit API - Scalar | http://localhost:31104/scalar/v1 |
 | Knowledge API - Scalar | http://localhost:31105/scalar/v1 |
+| Donations API - Scalar | http://localhost:31106/scalar/v1 |
 
 Usuários locais:
 
@@ -104,10 +112,19 @@ Como alternativa ao Kubernetes:
 ```powershell
 dotnet restore ConexaoSolidaria.slnx
 dotnet build ConexaoSolidaria.slnx --configuration Release --no-restore
-dotnet test ConexaoSolidaria.slnx --configuration Release --no-build --no-restore
+dotnet test ConexaoSolidaria.slnx --configuration Release --no-build --no-restore --filter "Category!=E2E"
 ```
 
-O workflow [`Platform CI/CD`](.github/workflows/ci.yml) executa build, testes, validação Helm/Terraform, Trivy, SBOM e build das oito imagens. Imagens são publicadas no GHCR; espelhamento para ECR/ACR e deploy EKS/AKS são habilitados por variáveis de ambiente protegidas.
+As cinco jornadas Playwright são executadas pelo pipeline contra o conjunto de imagens publicado.
+
+O workflow [`Platform CI/CD`](.github/workflows/ci.yml) executa build, testes, validação Helm/Terraform, Trivy, SBOM e build das nove imagens. Imagens são publicadas no GHCR; espelhamento para ECR/ACR e deploy EKS/AKS são habilitados por variáveis de environment protegidas e autenticação OIDC.
+
+## Cloud
+
+A topologia mantém o AKS como ambiente público contínuo. Na AWS, ECR e a identidade de entrega permanecem disponíveis, enquanto o EKS pode ser criado em uma janela controlada devido ao custo do control plane, NAT e nós. Ambos usam o mesmo chart e preservam fronteiras de deploy e dados independentes.
+
+- [Runbook de publicação Azure e AWS](docs/operations/cloud-deployment.md)
+- [Modelo de segurança](docs/security/security-model.md)
 
 ## Discovery
 
