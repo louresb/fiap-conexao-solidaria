@@ -4,32 +4,38 @@
 
 Projeto desenvolvido para o Hackathon da pós-graduação em Arquitetura de Sistemas .NET da FIAP. A plataforma conecta organizações, doadores e campanhas com pagamentos, processamento assíncrono, transparência e auditoria ponta a ponta.
 
-![Página inicial da Conexão Solidária](docs/product/screenshots/home.png)
+[![Página inicial da Conexão Solidária](docs/product/screenshots/home.png)](https://conexao-solidaria-blouresfiap26.chilecentral.cloudapp.azure.com/)
 
-## Arquitetura
-
-![Arquitetura da plataforma](docs/architecture/platform-architecture.png)
-
-A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit/RabbitMQ. PostgreSQL mantém o estado transacional, Redis e OpenSearch atendem projeções de leitura, MongoDB preserva a auditoria append-only e OpenTelemetry/Tempo acompanham a jornada entre processos.
-
-- [Diagrama editável em Graphviz](docs/architecture/platform-architecture.dot)
-- [Topologia de entrega AWS e Azure](docs/architecture/deployment-topology.png)
-- [Registro de decisões arquiteturais](docs/architecture/decisions/README.md)
-
-## Capacidades
+## Produto
 
 | Área | Implementação |
 |---|---|
-| Experiência | Portal público, área do doador e gestão de campanhas em Blazor Web App |
-| Segurança | Keycloak OIDC, JWT, roles `GestorONG` e `Doador`, rate limiting e tenant no token |
-| Doações | Intenção, pagamento sandbox Pix/cartão/boleto, Outbox/Inbox e processamento idempotente |
-| Transparência | Campanhas ativas, valor arrecadado, busca fuzzy e cache com `X-Cache: HIT/MISS` |
-| Auditoria | Eventos por tenant e correlação em MongoDB, com consulta autorizada |
-| Conhecimento | Respostas baseadas em documentos verificados, sempre acompanhadas das fontes |
-| Observabilidade | Serilog, Correlation ID, OpenTelemetry Collector, Tempo, Prometheus, Grafana, Loki e web scenarios no Zabbix |
-| Plataforma | Docker Compose, Kubernetes, Helm, Terraform AWS/Azure e GitHub Actions |
+| Experiência | Portal público, área do doador e gestão de campanhas em Blazor Web App, com português e inglês |
+| Segurança | Keycloak OIDC, JWT, RBAC, rate limiting e isolamento lógico por tenant |
+| Doações | Pix, cartão e boleto em sandbox, com Outbox/Inbox e processamento idempotente |
+| Transparência | Campanhas ativas, valores arrecadados, busca fuzzy e cache com `X-Cache: HIT/MISS` |
+| Auditoria | Eventos append-only por tenant e correlação, persistidos no MongoDB |
+| Conhecimento | Assistente RAG com fontes verificadas, isolamento por tenant e fallback determinístico |
+| Operação | Logs, métricas e traces com Serilog, OpenTelemetry, Prometheus, Grafana, Loki, Tempo e Zabbix |
 
-## Executar no Kubernetes
+## Arquitetura
+
+[![Arquitetura lógica da plataforma](docs/architecture/platform-architecture-final.png)](https://lucid.app/lucidchart/6e80164b-4cca-4f4e-9aa7-a6f7ab7cd923/edit?invitationId=inv_0c5180ba-f12a-4d44-a002-8ae873e177de&page=26DfIEDjgP1E#)
+
+A solução utiliza .NET 10, Blazor, YARP e Keycloak em unidades de deploy independentes. MassTransit e RabbitMQ sustentam os fluxos assíncronos; PostgreSQL preserva o estado transacional; Redis e OpenSearch atendem projeções de leitura; MongoDB mantém a trilha de auditoria. `TenantId`, `CorrelationId` e `TraceId` atravessam requisições, eventos e telemetria.
+
+- [Decisões arquiteturais](docs/architecture/decisions/README.md)
+- [Modelo de segurança](docs/security/security-model.md)
+
+### Entrega multi-cloud
+
+[![Topologia de entrega AWS e Azure](docs/architecture/platform-deployment-final.png)](https://lucid.app/lucidchart/8cc6f156-fa26-45d7-91a3-c1571126d5fb/edit?invitationId=inv_8378f368-9687-45b8-8d96-f7206c9b6397&page=phEfYmhT_bZQ#)
+
+O mesmo conjunto de imagens e o mesmo Helm chart são promovidos por GitHub Actions para GHCR, ACR e ECR. Os ambientes AKS e EKS mantêm configurações e dados independentes, enquanto Terraform, Helm values e autenticação OIDC preservam uma entrega reproduzível sem credenciais permanentes no GitHub.
+
+- [Runbook de publicação Azure e AWS](docs/operations/cloud-deployment.md)
+
+## Executar localmente
 
 ### Pré-requisitos
 
@@ -38,8 +44,6 @@ A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit
 - `kubectl` com o contexto `docker-desktop`
 - .NET SDK definido em [`global.json`](global.json)
 
-### Instalação completa
-
 ```powershell
 git clone https://github.com/louresb/fiap-conexao-solidaria.git
 cd fiap-conexao-solidaria
@@ -47,30 +51,25 @@ kubectl config use-context docker-desktop
 .\scripts\Deploy-KubernetesLocal.ps1 -Reset
 ```
 
-O script gera credenciais locais, constrói imagens imutáveis, aplica os manifests e o Helm chart, aguarda os rollouts, configura usuários no Keycloak, provisiona tracing e monitoramento e abre os port-forwards.
+O script gera as credenciais locais, constrói imagens imutáveis, instala a plataforma, configura os usuários do Keycloak e abre os port-forwards necessários.
 
 > [!NOTE]
-> As credenciais são geradas em `.env`, que não é versionado. Nenhum segredo de runtime está no repositório.
+> Os segredos locais são gerados em `.env`, que não é versionado. Os ambientes cloud utilizam Azure Key Vault e AWS Secrets Manager via Secrets Store CSI.
 
-### Verificação funcional
+### Validar a plataforma
 
 ```powershell
 .\scripts\Test-KubernetesLocal.ps1
 kubectl get pods -n conexao-solidaria
 ```
 
-O smoke test verifica readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamento entre tenants, pagamento, mensageria, atualização assíncrona, auditoria, fontes da Knowledge API, Prometheus, Grafana e Zabbix. A jornada de doação também precisa aparecer no Tempo com o mesmo `traceId` em gateway, campanhas, pagamentos, worker e auditoria.
+O smoke test cobre readiness, Redis MISS/HIT, busca fuzzy, JWT/RBAC, isolamento entre tenants, pagamento, RabbitMQ, atualização assíncrona, auditoria, RAG com fontes e observabilidade. A jornada principal também é validada por testes Playwright.
 
 > [!TIP]
-> Em uma nova aplicação sem mudanças de código, use `.\scripts\Deploy-KubernetesLocal.ps1 -SkipBuild`.
+> Para reaplicar a plataforma sem reconstruir as imagens, use `.\scripts\Deploy-KubernetesLocal.ps1 -SkipBuild`.
 
-Para liberar os recursos locais sem apagar os PVCs e dados da demonstração:
-
-```powershell
-.\scripts\Stop-KubernetesLocal.ps1
-```
-
-## Endpoints locais
+<details>
+<summary>Endpoints locais e contas de avaliação</summary>
 
 | Serviço | Endereço |
 |---|---|
@@ -89,44 +88,41 @@ Para liberar os recursos locais sem apagar os PVCs e dados da demonstração:
 | Knowledge API - Scalar | http://localhost:31105/scalar/v1 |
 | Donations API - Scalar | http://localhost:31106/scalar/v1 |
 
-Usuários locais:
-
 - Gestor: `gestor.esperanca@conexaosolidaria.local`
 - Doador: `doador.esperanca@conexaosolidaria.local`
 - As senhas estão em `DEMO_MANAGER_PASSWORD` e `DEMO_DONOR_PASSWORD` no `.env`.
-- Grafana usa `admin`; Zabbix usa `Admin`; RabbitMQ usa `conexao`. As respectivas senhas também estão no `.env`.
+- Grafana usa `admin`, Zabbix usa `Admin` e RabbitMQ usa `conexao`; as senhas também estão no `.env`.
 
-## Docker Compose
+</details>
 
-Como alternativa ao Kubernetes:
+Para encerrar o ambiente local sem remover os dados persistidos:
 
 ```powershell
-.\scripts\Start-Local.ps1 -Build -Tools -Operations
-.\scripts\Test-Local.ps1
-.\scripts\Stop-Local.ps1
+.\scripts\Stop-KubernetesLocal.ps1
 ```
 
 ## Qualidade e entrega
 
 ```powershell
-dotnet restore ConexaoSolidaria.slnx
+dotnet restore ConexaoSolidaria.slnx --locked-mode
 dotnet build ConexaoSolidaria.slnx --configuration Release --no-restore
 dotnet test ConexaoSolidaria.slnx --configuration Release --no-build --no-restore --filter "Category!=E2E"
 ```
 
-As cinco jornadas Playwright são executadas pelo pipeline contra o conjunto de imagens publicado.
-
-O workflow [`Platform CI/CD`](.github/workflows/ci.yml) executa build, testes, validação Helm/Terraform, Trivy, SBOM e build das nove imagens. Imagens são publicadas no GHCR; espelhamento para ECR/ACR e deploy EKS/AKS são habilitados por variáveis de environment protegidas e autenticação OIDC.
-
-## Cloud
-
-A topologia mantém o AKS como ambiente público contínuo. Na AWS, ECR e a identidade de entrega permanecem disponíveis, enquanto o EKS pode ser criado em uma janela controlada devido ao custo do control plane, NAT e nós. Ambos usam o mesmo chart e preservam fronteiras de deploy e dados independentes.
-
-- [Runbook de publicação Azure e AWS](docs/operations/cloud-deployment.md)
-- [Modelo de segurança](docs/security/security-model.md)
+O workflow [`Platform CI/CD`](.github/workflows/ci.yml) executa build, testes, E2E, validação Helm/Terraform, Trivy, SBOM e build das nove imagens. Publicação nos registries privados e deploys Kubernetes usam imagens identificadas pelo SHA do commit.
 
 ## Discovery
 
 [![Event Storming Consolidado](docs/discovery/event-storming/event-storming-consolidado.jpg)](https://miro.com/app/board/uXjVH48WBvk=/?moveToWidget=3458764679031794026&cot=14)
 
 [![Eventos de integração e projeções](docs/discovery/event-storming/eventos-de-integracao.jpg)](https://miro.com/app/board/uXjVH48WBvk=/?moveToWidget=3458764679107645340&cot=14)
+
+<details>
+<summary>Créditos</summary>
+
+- [OpenAI Codex](https://openai.com/codex/) — apoio à implementação e revisão técnica.
+- [Google Gemini](https://gemini.google.com/) — geração das imagens institucionais e de campanhas.
+- [Miro](https://miro.com/) — Event Storming.
+- [Lucidchart](https://www.lucidchart.com/) — diagramas de arquitetura.
+
+</details>

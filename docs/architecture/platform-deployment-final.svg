@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Conexão Solidária - Deployment Multicloud</title>
+  <desc id="desc">Entrega contínua de um mesmo artefato imutável para Kubernetes local, Azure AKS e AWS EKS com Terraform, Helm, segurança e observabilidade.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="azureArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563A6"/>
+    </marker>
+    <marker id="awsArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B7791F"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Inter, "Segoe UI", sans-serif; fill: #17324D; }
+      .subtitle { font: 400 15px Inter, "Segoe UI", sans-serif; fill: #64748B; }
+      .section { font: 700 13px Inter, "Segoe UI", sans-serif; fill: #475569; letter-spacing: 1.2px; }
+      .label { font: 600 15px Inter, "Segoe UI", sans-serif; fill: #1F2937; }
+      .small { font: 400 14px Inter, "Segoe UI", sans-serif; fill: #334155; }
+      .tiny { font: 400 13px Inter, "Segoe UI", sans-serif; fill: #475569; }
+      .micro { font: 400 12px Inter, "Segoe UI", sans-serif; fill: #475569; }
+      .sync { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .bus { fill: none; stroke: #475569; stroke-width: 2.5; }
+      .azure-line { fill: none; stroke: #2563A6; stroke-width: 2; marker-end: url(#azureArrow); }
+      .aws-line { fill: none; stroke: #B7791F; stroke-width: 2; marker-end: url(#awsArrow); }
+      .band { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.3; }
+      .node { fill: #FFFFFF; stroke: #64748B; stroke-width: 1.5; }
+      .pipeline { fill: #F8FAFC; stroke: #334155; stroke-width: 1.8; }
+      .local { fill: #FFFFFF; stroke: #475569; stroke-width: 1.8; }
+      .local-head { fill: #F1F5F9; stroke: #475569; stroke-width: 1.2; }
+      .azure { fill: #FFFFFF; stroke: #2563A6; stroke-width: 1.8; }
+      .azure-head { fill: #EAF4FC; stroke: #2563A6; stroke-width: 1.2; }
+      .aws { fill: #FFFFFF; stroke: #B7791F; stroke-width: 1.8; }
+      .aws-head { fill: #FFF7E6; stroke: #B7791F; stroke-width: 1.2; }
+      .layer { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.1; }
+      .delivery { fill: #F4F7F6; stroke: #557A6C; stroke-width: 1.4; }
+      .guarantee { fill: #FCFBF8; stroke: #8B7A5E; stroke-width: 1.3; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <text x="60" y="48" class="title">Conexão Solidária | Deployment Multicloud</text>
+  <text x="60" y="76" class="subtitle">Entrega reproduzível do mesmo artefato para Kubernetes local, Azure e AWS</text>
+
+  <!-- Entrega contínua -->
+  <rect x="60" y="100" width="1480" height="150" rx="6" class="band"/>
+  <text x="78" y="124" class="section">ENTREGA CONTÍNUA</text>
+
+  <rect x="95" y="152" width="160" height="56" rx="6" class="node"/>
+  <text x="175" y="186" text-anchor="middle" class="label">Desenvolvedor</text>
+  <rect x="300" y="152" width="160" height="56" rx="6" class="node"/>
+  <text x="380" y="186" text-anchor="middle" class="label">Pull Request</text>
+  <rect x="510" y="132" width="510" height="96" rx="7" class="pipeline"/>
+  <text x="765" y="158" text-anchor="middle" class="section">GITHUB ACTIONS</text>
+  <text x="765" y="184" text-anchor="middle" class="label">build • testes • E2E • SBOM • Trivy • Docker</text>
+  <text x="765" y="207" text-anchor="middle" class="small">Helm lint • Terraform plan • assinatura e proveniência</text>
+  <rect x="1070" y="145" width="400" height="70" rx="7" class="node"/>
+  <text x="1270" y="176" text-anchor="middle" class="label">Artefato imutável por commit SHA</text>
+  <text x="1270" y="198" text-anchor="middle" class="tiny">GHCR • ACR • ECR</text>
+  <line x1="255" y1="180" x2="300" y2="180" class="sync"/>
+  <line x1="460" y1="180" x2="510" y2="180" class="sync"/>
+  <line x1="1020" y1="180" x2="1070" y2="180" class="sync"/>
+
+  <!-- Barramento de distribuição -->
+  <path d="M1270 215 V272 H290 M800 272 H1310" class="bus"/>
+  <text x="800" y="266" text-anchor="middle" class="small">distribuição do artefato por SHA</text>
+  <line x1="290" y1="272" x2="290" y2="318" class="sync"/>
+  <line x1="800" y1="272" x2="800" y2="318" class="azure-line"/>
+  <line x1="1310" y1="272" x2="1310" y2="318" class="aws-line"/>
+
+  <!-- Local -->
+  <rect x="60" y="310" width="460" height="390" rx="7" class="local"/>
+  <rect x="60" y="310" width="460" height="44" rx="7" class="local-head"/>
+  <text x="290" y="337" text-anchor="middle" class="section">LOCAL</text>
+  <rect x="82" y="370" width="180" height="52" rx="5" class="node"/>
+  <text x="172" y="401" text-anchor="middle" class="label">Registry GHCR</text>
+  <rect x="282" y="370" width="216" height="52" rx="5" class="node"/>
+  <text x="390" y="393" text-anchor="middle" class="label">Helm values</text>
+  <text x="390" y="414" text-anchor="middle" class="tiny">values.local.yaml</text>
+  <path d="M172 422 V448 H225" class="sync"/>
+  <path d="M390 422 V448 H355" class="sync"/>
+  <rect x="80" y="446" width="420" height="232" rx="7" fill="#FFFFFF" stroke="#64748B" stroke-width="1.4"/>
+  <rect x="94" y="460" width="392" height="34" rx="5" class="local-head"/>
+  <text x="290" y="482" text-anchor="middle" class="small">Docker Desktop Kubernetes</text>
+  <rect x="94" y="504" width="392" height="32" rx="4" class="layer"/>
+  <text x="290" y="525" text-anchor="middle" class="tiny">Ingress local • cert-manager • secrets locais</text>
+  <rect x="94" y="546" width="392" height="32" rx="4" class="layer"/>
+  <text x="290" y="567" text-anchor="middle" class="tiny">Web • Gateway • APIs • Workers</text>
+  <rect x="94" y="588" width="392" height="38" rx="4" class="layer"/>
+  <text x="290" y="604" text-anchor="middle" class="micro">RabbitMQ • PostgreSQL • Redis • MongoDB</text>
+  <text x="290" y="619" text-anchor="middle" class="micro">OpenSearch • Keycloak</text>
+  <rect x="94" y="636" width="392" height="28" rx="4" class="layer"/>
+  <text x="290" y="655" text-anchor="middle" class="micro">OTel • Prometheus • Grafana • Loki • Tempo • Zabbix</text>
+
+  <!-- Azure -->
+  <rect x="570" y="310" width="460" height="390" rx="7" class="azure"/>
+  <rect x="570" y="310" width="460" height="44" rx="7" class="azure-head"/>
+  <text x="800" y="337" text-anchor="middle" class="section">AZURE</text>
+  <rect x="592" y="370" width="180" height="52" rx="5" class="node"/>
+  <text x="682" y="401" text-anchor="middle" class="label">Registry ACR</text>
+  <rect x="792" y="370" width="216" height="52" rx="5" class="node"/>
+  <text x="900" y="393" text-anchor="middle" class="label">Helm values</text>
+  <text x="900" y="414" text-anchor="middle" class="tiny">values.azure.yaml</text>
+  <path d="M682 422 V448 H735" class="azure-line"/>
+  <path d="M900 422 V448 H865" class="azure-line"/>
+  <rect x="590" y="446" width="420" height="232" rx="7" fill="#FFFFFF" stroke="#2563A6" stroke-width="1.4"/>
+  <rect x="604" y="460" width="392" height="34" rx="5" class="azure-head"/>
+  <text x="800" y="482" text-anchor="middle" class="small">AKS • Key Vault CSI • Azure DNS</text>
+  <rect x="604" y="504" width="392" height="32" rx="4" class="layer"/>
+  <text x="800" y="525" text-anchor="middle" class="tiny">Edge ingress • cert-manager • Secrets Store CSI</text>
+  <rect x="604" y="546" width="392" height="32" rx="4" class="layer"/>
+  <text x="800" y="567" text-anchor="middle" class="tiny">Web • Gateway • APIs • Workers</text>
+  <rect x="604" y="588" width="392" height="38" rx="4" class="layer"/>
+  <text x="800" y="604" text-anchor="middle" class="micro">RabbitMQ • PostgreSQL • Redis • MongoDB</text>
+  <text x="800" y="619" text-anchor="middle" class="micro">OpenSearch • Keycloak</text>
+  <rect x="604" y="636" width="392" height="28" rx="4" class="layer"/>
+  <text x="800" y="655" text-anchor="middle" class="micro">OTel • Prometheus • Grafana • Loki • Tempo • Zabbix</text>
+
+  <!-- AWS -->
+  <rect x="1080" y="310" width="460" height="390" rx="7" class="aws"/>
+  <rect x="1080" y="310" width="460" height="44" rx="7" class="aws-head"/>
+  <text x="1310" y="337" text-anchor="middle" class="section">AWS</text>
+  <rect x="1102" y="370" width="180" height="52" rx="5" class="node"/>
+  <text x="1192" y="401" text-anchor="middle" class="label">Registry ECR</text>
+  <rect x="1302" y="370" width="216" height="52" rx="5" class="node"/>
+  <text x="1410" y="393" text-anchor="middle" class="label">Helm values</text>
+  <text x="1410" y="414" text-anchor="middle" class="tiny">values.aws.yaml</text>
+  <path d="M1192 422 V448 H1245" class="aws-line"/>
+  <path d="M1410 422 V448 H1375" class="aws-line"/>
+  <rect x="1100" y="446" width="420" height="232" rx="7" fill="#FFFFFF" stroke="#B7791F" stroke-width="1.4"/>
+  <rect x="1114" y="460" width="392" height="34" rx="5" class="aws-head"/>
+  <text x="1310" y="482" text-anchor="middle" class="small">EKS • Secrets Manager CSI • Route 53</text>
+  <rect x="1114" y="504" width="392" height="32" rx="4" class="layer"/>
+  <text x="1310" y="525" text-anchor="middle" class="tiny">ALB ingress • cert-manager • Secrets Store CSI</text>
+  <rect x="1114" y="546" width="392" height="32" rx="4" class="layer"/>
+  <text x="1310" y="567" text-anchor="middle" class="tiny">Web • Gateway • APIs • Workers</text>
+  <rect x="1114" y="588" width="392" height="38" rx="4" class="layer"/>
+  <text x="1310" y="604" text-anchor="middle" class="micro">RabbitMQ • PostgreSQL • Redis • MongoDB</text>
+  <text x="1310" y="619" text-anchor="middle" class="micro">OpenSearch • Keycloak</text>
+  <rect x="1114" y="636" width="392" height="28" rx="4" class="layer"/>
+  <text x="1310" y="655" text-anchor="middle" class="micro">OTel • Prometheus • Grafana • Loki • Tempo • Zabbix</text>
+
+  <!-- Infraestrutura e entrega -->
+  <rect x="180" y="730" width="540" height="52" rx="6" class="delivery"/>
+  <text x="450" y="761" text-anchor="middle" class="label">Terraform provisiona identidade, rede e serviços cloud</text>
+  <rect x="880" y="730" width="540" height="52" rx="6" class="delivery"/>
+  <text x="1150" y="761" text-anchor="middle" class="label">Helm entrega workloads e executa rolling update</text>
+
+  <rect x="180" y="804" width="1240" height="42" rx="5" class="guarantee"/>
+  <text x="800" y="830" text-anchor="middle" class="small">Mesmo artefato • mesmo chart • configuração por ambiente • dados independentes por cluster</text>
+
+  <text x="60" y="872" class="section">LEGENDA</text>
+  <line x1="150" y1="867" x2="215" y2="867" class="sync"/>
+  <text x="232" y="872" class="tiny">promoção por SHA</text>
+  <rect x="405" y="856" width="18" height="18" rx="3" class="local-head"/>
+  <text x="438" y="872" class="tiny">local</text>
+  <rect x="520" y="856" width="18" height="18" rx="3" class="azure-head"/>
+  <text x="553" y="872" class="tiny">Azure</text>
+  <rect x="645" y="856" width="18" height="18" rx="3" class="aws-head"/>
+  <text x="678" y="872" class="tiny">AWS</text>
+  <text x="1540" y="872" text-anchor="end" class="tiny">portabilidade sem acoplamento ao provedor</text>
+</svg>

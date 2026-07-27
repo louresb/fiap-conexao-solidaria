@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Conexão Solidária - Arquitetura de Containers</title>
+  <desc id="desc">Arquitetura lógica multi-tenant com pessoas, experiência, bounded contexts, dados, eventos, sistemas externos, observabilidade e garantias transversais.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="eventArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B7791F"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Inter, "Segoe UI", sans-serif; fill: #17324D; }
+      .subtitle { font: 400 15px Inter, "Segoe UI", sans-serif; fill: #64748B; }
+      .section { font: 700 13px Inter, "Segoe UI", sans-serif; fill: #475569; letter-spacing: 1.2px; }
+      .label { font: 600 15px Inter, "Segoe UI", sans-serif; fill: #1F2937; }
+      .small { font: 400 14px Inter, "Segoe UI", sans-serif; fill: #334155; }
+      .tiny { font: 400 13px Inter, "Segoe UI", sans-serif; fill: #475569; }
+      .context-title { font: 700 16px Inter, "Segoe UI", sans-serif; fill: #244A70; }
+      .sync { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .sync-bi { fill: none; stroke: #475569; stroke-width: 2; marker-start: url(#arrow); marker-end: url(#arrow); }
+      .event { fill: none; stroke: #B7791F; stroke-width: 2; stroke-dasharray: 7 6; marker-end: url(#eventArrow); }
+      .bus { fill: none; stroke: #475569; stroke-width: 2.5; }
+      .event-bus { fill: #FFF7E6; stroke: #B7791F; stroke-width: 1.5; }
+      .actor { fill: #F1F5F9; stroke: #94A3B8; stroke-width: 1.5; }
+      .access { fill: #ECFDF5; stroke: #2F6B57; stroke-width: 1.7; }
+      .context { fill: #FFFFFF; stroke: #2F5D8A; stroke-width: 1.8; }
+      .context-head { fill: #E8F0F8; stroke: #2F5D8A; stroke-width: 1.2; }
+      .component { fill: #F8FAFC; stroke: #6B8EAD; stroke-width: 1.2; }
+      .data { fill: #EDF2F7; stroke: #718096; stroke-width: 1.2; }
+      .external { fill: #F5F0FA; stroke: #76558C; stroke-width: 1.5; }
+      .ops { fill: #F4F7F6; stroke: #557A6C; stroke-width: 1.4; }
+      .guarantee { fill: #FCFBF8; stroke: #8B7A5E; stroke-width: 1.4; }
+      .band { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.2; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <text x="60" y="48" class="title">Conexão Solidária | Arquitetura de Containers</text>
+  <text x="60" y="76" class="subtitle">Plataforma multi-tenant para campanhas, doações, transparência e atendimento com fontes</text>
+
+  <!-- Pessoas e acesso -->
+  <rect x="60" y="100" width="1190" height="155" rx="6" class="band"/>
+  <text x="78" y="124" class="section">PESSOAS E ACESSO</text>
+
+  <rect x="80" y="145" width="105" height="42" rx="5" class="actor"/>
+  <text x="132.5" y="171" text-anchor="middle" class="small">Publico</text>
+  <rect x="200" y="145" width="105" height="42" rx="5" class="actor"/>
+  <text x="252.5" y="171" text-anchor="middle" class="small">Doador</text>
+  <rect x="320" y="145" width="120" height="42" rx="5" class="actor"/>
+  <text x="380" y="171" text-anchor="middle" class="small">Gestor ONG</text>
+  <rect x="455" y="145" width="130" height="42" rx="5" class="actor"/>
+  <text x="520" y="171" text-anchor="middle" class="small">Admin SaaS</text>
+
+  <line x1="132.5" y1="187" x2="132.5" y2="210" class="bus"/>
+  <line x1="252.5" y1="187" x2="252.5" y2="210" class="bus"/>
+  <line x1="380" y1="187" x2="380" y2="210" class="bus"/>
+  <line x1="520" y1="187" x2="520" y2="210" class="bus"/>
+  <path d="M132.5 210 H590 V166 H620" class="sync"/>
+  <text x="535" y="203" class="tiny">HTTPS</text>
+
+  <rect x="620" y="137" width="200" height="58" rx="6" class="access"/>
+  <text x="720" y="162" text-anchor="middle" class="label">Blazor Web App</text>
+  <text x="720" y="183" text-anchor="middle" class="tiny">portal, doador e gestao</text>
+  <rect x="860" y="137" width="210" height="58" rx="6" class="access"/>
+  <text x="965" y="162" text-anchor="middle" class="label">YARP Gateway / BFF</text>
+  <text x="965" y="183" text-anchor="middle" class="tiny">roteamento e rate limiting</text>
+  <line x1="820" y1="166" x2="860" y2="166" class="sync"/>
+
+  <rect x="620" y="207" width="200" height="34" rx="5" class="actor"/>
+  <text x="720" y="229" text-anchor="middle" class="small">Keycloak | OIDC + PKCE</text>
+  <line x1="720" y1="195" x2="720" y2="207" class="sync-bi"/>
+
+  <path d="M965 195 V272" class="sync"/>
+  <rect x="70" y="264" width="1180" height="30" rx="5" fill="#F8FAFC" stroke="#64748B" stroke-width="1.3"/>
+  <text x="660" y="284" text-anchor="middle" class="small">Barramento de entrada | HTTPS • JWT • tenant_id</text>
+
+  <!-- Capacidades de negocio -->
+  <text x="70" y="318" class="section">CAPACIDADES DE NEGÓCIO</text>
+
+  <!-- Identity -->
+  <rect x="70" y="330" width="220" height="250" rx="6" class="context"/>
+  <rect x="70" y="330" width="220" height="38" rx="6" class="context-head"/>
+  <text x="180" y="354" text-anchor="middle" class="context-title">Identidade e Tenancy</text>
+  <rect x="86" y="385" width="188" height="54" rx="5" class="component"/>
+  <text x="180" y="409" text-anchor="middle" class="label">Identity API</text>
+  <text x="180" y="429" text-anchor="middle" class="tiny">perfil e tenant</text>
+  <rect x="86" y="454" width="188" height="48" rx="5" class="data"/>
+  <text x="180" y="483" text-anchor="middle" class="small">PostgreSQL</text>
+  <rect x="86" y="517" width="188" height="43" rx="5" class="data"/>
+  <text x="180" y="543" text-anchor="middle" class="small">Identidade no Keycloak</text>
+
+  <!-- Campaigns -->
+  <rect x="310" y="330" width="220" height="250" rx="6" class="context"/>
+  <rect x="310" y="330" width="220" height="38" rx="6" class="context-head"/>
+  <text x="420" y="354" text-anchor="middle" class="context-title">Campanhas</text>
+  <rect x="326" y="385" width="188" height="54" rx="5" class="component"/>
+  <text x="420" y="407" text-anchor="middle" class="label">Campaigns API</text>
+  <text x="420" y="428" text-anchor="middle" class="tiny">+ Campaigns Worker</text>
+  <rect x="326" y="454" width="188" height="48" rx="5" class="data"/>
+  <text x="420" y="483" text-anchor="middle" class="small">PostgreSQL</text>
+  <rect x="326" y="517" width="188" height="43" rx="5" class="data"/>
+  <text x="420" y="543" text-anchor="middle" class="small">Redis + OpenSearch</text>
+
+  <!-- Knowledge -->
+  <rect x="550" y="330" width="220" height="250" rx="6" class="context"/>
+  <rect x="550" y="330" width="220" height="38" rx="6" class="context-head"/>
+  <text x="660" y="354" text-anchor="middle" class="context-title">Conhecimento</text>
+  <rect x="566" y="385" width="188" height="54" rx="5" class="component"/>
+  <text x="660" y="409" text-anchor="middle" class="label">Knowledge API</text>
+  <text x="660" y="429" text-anchor="middle" class="tiny">RAG fundamentado</text>
+  <rect x="566" y="454" width="188" height="48" rx="5" class="data"/>
+  <text x="660" y="475" text-anchor="middle" class="small">Corpus versionado</text>
+  <text x="660" y="493" text-anchor="middle" class="tiny">por tenant</text>
+  <rect x="566" y="517" width="188" height="43" rx="5" class="data"/>
+  <text x="660" y="543" text-anchor="middle" class="small">Respostas com fontes</text>
+
+  <!-- Audit -->
+  <rect x="790" y="330" width="220" height="250" rx="6" class="context"/>
+  <rect x="790" y="330" width="220" height="38" rx="6" class="context-head"/>
+  <text x="900" y="354" text-anchor="middle" class="context-title">Auditoria</text>
+  <rect x="806" y="385" width="188" height="54" rx="5" class="component"/>
+  <text x="900" y="407" text-anchor="middle" class="label">Audit API</text>
+  <text x="900" y="428" text-anchor="middle" class="tiny">+ Audit Consumer</text>
+  <rect x="806" y="454" width="188" height="48" rx="5" class="data"/>
+  <text x="900" y="483" text-anchor="middle" class="small">MongoDB</text>
+  <rect x="806" y="517" width="188" height="43" rx="5" class="data"/>
+  <text x="900" y="543" text-anchor="middle" class="small">append-only</text>
+
+  <!-- Donations and Payments -->
+  <rect x="1030" y="330" width="220" height="250" rx="6" class="context"/>
+  <rect x="1030" y="330" width="220" height="38" rx="6" class="context-head"/>
+  <text x="1140" y="354" text-anchor="middle" class="context-title">Doações e Pagamentos</text>
+  <rect x="1046" y="385" width="188" height="54" rx="5" class="component"/>
+  <text x="1140" y="407" text-anchor="middle" class="label">Donations API</text>
+  <text x="1140" y="428" text-anchor="middle" class="tiny">+ Payments API</text>
+  <rect x="1046" y="454" width="188" height="48" rx="5" class="data"/>
+  <text x="1140" y="475" text-anchor="middle" class="small">PostgreSQL</text>
+  <text x="1140" y="493" text-anchor="middle" class="tiny">Outbox / Inbox</text>
+  <rect x="1046" y="517" width="188" height="43" rx="5" class="data"/>
+  <text x="1140" y="543" text-anchor="middle" class="small">ledger + idempotência</text>
+
+  <!-- Entrada para contextos: curtas e paralelas -->
+  <line x1="180" y1="294" x2="180" y2="330" class="sync"/>
+  <line x1="420" y1="294" x2="420" y2="330" class="sync"/>
+  <line x1="660" y1="294" x2="660" y2="330" class="sync"/>
+  <line x1="900" y1="294" x2="900" y2="330" class="sync"/>
+  <line x1="1140" y1="294" x2="1140" y2="330" class="sync"/>
+
+  <!-- Sistemas externos -->
+  <rect x="1280" y="330" width="260" height="36" rx="5" fill="#EDE5F4" stroke="#76558C" stroke-width="1.3"/>
+  <text x="1410" y="353" text-anchor="middle" class="section">SISTEMAS EXTERNOS</text>
+  <rect x="1280" y="382" width="260" height="74" rx="6" class="external"/>
+  <text x="1410" y="408" text-anchor="middle" class="label">Provedor de pagamentos</text>
+  <text x="1410" y="431" text-anchor="middle" class="small">Pix • cartão • boleto</text>
+  <text x="1410" y="449" text-anchor="middle" class="tiny">gateway + webhook assinado</text>
+  <path d="M1250 419 H1280" class="sync-bi"/>
+  <rect x="1280" y="474" width="260" height="58" rx="6" class="external"/>
+  <text x="1410" y="509" text-anchor="middle" class="label">Provedor de e-mail</text>
+
+  <!-- Eventos e baseline -->
+  <line x1="180" y1="580" x2="180" y2="606" class="event"/>
+  <line x1="420" y1="580" x2="420" y2="606" class="event"/>
+  <line x1="660" y1="580" x2="660" y2="606" class="event"/>
+  <line x1="900" y1="580" x2="900" y2="606" class="event"/>
+  <line x1="1140" y1="580" x2="1140" y2="606" class="event"/>
+  <rect x="70" y="606" width="1180" height="42" rx="5" class="event-bus"/>
+  <text x="660" y="632" text-anchor="middle" class="label" fill="#8A5A12">RabbitMQ + MassTransit | eventos • retry • DLQ</text>
+  <path d="M1250 627 H1265 V503 H1280" class="event"/>
+
+  <rect x="70" y="660" width="1180" height="34" rx="5" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2"/>
+  <text x="660" y="682" text-anchor="middle" class="small">Baseline de plataforma | contracts versionados • service defaults</text>
+
+  <!-- Observabilidade -->
+  <rect x="70" y="708" width="1180" height="98" rx="6" class="ops"/>
+  <text x="90" y="733" class="section">OBSERVABILIDADE E OPERAÇÃO</text>
+  <rect x="90" y="747" width="265" height="40" rx="5" fill="#FFFFFF" stroke="#9BB5AB"/>
+  <text x="222.5" y="772" text-anchor="middle" class="small">Serilog • CorrelationId • TenantId</text>
+  <rect x="375" y="747" width="265" height="40" rx="5" fill="#FFFFFF" stroke="#9BB5AB"/>
+  <text x="507.5" y="772" text-anchor="middle" class="small">OpenTelemetry Collector • Tempo</text>
+  <rect x="660" y="747" width="340" height="40" rx="5" fill="#FFFFFF" stroke="#9BB5AB"/>
+  <text x="830" y="772" text-anchor="middle" class="small">Prometheus • Grafana • Loki</text>
+  <rect x="1020" y="747" width="210" height="40" rx="5" fill="#FFFFFF" stroke="#9BB5AB"/>
+  <text x="1125" y="772" text-anchor="middle" class="small">Zabbix</text>
+
+  <!-- Garantias -->
+  <rect x="1280" y="552" width="260" height="254" rx="6" class="guarantee"/>
+  <text x="1410" y="580" text-anchor="middle" class="section">GARANTIAS TRANSVERSAIS</text>
+  <line x1="1302" y1="594" x2="1518" y2="594" stroke="#C7BFAF"/>
+  <text x="1303" y="621" class="small">• tenant_id em token, eventos,</text>
+  <text x="1317" y="642" class="small">logs e persistencia</text>
+  <text x="1303" y="672" class="small">• TLS e secrets externos</text>
+  <text x="1303" y="702" class="small">• health checks, HPA, PDB</text>
+  <text x="1317" y="723" class="small">e rolling update</text>
+  <text x="1303" y="753" class="small">• idempotência, Outbox/Inbox,</text>
+  <text x="1317" y="774" class="small">retry e DLQ</text>
+
+  <!-- Legenda -->
+  <text x="70" y="852" class="section">LEGENDA</text>
+  <line x1="160" y1="847" x2="230" y2="847" class="sync"/>
+  <text x="245" y="852" class="small">chamada síncrona</text>
+  <line x1="390" y1="847" x2="460" y2="847" class="event"/>
+  <text x="475" y="852" class="small">evento assíncrono</text>
+  <rect x="700" y="834" width="18" height="18" rx="3" class="context-head"/>
+  <text x="730" y="850" class="small">bounded context</text>
+  <rect x="900" y="834" width="18" height="18" rx="3" class="data"/>
+  <text x="930" y="850" class="small">persistência / projeção</text>
+  <rect x="1170" y="834" width="18" height="18" rx="3" class="external"/>
+  <text x="1200" y="850" class="small">sistema externo</text>
+</svg>

@@ -18,21 +18,21 @@ public static class TenantCatalog
             "Esperança",
             "Segurança alimentar, educação e resposta comunitária com prestação de contas aberta.",
             "tenant-esperanca",
-            "/images/seguranca-alimentar.jpg"),
+            "/images/hero-esperanca-solidaria.jpg"),
         new(
             "mare-limpa",
             "Maré Limpa",
             "Maré Limpa",
             "Recuperação costeira e educação ambiental conduzidas com a comunidade.",
             "tenant-mare",
-            "/images/mangue-vivo.jpg"),
+            "/images/hero-mare-limpa.jpg"),
         new(
             "futuro-em-rede",
             "Futuro em Rede",
             "Futuro em Rede",
             "Inclusão digital e formação tecnológica para ampliar autonomia e oportunidades.",
             "tenant-futuro",
-            "/images/inclusao-digital.jpg")
+            "/images/hero-futuro-em-rede.jpg")
     ];
 
     public static TenantBrand Resolve(string? tenantId) =>
