@@ -43,7 +43,7 @@
             <AuthorizeView>
                 <Authorized Context="auth">
                     <span class="user-name">@DisplayName(auth.User)</span>
-                    <form method="post" action="/auth/logout">
+                    <form method="post" action="/account/logout">
                         <AntiforgeryToken />
                         <button class="button button-quiet" type="submit">Sair</button>
                     </form>

@@ -9,6 +9,8 @@ kubernetes_version      = "1.35"
 node_vm_size            = "Standard_B4as_v2"
 node_min_count          = 1
 node_max_count          = 1
+workload_node_vm_size   = "Standard_B2as_v2"
+workload_node_count     = 1
 
 # Replace with the public /32 CIDR of each trusted operator workstation.
 # GitHub delivery uses AKS Run Command and does not require direct API exposure.

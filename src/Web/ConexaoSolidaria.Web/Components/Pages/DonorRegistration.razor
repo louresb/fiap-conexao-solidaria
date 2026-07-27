@@ -23,7 +23,7 @@
                 <span aria-hidden="true">✓</span>
                 <h2>Cadastro concluído</h2>
                 <p>Sua conta foi vinculada à @Tenant.Name. Entre para escolher uma campanha.</p>
-                <a class="button button-primary button-full" href="/auth/login?returnUrl=@Uri.EscapeDataString($"/?tenant={Tenant.Id}")">Entrar agora</a>
+                <a class="button button-primary button-full" href="/account/login?returnUrl=@Uri.EscapeDataString($"/?tenant={Tenant.Id}")">Entrar agora</a>
             </div>
         }
         else
@@ -73,7 +73,7 @@
                 }
                 <button class="button button-primary button-full" type="submit" disabled="@Submitting">@(Submitting ? "Criando conta..." : "Criar conta")</button>
             </EditForm>
-            <p class="access-security">Já tem uma conta? <a href="/auth/login?returnUrl=/">Entrar</a></p>
+            <p class="access-security">Já tem uma conta? <a href="/account/login?returnUrl=/">Entrar</a></p>
         }
     </div>
 </section>

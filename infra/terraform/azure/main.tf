@@ -175,6 +175,27 @@ resource "azurerm_kubernetes_cluster" "platform" {
   depends_on = [terraform_data.aks_cost_guard]
 }
 
+resource "azurerm_kubernetes_cluster_node_pool" "workloads" {
+  name                  = "apps"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.platform.id
+  vm_size               = var.workload_node_vm_size
+  node_count            = var.workload_node_count
+  mode                  = "User"
+  vnet_subnet_id        = azurerm_subnet.aks.id
+  max_pods              = 50
+  os_disk_size_gb       = 128
+  os_disk_type          = "Managed"
+  os_sku                = "Ubuntu"
+  orchestrator_version  = var.kubernetes_version
+
+  upgrade_settings {
+    max_surge                 = "10%"
+    undrainable_node_behavior = "Schedule"
+  }
+
+  tags = local.common_tags
+}
+
 resource "azurerm_role_assignment" "aks_acr_pull" {
   scope                            = azurerm_container_registry.platform.id
   role_definition_name             = "AcrPull"

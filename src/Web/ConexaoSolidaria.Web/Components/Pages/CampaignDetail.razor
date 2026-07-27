@@ -59,7 +59,7 @@ else
             @if (!User.IsAuthenticated)
             {
                 <p>Entre como doador para continuar com segurança.</p>
-                <a class="button button-primary button-full" href="/auth/login?returnUrl=@Uri.EscapeDataString($"/campanhas/{Id}?tenant={Tenant.Id}")">Entrar para doar</a>
+                <a class="button button-primary button-full" href="/account/login?returnUrl=@Uri.EscapeDataString($"/campanhas/{Id}?tenant={Tenant.Id}")">Entrar para doar</a>
                 <a class="text-link" href="/acesso">Ainda não tenho cadastro</a>
             }
             else if (!User.IsDonor)
@@ -215,17 +215,19 @@ else
             return;
         }
 
+        var paymentId = Payment.Id;
+        var donationId = Payment.DonationId;
         var totalBeforeConfirmation = Campaign?.TotalRaised;
         Submitting = true;
         Error = string.Empty;
         try
         {
-            await Api.ConfirmSandboxPaymentAsync(Payment.Id, CancellationToken.None);
+            await Api.ConfirmSandboxPaymentAsync(paymentId, CancellationToken.None);
 
             for (var attempt = 0; attempt < 24; attempt++)
             {
                 await Task.Delay(500);
-                Payment = await Api.GetPaymentByDonationAsync(Payment.DonationId, CancellationToken.None);
+                Payment = await Api.GetPaymentByDonationAsync(donationId, CancellationToken.None);
                 var campaigns = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
                 Campaign = campaigns.Items.FirstOrDefault(item => item.Id == Id);
 

@@ -5,6 +5,6 @@
     {
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var returnUrl = string.IsNullOrWhiteSpace(relative) ? "/" : $"/{relative}";
-        Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        Navigation.NavigateTo($"/account/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
     }
 }
