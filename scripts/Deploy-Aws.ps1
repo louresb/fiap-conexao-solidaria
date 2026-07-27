@@ -73,7 +73,7 @@ if ($aiEnabled) {
 }
 
 $outputs = (Invoke-Checked {
-    terraform -chdir=$terraformPath output -json
+    terraform "-chdir=$terraformPath" output -json
 } "Nao foi possivel ler os outputs da AWS. Aplique o Terraform com enable_eks=true primeiro.") |
     Out-String |
     ConvertFrom-Json

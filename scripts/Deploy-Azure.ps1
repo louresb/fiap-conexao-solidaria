@@ -65,7 +65,7 @@ if ($aiEnabled) {
 }
 
 $outputs = (Invoke-Checked {
-    terraform -chdir=$terraformPath output -json
+    terraform "-chdir=$terraformPath" output -json
 } "Nao foi possivel ler os outputs da Azure. Aplique o Terraform primeiro.") | Out-String | ConvertFrom-Json
 
 $resourceGroup = $outputs.resource_group_name.value

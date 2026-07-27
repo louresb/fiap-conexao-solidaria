@@ -30,7 +30,7 @@ function Invoke-Checked([scriptblock]$Command, [string]$FailureMessage) {
 
 function Read-TerraformOutputs([string]$Directory) {
     $json = Invoke-Checked {
-        terraform -chdir=$Directory output -json
+        terraform "-chdir=$Directory" output -json
     } "Nao foi possivel ler os outputs Terraform em '$Directory'. Aplique a infraestrutura primeiro."
 
     return ($json | Out-String | ConvertFrom-Json)
