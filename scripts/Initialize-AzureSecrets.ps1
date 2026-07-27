@@ -97,6 +97,7 @@ $mongoPassword = Get-OrCreateSecret $vaultName "mongo-password"
 $null = Get-OrCreateSecret $vaultName "keycloak-admin-password"
 $null = Get-OrCreateSecret $vaultName "keycloak-client-secret" 48
 $null = Get-OrCreateSecret $vaultName "grafana-admin-password"
+$null = Get-OrCreateSecret $vaultName "zabbix-admin-password"
 $null = Get-OrCreateSecret $vaultName "zabbix-db-password"
 $null = Get-OrCreateSecret $vaultName "payment-webhook-secret" 48
 $null = Get-OrCreateSecret $vaultName "demo-manager-password"

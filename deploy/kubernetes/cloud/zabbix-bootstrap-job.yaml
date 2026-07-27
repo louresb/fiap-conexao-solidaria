@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: conexao-solidaria-zabbix-bootstrap
+  labels:
+    app.kubernetes.io/name: zabbix-bootstrap
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 420
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: zabbix-bootstrap
+        app.kubernetes.io/component: observability
+        app.kubernetes.io/part-of: conexao-solidaria
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bootstrap
+          image: mcr.microsoft.com/powershell:7.5-alpine-3.20
+          imagePullPolicy: IfNotPresent
+          command: ["pwsh"]
+          args:
+            - -NoLogo
+            - -NoProfile
+            - -File
+            - /bootstrap/Initialize-Zabbix.ps1
+            - -BaseUrl
+            - http://conexao-solidaria-zabbix-web:8080
+            - -GatewayUrl
+            - http://conexao-solidaria-gateway:8080
+            - -WebUrl
+            - http://conexao-solidaria-web:80
+            - -AdminPassword
+            - $(ZABBIX_ADMIN_PASSWORD)
+          env:
+            - name: ZABBIX_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: zabbix-admin-password
+            - name: POWERSHELL_TELEMETRY_OPTOUT
+              value: "1"
+            - name: DOTNET_CLI_HOME
+              value: /tmp
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits: { cpu: 200m, memory: 192Mi }
+          volumeMounts:
+            - name: bootstrap-script
+              mountPath: /bootstrap
+              readOnly: true
+            - name: temp
+              mountPath: /tmp
+      volumes:
+        - name: bootstrap-script
+          configMap:
+            name: conexao-solidaria-zabbix-bootstrap
+        - name: temp
+          emptyDir:
+            sizeLimit: 64Mi

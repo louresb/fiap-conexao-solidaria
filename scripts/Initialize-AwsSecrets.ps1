@@ -85,6 +85,7 @@ $runtime = [ordered]@{
     keycloakAdminPassword = Get-OrCreate "keycloakAdminPassword"
     keycloakClientSecret  = Get-OrCreate "keycloakClientSecret" 48
     grafanaAdminPassword  = Get-OrCreate "grafanaAdminPassword"
+    zabbixAdminPassword   = Get-OrCreate "zabbixAdminPassword"
     zabbixDbPassword      = Get-OrCreate "zabbixDbPassword"
     paymentWebhookSecret  = Get-OrCreate "paymentWebhookSecret" 48
     demoManagerPassword   = Get-OrCreate "demoManagerPassword"
