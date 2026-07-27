@@ -11,8 +11,8 @@ PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometh
 O perfil Azure cria AKS Free, ACR Basic, Key Vault, Log Analytics, rede, IP público com hostname Azure e identidade federada do GitHub. Segredos são sincronizados pelo Secrets Store CSI.
 
 ```powershell
+./scripts/Initialize-TerraformBackend.ps1 -Provider azure -AzureSuffix <sufixo-unico> -ExpectedAzureSubscriptionId <subscription-id> -ConfirmCloudMutation
 cd infra/terraform/azure
-terraform init
 terraform plan -out azure.tfplan
 terraform apply azure.tfplan
 cd ../../..
@@ -32,6 +32,8 @@ terraform -chdir=infra/terraform/azure destroy
 Com `enable_eks=false`, Terraform cria somente os nove repositórios ECR e as roles OIDC de publicação. EKS, VPC, NAT, nós, EBS CSI e Secrets Manager exigem habilitação e confirmação explícitas no `terraform.tfvars`.
 
 ```powershell
+aws login --profile conexao-solidaria-terraform
+./scripts/Initialize-TerraformBackend.ps1 -Provider aws -AwsProfile conexao-solidaria-terraform -ExpectedAwsAccountId <account-id> -ConfirmCloudMutation
 terraform -chdir=infra/terraform/aws plan
 terraform -chdir=infra/terraform/aws apply
 .\scripts\Publish-CloudImages.ps1 -Provider aws -ImageTag <sha-ou-tag>
@@ -39,6 +41,8 @@ terraform -chdir=infra/terraform/aws apply
 ```
 
 O bootstrap instala Secrets Store CSI/ASCP, `ingress-nginx`, NLB e `cert-manager`. Sem `-AppHost`, usa um hostname temporário `sslip.io`; para endereço próprio, aponte o DNS ao hostname do NLB e passe `-AppHost doacoes.exemplo.org`.
+
+Os backends remotos armazenam estado criptografado e versionado em Azure Blob e S3. O Blob mantém retenção de exclusão por 30 dias; o S3 mantém versionamento e bloqueia transporte sem TLS. A AWS usa o lockfile nativo do backend S3; a Azure usa leases do Blob Storage. Os arquivos HCL gerados permanecem em `.local/terraform-backends` e nunca são versionados.
 
 Para encerrar o ambiente pago:
 
