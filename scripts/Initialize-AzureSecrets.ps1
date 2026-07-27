@@ -1,5 +1,6 @@
 param(
     [string]$TerraformDirectory = "infra/terraform/azure",
+    [string]$AiApiKey,
     [switch]$Rotate
 )
 
@@ -84,7 +85,12 @@ $null = Get-OrCreateSecret $vaultName "payment-webhook-secret" 48
 $null = Get-OrCreateSecret $vaultName "demo-manager-password"
 $null = Get-OrCreateSecret $vaultName "demo-donor-password"
 $null = Get-OrCreateSecret $vaultName "demo-admin-password"
-$null = Get-OrCreateSecret $vaultName "ai-api-key" 48
+if ([string]::IsNullOrWhiteSpace($AiApiKey)) {
+    $null = Get-OrCreateSecret $vaultName "ai-api-key" 48
+}
+else {
+    Set-KeyVaultSecret $vaultName "ai-api-key" $AiApiKey
+}
 
 $derivedSecrets = [ordered]@{
     "identity-db-connection"  = "Host=conexao-solidaria-postgres;Port=5432;Database=conexao_identity;Username=conexao;Password=$postgresPassword"

@@ -3,6 +3,11 @@ param(
     [string]$AwsProfile = "default",
     [string]$ImageTag = "latest",
     [string]$AppHost,
+    [string]$AiEndpoint,
+    [string]$AiModel,
+    [ValidateSet("api-key", "Authorization")]
+    [string]$AiApiKeyHeader = "api-key",
+    [string]$AiApiKey,
     [switch]$SkipSecretBootstrap,
     [switch]$SkipObservability
 )
@@ -49,6 +54,24 @@ $null = Invoke-Checked { aws sts get-caller-identity --profile $AwsProfile --out
 $null = Invoke-Checked { helm version --short } "Helm 3 nao esta disponivel."
 $null = Invoke-Checked { kubectl version --client=true } "kubectl nao esta disponivel."
 
+$aiEnabled = -not [string]::IsNullOrWhiteSpace($AiEndpoint) -or
+    -not [string]::IsNullOrWhiteSpace($AiModel) -or
+    -not [string]::IsNullOrWhiteSpace($AiApiKey)
+if ($aiEnabled) {
+    $aiUri = $null
+    if ([string]::IsNullOrWhiteSpace($AiEndpoint) -or
+        -not [Uri]::TryCreate($AiEndpoint, [UriKind]::Absolute, [ref]$aiUri) -or
+        $aiUri.Scheme -ne [Uri]::UriSchemeHttps) {
+        throw "AiEndpoint deve ser um endpoint HTTPS absoluto."
+    }
+    if ([string]::IsNullOrWhiteSpace($AiModel)) {
+        throw "AiModel e obrigatorio quando a geracao fundamentada esta habilitada."
+    }
+    if (-not $SkipSecretBootstrap -and [string]::IsNullOrWhiteSpace($AiApiKey)) {
+        throw "Informe AiApiKey ou use SkipSecretBootstrap quando o segredo ja existir no Secrets Manager."
+    }
+}
+
 $outputs = (Invoke-Checked {
     terraform -chdir=$terraformPath output -json
 } "Nao foi possivel ler os outputs da AWS. Aplique o Terraform com enable_eks=true primeiro.") |
@@ -66,7 +89,8 @@ if ([string]::IsNullOrWhiteSpace($clusterName) -or [string]::IsNullOrWhiteSpace(
 if (-not $SkipSecretBootstrap) {
     & "$PSScriptRoot/Initialize-AwsSecrets.ps1" `
         -TerraformDirectory $TerraformDirectory `
-        -AwsProfile $AwsProfile
+        -AwsProfile $AwsProfile `
+        -AiApiKey $AiApiKey
 }
 
 $null = Invoke-Checked {
@@ -252,16 +276,28 @@ if (-not $SkipObservability) {
     $null = Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/zabbix.yaml } "Falha ao aplicar Zabbix."
 }
 
+$helmArguments = @(
+    "upgrade", "--install", "conexao-solidaria", "deploy/helm/conexao-solidaria",
+    "--namespace", $namespace,
+    "--values", "deploy/helm/conexao-solidaria/values.aws.yaml",
+    "--set-string", "image.registry=$registry",
+    "--set-string", "image.tag=$ImageTag",
+    "--set-string", "ingress.host=$AppHost",
+    "--wait",
+    "--atomic",
+    "--timeout", "10m"
+)
+if ($aiEnabled) {
+    $helmArguments += @(
+        "--set-string", "components.knowledge-api.env.AI__Enabled=true",
+        "--set-string", "components.knowledge-api.env.AI__Endpoint=$AiEndpoint",
+        "--set-string", "components.knowledge-api.env.AI__Model=$AiModel",
+        "--set-string", "components.knowledge-api.env.AI__ApiKeyHeader=$AiApiKeyHeader"
+    )
+}
+
 $null = Invoke-Checked {
-    helm upgrade --install conexao-solidaria deploy/helm/conexao-solidaria `
-        --namespace $namespace `
-        --values deploy/helm/conexao-solidaria/values.aws.yaml `
-        --set-string "image.registry=$registry" `
-        --set-string "image.tag=$ImageTag" `
-        --set-string "ingress.host=$AppHost" `
-        --wait `
-        --atomic `
-        --timeout 10m
+    helm @helmArguments
 } "Nao foi possivel publicar a aplicacao no EKS."
 
 $null = Invoke-Checked {

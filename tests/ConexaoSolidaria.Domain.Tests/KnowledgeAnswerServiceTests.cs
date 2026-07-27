@@ -71,6 +71,25 @@ public sealed class KnowledgeAnswerServiceTests : IDisposable
         Assert.Null(answer.Model);
     }
 
+    [Theory]
+    [InlineData("Resposta sem citacao.")]
+    [InlineData("Resposta baseada em uma fonte inexistente [documento-inventado].")]
+    public async Task AnswerAsync_rejects_generated_answers_without_retrieved_citations(string generatedAnswer)
+    {
+        var generator = new StubGenerator(new GroundedGenerationResult(generatedAnswer, "demo-model"));
+        var service = CreateService(generator);
+
+        var answer = await service.AnswerAsync(
+            "esperanca-solidaria",
+            "Como a ONG presta contas das doacoes?",
+            "corr-5",
+            CancellationToken.None);
+
+        Assert.True(answer.Answered);
+        Assert.Equal("extractive", answer.AnswerMode);
+        Assert.Null(answer.Model);
+    }
+
     private KnowledgeAnswerService CreateService(IGroundedAnswerGenerator? generator = null)
     {
         var tenantPath = Path.Combine(_root, "esperanca-solidaria");

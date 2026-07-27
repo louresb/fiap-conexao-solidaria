@@ -1,6 +1,7 @@
 param(
     [string]$TerraformDirectory = "infra/terraform/aws",
     [string]$AwsProfile = "default",
+    [string]$AiApiKey,
     [switch]$Rotate
 )
 
@@ -59,6 +60,12 @@ $postgresPassword = Get-OrCreate "postgresPassword"
 $rabbitPassword = Get-OrCreate "rabbitmqPassword"
 $redisPassword = Get-OrCreate "redisPassword"
 $mongoPassword = Get-OrCreate "mongoPassword"
+$resolvedAiApiKey = if ([string]::IsNullOrWhiteSpace($AiApiKey)) {
+    Get-OrCreate "aiApiKey" 48
+}
+else {
+    $AiApiKey
+}
 
 $runtime = [ordered]@{
     postgresPassword      = $postgresPassword
@@ -73,7 +80,7 @@ $runtime = [ordered]@{
     demoManagerPassword   = Get-OrCreate "demoManagerPassword"
     demoDonorPassword     = Get-OrCreate "demoDonorPassword"
     demoAdminPassword     = Get-OrCreate "demoAdminPassword"
-    aiApiKey              = Get-OrCreate "aiApiKey" 48
+    aiApiKey              = $resolvedAiApiKey
     identityDbConnection  = "Host=conexao-solidaria-postgres;Port=5432;Database=conexao_identity;Username=conexao;Password=$postgresPassword"
     campaignsDbConnection = "Host=conexao-solidaria-postgres;Port=5432;Database=conexao_campaigns;Username=conexao;Password=$postgresPassword"
     donationsDbConnection = "Host=conexao-solidaria-postgres;Port=5432;Database=conexao_donations;Username=conexao;Password=$postgresPassword"

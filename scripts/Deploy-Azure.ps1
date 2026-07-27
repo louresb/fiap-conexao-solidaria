@@ -1,6 +1,11 @@
 param(
     [string]$TerraformDirectory = "infra/terraform/azure",
     [string]$ImageTag = "latest",
+    [string]$AiEndpoint,
+    [string]$AiModel,
+    [ValidateSet("api-key", "Authorization")]
+    [string]$AiApiKeyHeader = "api-key",
+    [string]$AiApiKey,
     [switch]$SkipSecretBootstrap,
     [switch]$SkipObservability
 )
@@ -41,6 +46,24 @@ $null = Invoke-Checked { az account show --output none --only-show-errors } `
 $null = Invoke-Checked { docker info --format '{{.ServerVersion}}' } `
     "Docker Desktop nao esta disponivel para renderizar o chart Helm."
 
+$aiEnabled = -not [string]::IsNullOrWhiteSpace($AiEndpoint) -or
+    -not [string]::IsNullOrWhiteSpace($AiModel) -or
+    -not [string]::IsNullOrWhiteSpace($AiApiKey)
+if ($aiEnabled) {
+    $aiUri = $null
+    if ([string]::IsNullOrWhiteSpace($AiEndpoint) -or
+        -not [Uri]::TryCreate($AiEndpoint, [UriKind]::Absolute, [ref]$aiUri) -or
+        $aiUri.Scheme -ne [Uri]::UriSchemeHttps) {
+        throw "AiEndpoint deve ser um endpoint HTTPS absoluto."
+    }
+    if ([string]::IsNullOrWhiteSpace($AiModel)) {
+        throw "AiModel e obrigatorio quando a geracao fundamentada esta habilitada."
+    }
+    if (-not $SkipSecretBootstrap -and [string]::IsNullOrWhiteSpace($AiApiKey)) {
+        throw "Informe AiApiKey ou use SkipSecretBootstrap quando o segredo ja existir no Key Vault."
+    }
+}
+
 $outputs = (Invoke-Checked {
     terraform -chdir=$terraformPath output -json
 } "Nao foi possivel ler os outputs da Azure. Aplique o Terraform primeiro.") | Out-String | ConvertFrom-Json
@@ -56,7 +79,9 @@ $publicIpName = $outputs.ingress_public_ip_name.value
 $publicAppUrl = "https://$hostname"
 
 if (-not $SkipSecretBootstrap) {
-    & "$PSScriptRoot/Initialize-AzureSecrets.ps1" -TerraformDirectory $TerraformDirectory
+    & "$PSScriptRoot/Initialize-AzureSecrets.ps1" `
+        -TerraformDirectory $TerraformDirectory `
+        -AiApiKey $AiApiKey
 }
 
 $null = Invoke-Checked {
@@ -166,18 +191,26 @@ if (-not $SkipObservability) {
     $null = Invoke-Checked { kubectl apply -n $namespace -f deploy/kubernetes/local/zabbix.yaml } "Falha ao aplicar Zabbix."
 }
 
-$renderedChart = docker run --rm `
-    -v "${root}:/src" `
-    -w /src `
-    alpine/helm:3.18.4 `
-    template conexao-solidaria deploy/helm/conexao-solidaria `
-    -f deploy/helm/conexao-solidaria/values.azure.yaml `
-    --set-string "image.registry=$registryName.azurecr.io" `
-    --set-string "image.tag=$ImageTag" `
-    --set-string "ingress.host=$hostname" `
-    --set-string "azureRouting.publicIpName=$publicIpName" `
-    --set-string "azureRouting.publicIpResourceGroup=$resourceGroup" `
-    --namespace $namespace
+$helmArguments = @(
+    "template", "conexao-solidaria", "deploy/helm/conexao-solidaria",
+    "-f", "deploy/helm/conexao-solidaria/values.azure.yaml",
+    "--set-string", "image.registry=$registryName.azurecr.io",
+    "--set-string", "image.tag=$ImageTag",
+    "--set-string", "ingress.host=$hostname",
+    "--set-string", "azureRouting.publicIpName=$publicIpName",
+    "--set-string", "azureRouting.publicIpResourceGroup=$resourceGroup",
+    "--namespace", $namespace
+)
+if ($aiEnabled) {
+    $helmArguments += @(
+        "--set-string", "components.knowledge-api.env.AI__Enabled=true",
+        "--set-string", "components.knowledge-api.env.AI__Endpoint=$AiEndpoint",
+        "--set-string", "components.knowledge-api.env.AI__Model=$AiModel",
+        "--set-string", "components.knowledge-api.env.AI__ApiKeyHeader=$AiApiKeyHeader"
+    )
+}
+
+$renderedChart = docker run --rm -v "${root}:/src" -w /src alpine/helm:3.18.4 @helmArguments
 Apply-Generated $renderedChart "Nao foi possivel aplicar o chart da aplicacao."
 
 $applicationWorkloads = @(

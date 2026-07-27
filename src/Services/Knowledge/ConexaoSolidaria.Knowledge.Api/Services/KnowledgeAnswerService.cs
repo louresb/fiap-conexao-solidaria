@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 using ConexaoSolidaria.Contracts.Knowledge;
 using ConexaoSolidaria.Knowledge.Api.Retrieval;
 
@@ -10,6 +12,11 @@ public sealed class KnowledgeAnswerService(
     IGroundedAnswerGenerator generator,
     ILogger<KnowledgeAnswerService> logger)
 {
+    private static readonly Regex CitationPattern = new(
+        @"\[(?<documentId>[a-zA-Z0-9._-]+)\]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(100));
+
     public KnowledgeAnswerService(IKnowledgeRetriever retriever)
         : this(retriever, DisabledGroundedAnswerGenerator.Instance, NullLogger<KnowledgeAnswerService>.Instance)
     {
@@ -37,7 +44,7 @@ public sealed class KnowledgeAnswerService(
         try
         {
             var generated = await generator.GenerateAsync(question, sources, cancellationToken);
-            if (generated is not null)
+            if (generated is not null && HasValidCitations(generated.Answer, sources))
             {
                 return new KnowledgeAnswerDto(
                     generated.Answer,
@@ -46,6 +53,15 @@ public sealed class KnowledgeAnswerService(
                     correlationId,
                     "grounded-generation",
                     generated.Model);
+            }
+
+            if (generated is not null)
+            {
+                logger.LogWarning(
+                    "Grounded generation returned missing or unknown citations; using extractive fallback. " +
+                    "TenantId={TenantId} CorrelationId={CorrelationId}",
+                    tenantId,
+                    correlationId);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -58,6 +74,24 @@ public sealed class KnowledgeAnswerService(
         }
 
         return CreateExtractiveAnswer(sources, correlationId);
+    }
+
+    private static bool HasValidCitations(
+        string answer,
+        IReadOnlyList<KnowledgeSourceDto> sources)
+    {
+        var citations = CitationPattern.Matches(answer)
+            .Select(match => match.Groups["documentId"].Value)
+            .ToArray();
+        if (citations.Length == 0)
+        {
+            return false;
+        }
+
+        var knownDocuments = sources
+            .Select(source => source.DocumentId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return citations.All(knownDocuments.Contains);
     }
 
     private static KnowledgeAnswerDto CreateExtractiveAnswer(
