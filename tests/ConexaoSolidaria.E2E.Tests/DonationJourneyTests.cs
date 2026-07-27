@@ -35,11 +35,11 @@ public sealed class DonationJourneyTests : PageTest
         await Page.Locator("#kc-login").ClickAsync();
 
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Sair" })).ToBeVisibleAsync();
-        await Page.WaitForTimeoutAsync(1_000);
+        await WaitForInteractiveAppAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Esperança Solidária" })).ToBeVisibleAsync();
         await Page.Locator(".campaign-card h3 a").First.ClickAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Faça parte desta campanha" })).ToBeVisibleAsync();
-        await Page.WaitForTimeoutAsync(1_000);
+        await WaitForInteractiveAppAsync();
 
         var raisedBefore = await Page.Locator(".detail-progress strong").TextContentAsync();
         await Page.Locator(".amount-options button").Nth(1).ClickAsync(new() { Force = true });
@@ -68,6 +68,7 @@ public sealed class DonationJourneyTests : PageTest
         EnsureConfigured();
 
         await Page.GotoAsync("/");
+        await WaitForInteractiveAppAsync();
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Esperança Solidária" })).ToBeVisibleAsync();
         await Page.GetByLabel("Buscar campanha").FillAsync("mesa");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Buscar" }).ClickAsync();
@@ -92,7 +93,7 @@ public sealed class DonationJourneyTests : PageTest
         var password = "SolidariaE2e2026";
 
         await Page.GotoAsync("/cadastro");
-        await Page.WaitForTimeoutAsync(1_000);
+        await WaitForInteractiveAppAsync();
         await Page.GetByLabel("Nome completo").FillAsync("Doador E2E Conexão Solidária");
         await Page.GetByLabel("E-mail").FillAsync(email);
         await Page.GetByLabel("CPF").FillAsync(CreateValidCpf());
@@ -132,7 +133,7 @@ public sealed class DonationJourneyTests : PageTest
 
         await Page.GotoAsync("/gestao/campanhas/nova");
         await Expect(Page.Locator(".editor-page form")).ToBeVisibleAsync();
-        await Page.WaitForTimeoutAsync(1_000);
+        await WaitForInteractiveAppAsync();
         var campaignTitle = $"Campanha E2E {DateTime.UtcNow:MMddHHmmss}";
         await Page.Locator("#title").FillAsync(campaignTitle);
         await Page.Locator("#description").FillAsync("Campanha criada automaticamente para validar a jornada de gestao.");
@@ -164,6 +165,15 @@ public sealed class DonationJourneyTests : PageTest
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Visão operacional da plataforma." })).ToBeVisibleAsync();
         await Expect(Page.Locator(".tenant-admin-list").GetByText("Esperança Solidária", new() { Exact = true })).ToBeVisibleAsync();
         await Expect(Page.GetByText("Disponível")).ToHaveCountAsync(6);
+    }
+
+    private async Task WaitForInteractiveAppAsync()
+    {
+        await Page.Locator(".site-shell[data-interactive='ready']").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Attached,
+            Timeout = 15_000
+        });
     }
 
     private static void EnsureConfigured()
