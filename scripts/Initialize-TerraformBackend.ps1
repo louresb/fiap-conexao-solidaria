@@ -3,7 +3,7 @@ param(
     [ValidateSet("azure", "aws")]
     [string]$Provider,
     [string]$Environment = "demo",
-    [string]$AzureLocation = "westcentralus",
+    [string]$AzureLocation = "brazilsouth",
     [string]$AzureSuffix = "blouresfiap26",
     [string]$ExpectedAzureSubscriptionId,
     [string]$AwsProfile = "conexao-solidaria-terraform",
@@ -69,21 +69,31 @@ function Initialize-AzureBackend {
     $container = "tfstate"
     $key = "conexao-solidaria/$Environment/azure.tfstate"
 
-    $null = Invoke-Checked {
-        az group create `
+    $resourceGroupExists = (Invoke-Checked {
+        az group exists `
             --name $resourceGroup `
-            --location $AzureLocation `
-            --tags project=conexao-solidaria purpose=terraform-state managed-by=bootstrap `
-            --output none `
+            --output tsv `
             --only-show-errors
-    } "Nao foi possivel criar o Resource Group do estado Terraform."
+    } "Nao foi possivel consultar o Resource Group do estado Terraform." | Out-String).Trim()
+    if ($resourceGroupExists -ne "true") {
+        $null = Invoke-Checked {
+            az group create `
+                --name $resourceGroup `
+                --location $AzureLocation `
+                --tags project=conexao-solidaria purpose=terraform-state managed-by=bootstrap `
+                --output none `
+                --only-show-errors
+        } "Nao foi possivel criar o Resource Group do estado Terraform."
+    }
 
-    az storage account show `
-        --name $storageAccount `
-        --resource-group $resourceGroup `
-        --output none `
-        --only-show-errors 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    $existingStorageAccount = (Invoke-Checked {
+        az storage account list `
+            --resource-group $resourceGroup `
+            --query "[?name=='$storageAccount'].name" `
+            --output tsv `
+            --only-show-errors
+    } "Nao foi possivel consultar os Storage Accounts do Resource Group." | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($existingStorageAccount)) {
         $availability = (Invoke-Checked {
             az storage account check-name --name $storageAccount --query nameAvailable --output tsv --only-show-errors
         } "Nao foi possivel validar o nome do Storage Account." | Out-String).Trim()
@@ -129,16 +139,16 @@ function Initialize-AzureBackend {
             --only-show-errors
     } "Nao foi possivel consultar o Storage Account." | Out-String).Trim()
 
-    $existingAssignment = (Invoke-Checked {
+    $existingAssignments = (Invoke-Checked {
         az role assignment list `
             --assignee-object-id $principalId `
             --role "Storage Blob Data Contributor" `
             --scope $storageScope `
-            --query "length(@)" `
+            --query "[].id" `
             --output tsv `
             --only-show-errors
     } "Nao foi possivel consultar o acesso ao Storage Account." | Out-String).Trim()
-    if ($existingAssignment -eq "0") {
+    if ([string]::IsNullOrWhiteSpace($existingAssignments)) {
         $null = Invoke-Checked {
             az role assignment create `
                 --assignee-object-id $principalId `
@@ -152,13 +162,19 @@ function Initialize-AzureBackend {
 
     $containerCreated = $false
     for ($attempt = 1; $attempt -le 12 -and -not $containerCreated; $attempt++) {
-        az storage container create `
-            --name $container `
-            --account-name $storageAccount `
-            --auth-mode login `
-            --output none `
-            --only-show-errors 2>$null
-        $containerCreated = $LASTEXITCODE -eq 0
+        try {
+            az storage container create `
+                --name $container `
+                --account-name $storageAccount `
+                --auth-mode login `
+                --output none `
+                --only-show-errors 2>$null
+            $containerCreated = $LASTEXITCODE -eq 0
+        }
+        catch {
+            $containerCreated = $false
+        }
+
         if (-not $containerCreated) {
             Start-Sleep -Seconds 5
         }
@@ -194,8 +210,13 @@ function Initialize-AwsBackend {
     $bucket = "conexao-solidaria-tfstate-$accountId-$AwsRegion"
     $key = "conexao-solidaria/$Environment/aws.tfstate"
 
-    aws s3api head-bucket --bucket $bucket --profile $AwsProfile 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    $bucketExists = (Invoke-Checked {
+        aws s3api list-buckets `
+            --profile $AwsProfile `
+            --query "contains(Buckets[].Name, '$bucket')" `
+            --output text
+    } "Nao foi possivel consultar os buckets S3 da conta." | Out-String).Trim()
+    if ($bucketExists -ne "True") {
         if ($AwsRegion -eq "us-east-1") {
             $null = Invoke-Checked {
                 aws s3api create-bucket --bucket $bucket --region $AwsRegion --profile $AwsProfile
@@ -225,11 +246,20 @@ function Initialize-AwsBackend {
             --versioning-configuration Status=Enabled `
             --profile $AwsProfile
     } "Nao foi possivel habilitar versionamento no bucket."
+    $encryptionPath = Join-Path $stateDirectory "aws-$Environment-encryption.json"
+    $encryption = @{
+        Rules = @(
+            @{
+                ApplyServerSideEncryptionByDefault = @{ SSEAlgorithm = "AES256" }
+                BucketKeyEnabled                   = $true
+            }
+        )
+    } | ConvertTo-Json -Depth 8
+    [System.IO.File]::WriteAllText($encryptionPath, $encryption, [System.Text.UTF8Encoding]::new($false))
     $null = Invoke-Checked {
         aws s3api put-bucket-encryption `
             --bucket $bucket `
-            --server-side-encryption-configuration `
-                '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"},"BucketKeyEnabled":true}]}' `
+            --server-side-encryption-configuration "file://$($encryptionPath.Replace('\', '/'))" `
             --profile $AwsProfile
     } "Nao foi possivel habilitar criptografia no bucket."
     $null = Invoke-Checked {

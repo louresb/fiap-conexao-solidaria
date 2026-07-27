@@ -11,7 +11,7 @@ PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometh
 O perfil Azure cria AKS Free, ACR Basic, Key Vault, Log Analytics, rede, IP público com hostname Azure e identidade federada do GitHub. Segredos são sincronizados pelo Secrets Store CSI.
 
 ```powershell
-./scripts/Initialize-TerraformBackend.ps1 -Provider azure -AzureSuffix <sufixo-unico> -ExpectedAzureSubscriptionId <subscription-id> -ConfirmCloudMutation
+./scripts/Initialize-TerraformBackend.ps1 -Provider azure -AzureLocation brazilsouth -AzureSuffix <sufixo-unico> -ExpectedAzureSubscriptionId <subscription-id> -ConfirmCloudMutation
 cd infra/terraform/azure
 terraform plan -var="acknowledge_aks_costs=true" -out azure.tfplan
 terraform apply azure.tfplan
@@ -45,6 +45,7 @@ terraform -chdir=infra/terraform/aws apply
 O bootstrap instala Secrets Store CSI/ASCP, `ingress-nginx`, NLB e `cert-manager`. Sem `-AppHost`, usa um hostname temporário `sslip.io`; para endereço próprio, aponte o DNS ao hostname do NLB e passe `-AppHost doacoes.exemplo.org`.
 
 Os backends remotos armazenam estado criptografado e versionado em Azure Blob e S3. O Blob mantém retenção de exclusão por 30 dias; o S3 mantém versionamento e bloqueia transporte sem TLS. A AWS usa o lockfile nativo do backend S3; a Azure usa leases do Blob Storage. Os arquivos HCL gerados permanecem em `.local/terraform-backends` e nunca são versionados.
+O backend Azure pode residir em uma região diferente do AKS; no ambiente acadêmico ele usa `Brazil South`, aceita pela política da assinatura, sem alterar a portabilidade do workload.
 
 Para encerrar o ambiente pago:
 
