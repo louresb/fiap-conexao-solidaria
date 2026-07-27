@@ -2,6 +2,20 @@
 
 A plataforma usa um único chart Helm e imagens independentes para os nove workloads. Azure e AWS mantêm dados separados; a portabilidade não implica replicação active-active entre provedores.
 
+## Ambientes validados
+
+Os dois perfis foram provisionados e verificados em 27/07/2026 com a mesma imagem imutável e o mesmo chart Helm.
+
+| Evidência | Azure | AWS |
+|---|---|---|
+| Produto | [AKS público](https://conexao-solidaria-blouresfiap26.chilecentral.cloudapp.azure.com) | [EKS público](https://100.27.143.29.sslip.io) |
+| Kubernetes | `aks-conexao-solidaria-production`, Helm revision 9 | `conexao-solidaria-demo`, Helm revision 6 |
+| Registry privado | ACR `conexaosolidariablouresfiap26` | ECR com nove repositórios `conexao-solidaria-*` |
+| Readiness | HTTP 200 para Web, Gateway e Keycloak | HTTP 200 para Web, Gateway e Keycloak |
+| Knowledge API | `grounded-generation` com Azure AI e fontes | fallback `extractive` com as mesmas fontes |
+
+A execução canônica da [pipeline Platform CI/CD](https://github.com/louresb/fiap-conexao-solidaria/actions/runs/30258605679) aprovou build, testes, E2E, Terraform, Helm, scans, nove imagens, espelhamento para ACR/ECR e deploy no AKS. O deploy EKS foi aplicado pelo mesmo artefato e validado separadamente durante a janela AWS.
+
 ## Dependências
 
 PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometheus, Grafana e Zabbix são executados no cluster nesta versão. PostgreSQL, RabbitMQ, MongoDB e OpenSearch preservam dados em PVCs da StorageClass padrão. Cache e telemetria usam `emptyDir` no perfil cloud para respeitar os limites de disco do nó econômico; podem perder histórico quando um pod é recriado. A evolução para serviços gerenciados preserva os contratos de conexão, mensageria e observabilidade.
