@@ -33,7 +33,7 @@ $null = Invoke-Checked { aws sts get-caller-identity --profile $AwsProfile --out
     "AWS CLI nao esta autenticada no profile '$AwsProfile'. Execute 'aws login --profile $AwsProfile'."
 
 $secretName = (Invoke-Checked {
-    terraform -chdir=$terraformPath output -raw runtime_secret_name
+    terraform "-chdir=$terraformPath" output -raw runtime_secret_name
 } "Nao foi possivel obter o segredo de runtime. Aplique o Terraform AWS com enable_eks=true primeiro.").Trim()
 
 $existing = $null
@@ -109,8 +109,7 @@ try {
         aws secretsmanager put-secret-value `
             --secret-id $secretName `
             --secret-string "file://$temporaryPath" `
-            --profile $AwsProfile `
-            --output none
+            --profile $AwsProfile
     } "Nao foi possivel gravar o segredo de runtime no AWS Secrets Manager."
 }
 finally {

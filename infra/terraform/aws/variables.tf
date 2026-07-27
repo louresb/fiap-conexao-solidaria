@@ -80,10 +80,14 @@ variable "kubernetes_namespace" {
 }
 
 variable "kubernetes_version" {
-  description = "Optional EKS Kubernetes minor version. Null selects the current EKS default."
+  description = "EKS Kubernetes minor version pinned for reproducible deployments."
   type        = string
-  default     = null
-  nullable    = true
+  default     = "1.35"
+
+  validation {
+    condition     = can(regex("^1\\.[0-9]+$", var.kubernetes_version))
+    error_message = "kubernetes_version must use the major.minor format, such as 1.35."
+  }
 }
 
 variable "vpc_cidr" {
@@ -134,7 +138,7 @@ variable "cluster_endpoint_public_access_cidrs" {
 variable "node_instance_types" {
   description = "Allowed EC2 instance types for the managed node group."
   type        = list(string)
-  default     = ["t3.large"]
+  default     = ["m7i-flex.large"]
 }
 
 variable "node_min_size" {

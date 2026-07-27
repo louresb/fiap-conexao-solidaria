@@ -77,7 +77,7 @@ $null = Invoke-Checked { az account show --output none --only-show-errors } `
     "Azure CLI nao esta autenticada. Execute 'az login' antes de inicializar os segredos."
 
 $vaultName = (Invoke-Checked {
-    terraform -chdir=$terraformPath output -raw key_vault_name
+    terraform "-chdir=$terraformPath" output -raw key_vault_name
 } "Nao foi possivel obter o Key Vault. Aplique o Terraform da Azure primeiro.").Trim()
 $script:ExistingSecretNames = @(
     Invoke-Checked {

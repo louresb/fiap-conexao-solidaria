@@ -194,7 +194,6 @@ module "eks" {
 
   tags = local.common_tags
 
-  depends_on = [terraform_data.eks_cost_guard]
 }
 
 resource "aws_secretsmanager_secret" "runtime" {
