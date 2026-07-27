@@ -1,7 +1,7 @@
 using System.Security.Claims;
 
 using ConexaoSolidaria.Contracts.Auth;
-using ConexaoSolidaria.Infrastructure.Observability;
+using ConexaoSolidaria.ServiceDefaults.Observability;
 using ConexaoSolidaria.Web.Components;
 using ConexaoSolidaria.Web.Services;
 
@@ -65,7 +65,9 @@ builder.Services.AddAuthentication(options =>
     if (!options.RequireHttpsMetadata)
     {
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None;
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
         options.NonceCookie.SecurePolicy = CookieSecurePolicy.None;
+        options.NonceCookie.SameSite = SameSiteMode.Lax;
     }
     options.ResponseType = OpenIdConnectResponseType.Code;
     options.UsePkce = true;

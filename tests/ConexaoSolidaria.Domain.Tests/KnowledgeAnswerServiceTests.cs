@@ -4,6 +4,7 @@ using ConexaoSolidaria.Knowledge.Api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ConexaoSolidaria.Tests;
 
@@ -34,7 +35,43 @@ public sealed class KnowledgeAnswerServiceTests : IDisposable
         Assert.Empty(answer.Sources);
     }
 
-    private KnowledgeAnswerService CreateService()
+    [Fact]
+    public async Task AnswerAsync_identifies_grounded_generation_and_model()
+    {
+        var generator = new StubGenerator(new GroundedGenerationResult(
+            "A prestacao de contas e publicada com indicadores [transparencia].",
+            "demo-model"));
+        var service = CreateService(generator);
+
+        var answer = await service.AnswerAsync(
+            "esperanca-solidaria",
+            "Como a ONG presta contas das doacoes?",
+            "corr-3",
+            CancellationToken.None);
+
+        Assert.True(answer.Answered);
+        Assert.Equal("grounded-generation", answer.AnswerMode);
+        Assert.Equal("demo-model", answer.Model);
+        Assert.NotEmpty(answer.Sources);
+    }
+
+    [Fact]
+    public async Task AnswerAsync_uses_extractive_fallback_when_generation_is_unavailable()
+    {
+        var service = CreateService(new StubGenerator(null));
+
+        var answer = await service.AnswerAsync(
+            "esperanca-solidaria",
+            "Como a ONG presta contas das doacoes?",
+            "corr-4",
+            CancellationToken.None);
+
+        Assert.True(answer.Answered);
+        Assert.Equal("extractive", answer.AnswerMode);
+        Assert.Null(answer.Model);
+    }
+
+    private KnowledgeAnswerService CreateService(IGroundedAnswerGenerator? generator = null)
     {
         var tenantPath = Path.Combine(_root, "esperanca-solidaria");
         Directory.CreateDirectory(tenantPath);
@@ -50,7 +87,10 @@ public sealed class KnowledgeAnswerServiceTests : IDisposable
             })
             .Build();
         var retriever = new KnowledgeRetriever(new TestWebHostEnvironment(_root), configuration);
-        return new KnowledgeAnswerService(retriever);
+        return new KnowledgeAnswerService(
+            retriever,
+            generator ?? DisabledGroundedAnswerGenerator.Instance,
+            NullLogger<KnowledgeAnswerService>.Instance);
     }
 
     public void Dispose()
@@ -69,5 +109,14 @@ public sealed class KnowledgeAnswerServiceTests : IDisposable
         public string EnvironmentName { get; set; } = "Testing";
         public string ContentRootPath { get; set; } = contentRootPath;
         public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(contentRootPath);
+    }
+
+    private sealed class StubGenerator(GroundedGenerationResult? result) : IGroundedAnswerGenerator
+    {
+        public Task<GroundedGenerationResult?> GenerateAsync(
+            string question,
+            IReadOnlyList<ConexaoSolidaria.Contracts.Knowledge.KnowledgeSourceDto> sources,
+            CancellationToken cancellationToken)
+            => Task.FromResult(result);
     }
 }

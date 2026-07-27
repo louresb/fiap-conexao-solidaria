@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "GestorONG")]
 @using System.ComponentModel.DataAnnotations
 @using ConexaoSolidaria.Contracts.Campaigns
+@using ConexaoSolidaria.Contracts.Validation
 @inject SolidariaApiClient Api
 @inject NavigationManager Navigation
 
@@ -47,10 +48,12 @@
                     <div class="form-field">
                         <label for="status">Status</label>
                         <InputSelect id="status" @bind-Value="Model.Status">
-                            <option value="@CampaignStatus.Ativa">Ativa</option>
-                            <option value="@CampaignStatus.Concluida">Concluída</option>
-                            <option value="@CampaignStatus.Cancelada">Cancelada</option>
+                            @foreach (var status in AvailableStatuses)
+                            {
+                                <option value="@status">@StatusLabel(status)</option>
+                            }
                         </InputSelect>
+                        <small>O fluxo preserva revisão e aprovação antes da publicação.</small>
                     </div>
                     <div class="form-field">
                         <label for="start">Data de início</label>
@@ -83,6 +86,10 @@
     private CampaignFormModel Model { get; set; } = new();
     private bool Saving { get; set; }
     private string Error { get; set; } = string.Empty;
+    private CampaignStatus PersistedStatus { get; set; } = CampaignStatus.Rascunho;
+    private IReadOnlyList<CampaignStatus> AvailableStatuses => Id.HasValue
+        ? CampaignRules.NextStatuses(PersistedStatus)
+        : [CampaignStatus.Rascunho];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -110,6 +117,7 @@
                 GoalAmount = campaign.GoalAmount,
                 Status = campaign.Status
             };
+            PersistedStatus = campaign.Status;
         }
         catch
         {
@@ -166,6 +174,17 @@
 
         public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
         public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddMonths(3));
-        public CampaignStatus Status { get; set; } = CampaignStatus.Ativa;
+        public CampaignStatus Status { get; set; } = CampaignStatus.Rascunho;
     }
+
+    private static string StatusLabel(CampaignStatus status) => status switch
+    {
+        CampaignStatus.Rascunho => "Rascunho",
+        CampaignStatus.EmRevisao => "Em revisão",
+        CampaignStatus.Aprovada => "Aprovada",
+        CampaignStatus.Ativa => "Publicada",
+        CampaignStatus.Concluida => "Concluída",
+        CampaignStatus.Cancelada => "Cancelada",
+        _ => status.ToString()
+    };
 }

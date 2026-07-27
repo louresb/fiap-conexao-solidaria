@@ -20,11 +20,42 @@
     else
     {
         <div class="transparency-metrics">
-            <div><span>Total mobilizado</span><strong>@Campaigns.Sum(c => c.TotalRaised).ToString("C0", Culture)</strong><small>nas campanhas ativas</small></div>
-            <div><span>Metas publicadas</span><strong>@Campaigns.Sum(c => c.GoalAmount).ToString("C0", Culture)</strong><small>com prazo definido</small></div>
-            <div><span>Progresso médio</span><strong>@AverageProgress.ToString("0")%</strong><small>atualização contínua</small></div>
-            <div><span>Campanhas</span><strong>@Campaigns.Count</strong><small>abertas para contribuição</small></div>
+            <div><span>Total mobilizado</span><strong>@Snapshot.TotalRaised.ToString("C0", Culture)</strong><small>nas campanhas ativas</small></div>
+            <div><span>Metas publicadas</span><strong>@Snapshot.PublishedGoal.ToString("C0", Culture)</strong><small>com prazo definido</small></div>
+            <div><span>Progresso médio</span><strong>@Snapshot.AverageProgress.ToString("0")%</strong><small>atualização contínua</small></div>
+            <div><span>Campanhas</span><strong>@Snapshot.ActiveCampaigns</strong><small>abertas para contribuição</small></div>
         </div>
+
+        <section class="transparency-history" aria-labelledby="donation-history-title">
+            <div class="section-heading">
+                <p class="eyebrow">Histórico público</p>
+                <h2 id="donation-history-title">Contribuições confirmadas</h2>
+                <p>Valores materializados a partir dos eventos processados, sem identificação pessoal do doador.</p>
+            </div>
+            @if (Snapshot.RecentDonations.Count == 0)
+            {
+                <div class="notice">As próximas contribuições confirmadas aparecerão aqui.</div>
+            }
+            else
+            {
+                <div class="transparency-table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>Confirmação</th><th>Campanha</th><th>Identificação</th><th>Valor</th></tr></thead>
+                        <tbody>
+                            @foreach (var donation in Snapshot.RecentDonations)
+                            {
+                                <tr>
+                                    <td>@donation.ProcessedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", Culture)</td>
+                                    <td><a href="/campanhas/@donation.CampaignId?tenant=@Tenant.Id">@donation.CampaignTitle</a></td>
+                                    <td>Doação anônima</td>
+                                    <td><strong>@donation.Amount.ToString("C2", Culture)</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
 
         <div class="transparency-layout">
             <div class="transparency-table-wrap">
@@ -72,17 +103,28 @@
     private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
     private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
     private IReadOnlyList<ActiveCampaignDto> Campaigns { get; set; } = [];
+    private TransparencySnapshotDto Snapshot { get; set; } = new(
+        string.Empty,
+        0,
+        0,
+        0,
+        0,
+        [],
+        DateTimeOffset.MinValue);
     private string CacheStatus { get; set; } = "-";
     private string Error { get; set; } = string.Empty;
-    private decimal AverageProgress => Campaigns.Count == 0 ? 0 : Campaigns.Average(c => c.ProgressPercent);
 
     protected override async Task OnParametersSetAsync()
     {
         try
         {
-            var collection = await Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+            var campaignsTask = Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+            var transparencyTask = Api.GetTransparencyAsync(Tenant.Id, CancellationToken.None);
+            await Task.WhenAll(campaignsTask, transparencyTask);
+            var collection = await campaignsTask;
             Campaigns = collection.Items;
             CacheStatus = collection.CacheStatus;
+            Snapshot = await transparencyTask;
         }
         catch
         {

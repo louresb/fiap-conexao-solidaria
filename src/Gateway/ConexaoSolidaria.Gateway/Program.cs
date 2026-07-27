@@ -1,8 +1,8 @@
 using System.Threading.RateLimiting;
 
 using ConexaoSolidaria.Contracts.Auth;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;

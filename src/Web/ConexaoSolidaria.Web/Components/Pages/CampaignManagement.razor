@@ -62,7 +62,8 @@
     private static readonly IReadOnlyDictionary<string, string> Filters = new Dictionary<string, string>
     {
         ["all"] = "Todas",
-        ["active"] = "Ativas",
+        ["active"] = "Publicadas",
+        ["workflow"] = "Em preparação",
         ["closed"] = "Encerradas"
     };
     private IReadOnlyList<CampaignDto> Campaigns { get; set; } = [];
@@ -72,7 +73,8 @@
     private IEnumerable<CampaignDto> FilteredCampaigns => CurrentFilter switch
     {
         "active" => Campaigns.Where(c => c.Status == CampaignStatus.Ativa),
-        "closed" => Campaigns.Where(c => c.Status != CampaignStatus.Ativa),
+        "workflow" => Campaigns.Where(c => c.Status is CampaignStatus.Rascunho or CampaignStatus.EmRevisao or CampaignStatus.Aprovada),
+        "closed" => Campaigns.Where(c => c.Status is CampaignStatus.Concluida or CampaignStatus.Cancelada),
         _ => Campaigns
     };
 
@@ -106,8 +108,12 @@
 
     private static string StatusLabel(CampaignStatus status) => status switch
     {
-        CampaignStatus.Ativa => "Ativa",
+        CampaignStatus.Rascunho => "Rascunho",
+        CampaignStatus.EmRevisao => "Em revisão",
+        CampaignStatus.Aprovada => "Aprovada",
+        CampaignStatus.Ativa => "Publicada",
         CampaignStatus.Concluida => "Concluída",
-        _ => "Cancelada"
+        CampaignStatus.Cancelada => "Cancelada",
+        _ => status.ToString()
     };
 }

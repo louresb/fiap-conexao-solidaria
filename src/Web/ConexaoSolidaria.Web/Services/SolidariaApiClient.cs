@@ -6,6 +6,7 @@ using System.Security.Claims;
 using ConexaoSolidaria.Contracts.Audit;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Campaigns;
+using ConexaoSolidaria.Contracts.Donations;
 using ConexaoSolidaria.Contracts.Identity;
 using ConexaoSolidaria.Contracts.Knowledge;
 using ConexaoSolidaria.Contracts.Payments;
@@ -57,6 +58,27 @@ public sealed class SolidariaApiClient(
         return await response.Content.ReadFromJsonAsync<List<ActiveCampaignDto>>(cancellationToken) ?? [];
     }
 
+    public async Task<TransparencySnapshotDto> GetTransparencyAsync(
+        string tenantId,
+        CancellationToken cancellationToken)
+    {
+        using var request = await CreateRequestAsync(
+            HttpMethod.Get,
+            $"/api/public/transparency?tenantId={Uri.EscapeDataString(tenantId)}&limit=12",
+            tenantId);
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return (await response.Content.ReadFromJsonAsync<TransparencySnapshotDto>(cancellationToken))!;
+    }
+
+    public async Task<PlatformHealthDto> GetPlatformHealthAsync(CancellationToken cancellationToken)
+    {
+        using var request = await CreateRequestAsync(HttpMethod.Get, "/health/ready");
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return (await response.Content.ReadFromJsonAsync<PlatformHealthDto>(cancellationToken))!;
+    }
+
     public async Task<IReadOnlyList<CampaignDto>> GetManagedCampaignsAsync(CancellationToken cancellationToken)
     {
         using var request = await CreateRequestAsync(HttpMethod.Get, "/api/management/campaigns", authenticatedTenantOnly: true);
@@ -100,7 +122,7 @@ public sealed class SolidariaApiClient(
     }
 
     public async Task<DonationAcceptedResponse> CreateDonationAsync(
-        DonationIntentRequest body,
+        CreateDonationRequest body,
         CancellationToken cancellationToken)
     {
         using var request = await CreateRequestAsync(HttpMethod.Post, "/api/donations", authenticatedTenantOnly: true);
@@ -108,6 +130,17 @@ public sealed class SolidariaApiClient(
         using var response = await httpClient.SendAsync(request, cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
         return (await response.Content.ReadFromJsonAsync<DonationAcceptedResponse>(cancellationToken))!;
+    }
+
+    public async Task<IReadOnlyList<DonationDto>> GetMyDonationsAsync(CancellationToken cancellationToken)
+    {
+        using var request = await CreateRequestAsync(
+            HttpMethod.Get,
+            "/api/donations/mine",
+            authenticatedTenantOnly: true);
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        return await response.Content.ReadFromJsonAsync<List<DonationDto>>(cancellationToken) ?? [];
     }
 
     public async Task<PaymentIntentDto?> GetPaymentByDonationAsync(Guid donationId, CancellationToken cancellationToken)
@@ -170,7 +203,8 @@ public sealed class SolidariaApiClient(
             principal.FindFirstValue("email") ?? string.Empty,
             principal.Identity?.Name ?? principal.FindFirstValue("preferred_username") ?? string.Empty,
             principal.IsInRole(AuthDefaults.ManagerRole),
-            principal.IsInRole(AuthDefaults.DonorRole));
+            principal.IsInRole(AuthDefaults.DonorRole),
+            principal.IsInRole(AuthDefaults.AdminRole));
     }
 
     private async Task<HttpRequestMessage> CreateRequestAsync(
@@ -219,7 +253,11 @@ public sealed record UserApiContext(
     string Email,
     string DisplayName,
     bool IsManager,
-    bool IsDonor);
+    bool IsDonor,
+    bool IsAdmin = false);
+
+public sealed record PlatformDependencyDto(string Name, bool Healthy);
+public sealed record PlatformHealthDto(string Status, IReadOnlyList<PlatformDependencyDto> Dependencies);
 
 public sealed class SolidariaApiException(HttpStatusCode statusCode, string detail)
     : Exception($"A API retornou {(int)statusCode}: {detail}")

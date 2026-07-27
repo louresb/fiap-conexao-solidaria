@@ -1,5 +1,6 @@
 @page "/campanhas/{Id:guid}"
 @using ConexaoSolidaria.Contracts.Campaigns
+@using ConexaoSolidaria.Contracts.Donations
 @using ConexaoSolidaria.Contracts.Payments
 @inject SolidariaApiClient Api
 
@@ -179,7 +180,12 @@ else
         try
         {
             var accepted = await Api.CreateDonationAsync(
-                new DonationIntentRequest(Campaign.Id, Amount, User.Subject, User.Email, PaymentMethod: PaymentMethod),
+                new CreateDonationRequest(
+                    Campaign.Id,
+                    Amount,
+                    PaymentMethod,
+                    User.Subject,
+                    User.Email),
                 CancellationToken.None);
             for (var attempt = 0; attempt < 12 && Payment is null; attempt++)
             {

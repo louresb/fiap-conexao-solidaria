@@ -1,10 +1,10 @@
 <Solution>
   <Folder Name="/src/" />
-  <Folder Name="/src/BuildingBlocks/">
-    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Application/ConexaoSolidaria.Application.csproj" />
-    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Contracts/ConexaoSolidaria.Contracts.csproj" />
-    <Project Path="src/BuildingBlocks/ConexaoSolidaria.Infrastructure/ConexaoSolidaria.Infrastructure.csproj" />
-    <Project Path="src/BuildingBlocks/ConexaoSolidaria.SharedKernel/ConexaoSolidaria.SharedKernel.csproj" />
+  <Folder Name="/src/Contracts/">
+    <Project Path="src/Contracts/ConexaoSolidaria.Contracts/ConexaoSolidaria.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Platform/">
+    <Project Path="src/Platform/ConexaoSolidaria.ServiceDefaults/ConexaoSolidaria.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Gateway/">
     <Project Path="src/Gateway/ConexaoSolidaria.Gateway/ConexaoSolidaria.Gateway.csproj" />
@@ -16,9 +16,11 @@
   <Folder Name="/src/Services/Campaigns/">
     <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/ConexaoSolidaria.Campaigns.Api.csproj" />
     <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Data/ConexaoSolidaria.Campaigns.Data.csproj" />
+    <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Infrastructure/ConexaoSolidaria.Campaigns.Infrastructure.csproj" />
+    <Project Path="src/Services/Campaigns/ConexaoSolidaria.Campaigns.Worker/ConexaoSolidaria.Campaigns.Worker.csproj" />
   </Folder>
   <Folder Name="/src/Services/Donations/">
-    <Project Path="src/Services/Donations/ConexaoSolidaria.Donations.Worker/ConexaoSolidaria.Donations.Worker.csproj" />
+    <Project Path="src/Services/Donations/ConexaoSolidaria.Donations.Api/ConexaoSolidaria.Donations.Api.csproj" />
   </Folder>
   <Folder Name="/src/Services/Identity/">
     <Project Path="src/Services/Identity/ConexaoSolidaria.Identity.Api/ConexaoSolidaria.Identity.Api.csproj" />
@@ -36,5 +38,6 @@
     <Project Path="tests/ConexaoSolidaria.Architecture.Tests/ConexaoSolidaria.Architecture.Tests.csproj" />
     <Project Path="tests/ConexaoSolidaria.Component.Tests/ConexaoSolidaria.Component.Tests.csproj" />
     <Project Path="tests/ConexaoSolidaria.Domain.Tests/ConexaoSolidaria.Tests.csproj" />
+    <Project Path="tests/ConexaoSolidaria.E2E.Tests/ConexaoSolidaria.E2E.Tests.csproj" />
   </Folder>
 </Solution>

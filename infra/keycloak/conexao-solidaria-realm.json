@@ -17,7 +17,8 @@
   "roles": {
     "realm": [
       { "name": "GestorONG", "description": "Gestão de campanhas, transparência e auditoria" },
-      { "name": "Doador", "description": "Contribuição e acompanhamento de doações" }
+      { "name": "Doador", "description": "Contribuição e acompanhamento de doações" },
+      { "name": "AdminSaaS", "description": "Visão operacional da plataforma e dos tenants" }
     ]
   },
   "clients": [

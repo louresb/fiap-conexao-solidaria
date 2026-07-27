@@ -2,9 +2,9 @@ using ConexaoSolidaria.Audit.Api.Consumers;
 using ConexaoSolidaria.Audit.Api.Data;
 using ConexaoSolidaria.Contracts.Audit;
 using ConexaoSolidaria.Contracts.Auth;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
-using ConexaoSolidaria.Infrastructure.OpenApi;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
 
 using MassTransit;
 

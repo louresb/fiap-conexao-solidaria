@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BuildingBlocks\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
-    <ProjectReference Include="..\..\BuildingBlocks\ConexaoSolidaria.Infrastructure\ConexaoSolidaria.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Contracts\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
+    <ProjectReference Include="..\..\Platform\ConexaoSolidaria.ServiceDefaults\ConexaoSolidaria.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

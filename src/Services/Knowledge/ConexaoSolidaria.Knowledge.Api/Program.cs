@@ -2,11 +2,11 @@ using System.Text.Json;
 
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Knowledge;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
-using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Knowledge.Api.Retrieval;
 using ConexaoSolidaria.Knowledge.Api.Services;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
 
 using MassTransit;
 
@@ -41,7 +41,12 @@ builder.Services.AddConexaoSolidariaTelemetry(
     "knowledge-api");
 
 builder.Services.AddSingleton<IKnowledgeRetriever, KnowledgeRetriever>();
-builder.Services.AddSingleton<KnowledgeAnswerService>();
+builder.Services.Configure<GroundedGenerationOptions>(builder.Configuration.GetSection("AI"));
+builder.Services.AddHttpClient<IGroundedAnswerGenerator, OpenAiCompatibleGroundedAnswerGenerator>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddScoped<KnowledgeAnswerService>();
 builder.Services.AddMassTransit(bus =>
 {
     bus.UsingRabbitMq((context, cfg) =>
@@ -107,12 +112,14 @@ app.MapPost("/api/knowledge/ask", async (
 
     var tenantId = http.TenantId();
     var correlationId = http.CorrelationId();
-    var answer = service.Answer(tenantId, question, correlationId);
+    var answer = await service.AnswerAsync(tenantId, question, correlationId, cancellationToken);
     var auditPayload = new KnowledgeQuestionAnsweredPayload(
         question,
         answer.Answered,
         answer.Sources.Select(source => source.DocumentId).ToList(),
-        tenantId);
+        tenantId,
+        answer.AnswerMode,
+        answer.Model);
 
     await publishEndpoint.Publish(
         IntegrationEvent.Create(

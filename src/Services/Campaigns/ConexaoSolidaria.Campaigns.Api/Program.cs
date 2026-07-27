@@ -1,16 +1,14 @@
-using System.Security.Claims;
 using System.Text.Json;
 
-using ConexaoSolidaria.Campaigns.Api.Consumers;
-using ConexaoSolidaria.Campaigns.Api.Search;
 using ConexaoSolidaria.Campaigns.Data;
+using ConexaoSolidaria.Campaigns.Infrastructure.Search;
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Validation;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
-using ConexaoSolidaria.Infrastructure.OpenApi;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
 
 using MassTransit;
 
@@ -68,14 +66,13 @@ builder.Services.AddScoped<ICampaignSearchIndexer, OpenSearchCampaignSearchIndex
 
 builder.Services.AddMassTransit(bus =>
 {
-    bus.AddConsumer<CampaignProjectionInvalidationConsumer>();
     bus.AddEntityFrameworkOutbox<CampaignsDbContext>(outbox =>
     {
         outbox.UsePostgres();
         outbox.UseBusOutbox();
     });
 
-    bus.UsingRabbitMq((context, cfg) =>
+    bus.UsingRabbitMq((_, cfg) =>
     {
         cfg.Host(
             builder.Configuration["RabbitMq:Host"] ?? "localhost",
@@ -86,11 +83,6 @@ builder.Services.AddMassTransit(bus =>
                 host.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
             });
 
-        cfg.ReceiveEndpoint("campaign-projections", endpoint =>
-        {
-            endpoint.UseMessageRetry(retry => retry.Intervals(200, 500, 1000, 5000));
-            endpoint.ConfigureConsumer<CampaignProjectionInvalidationConsumer>(context);
-        });
     });
 });
 
@@ -185,7 +177,6 @@ management.MapGet("/", async (CampaignsDbContext db, HttpContext http, Cancellat
 management.MapPost("/", async (
     CreateCampaignRequest request,
     CampaignsDbContext db,
-    ICampaignSearchIndexer search,
     IPublishEndpoint publishEndpoint,
     HttpContext http,
     CancellationToken cancellationToken) =>
@@ -195,6 +186,14 @@ management.MapPost("/", async (
     if (errors.Count > 0)
     {
         return Results.BadRequest(new { errors });
+    }
+
+    if (request.Status != CampaignStatus.Rascunho)
+    {
+        return Results.Conflict(new
+        {
+            error = "Uma campanha deve ser criada como rascunho antes de seguir para revisao."
+        });
     }
 
     var campaign = new Campaign
@@ -209,17 +208,17 @@ management.MapPost("/", async (
     };
 
     db.Campaigns.Add(campaign);
+    var campaignPayload = JsonSerializer.Serialize(ToDto(campaign), jsonOptions);
     await publishEndpoint.Publish(
         IntegrationEvent.Create(
             EventTypes.CampaignCreated,
             tenantId,
             http.CorrelationId(),
             "campaigns-api",
-            JsonSerializer.Serialize(ToDto(campaign), jsonOptions)),
+            campaignPayload),
         cancellationToken);
 
     await db.SaveChangesAsync(cancellationToken);
-    await search.IndexAsync(campaign, cancellationToken);
 
     return Results.Created($"/api/management/campaigns/{campaign.Id}", ToDto(campaign));
 })
@@ -230,7 +229,6 @@ management.MapPut("/{id:guid}", async (
     Guid id,
     UpdateCampaignRequest request,
     CampaignsDbContext db,
-    ICampaignSearchIndexer search,
     IPublishEndpoint publishEndpoint,
     HttpContext http,
     CancellationToken cancellationToken) =>
@@ -248,6 +246,16 @@ management.MapPut("/{id:guid}", async (
         return Results.BadRequest(new { errors });
     }
 
+    if (!CampaignRules.CanTransition(campaign.Status, request.Status))
+    {
+        return Results.Conflict(new
+        {
+            error = $"Transicao de {campaign.Status} para {request.Status} nao e permitida.",
+            allowedStatuses = CampaignRules.NextStatuses(campaign.Status)
+        });
+    }
+
+    var previousStatus = campaign.Status;
     campaign.Title = request.Title.Trim();
     campaign.Description = request.Description.Trim();
     campaign.StartDate = request.StartDate;
@@ -265,8 +273,19 @@ management.MapPut("/{id:guid}", async (
             JsonSerializer.Serialize(ToDto(campaign), jsonOptions)),
         cancellationToken);
 
+    if (previousStatus != CampaignStatus.Ativa && campaign.Status == CampaignStatus.Ativa)
+    {
+        await publishEndpoint.Publish(
+            IntegrationEvent.Create(
+                EventTypes.CampaignPublished,
+                tenantId,
+                http.CorrelationId(),
+                "campaigns-api",
+                JsonSerializer.Serialize(ToDto(campaign), jsonOptions)),
+            cancellationToken);
+    }
+
     await db.SaveChangesAsync(cancellationToken);
-    await search.IndexAsync(campaign, cancellationToken);
 
     return Results.Ok(ToDto(campaign));
 })
@@ -276,7 +295,6 @@ management.MapPut("/{id:guid}", async (
 management.MapDelete("/{id:guid}", async (
     Guid id,
     CampaignsDbContext db,
-    ICampaignSearchIndexer search,
     IPublishEndpoint publishEndpoint,
     HttpContext http,
     CancellationToken cancellationToken) =>
@@ -295,6 +313,11 @@ management.MapDelete("/{id:guid}", async (
         return Results.NoContent();
     }
 
+    if (!CampaignRules.CanTransition(campaign.Status, CampaignStatus.Cancelada))
+    {
+        return Results.Conflict(new { error = $"A campanha em estado {campaign.Status} nao pode ser cancelada." });
+    }
+
     campaign.Status = CampaignStatus.Cancelada;
     campaign.UpdatedAtUtc = DateTimeOffset.UtcNow;
     await publishEndpoint.Publish(
@@ -307,7 +330,6 @@ management.MapDelete("/{id:guid}", async (
         cancellationToken);
 
     await db.SaveChangesAsync(cancellationToken);
-    await search.IndexAsync(campaign, cancellationToken);
     return Results.NoContent();
 })
     .WithName("CancelCampaign")
@@ -358,6 +380,71 @@ app.MapGet("/api/public/campaigns", async (
     .WithName("ListActiveCampaigns")
     .WithSummary("Lista campanhas ativas com projecao cacheada de transparencia.");
 
+app.MapGet("/api/public/campaigns/{id:guid}", async (
+    Guid id,
+    CampaignsDbContext db,
+    HttpContext http,
+    CancellationToken cancellationToken) =>
+{
+    var campaign = await db.Campaigns
+        .AsNoTracking()
+        .FirstOrDefaultAsync(
+            item => item.Id == id
+                && item.TenantId == http.TenantId()
+                && item.Status == CampaignStatus.Ativa,
+            cancellationToken);
+    return campaign is null ? Results.NotFound() : Results.Ok(ToDto(campaign));
+})
+    .WithTags("Campanhas publicas")
+    .WithName("GetPublicCampaign")
+    .WithSummary("Consulta uma campanha do tenant para validacao e transparencia.");
+
+app.MapGet("/api/public/transparency", async (
+    string? tenantId,
+    int? limit,
+    CampaignsDbContext db,
+    HttpContext http,
+    CancellationToken cancellationToken) =>
+{
+    var resolvedTenantId = tenantId ?? http.TenantId();
+    var take = Math.Clamp(limit ?? 12, 1, 30);
+    var campaigns = await db.Campaigns
+        .AsNoTracking()
+        .Where(c => c.TenantId == resolvedTenantId && c.Status == CampaignStatus.Ativa)
+        .Select(c => new { c.Id, c.Title, c.GoalAmount, c.TotalRaised })
+        .ToListAsync(cancellationToken);
+    var recentDonations = await (
+        from donation in db.DonationProjections.AsNoTracking()
+        join campaign in db.Campaigns.AsNoTracking() on donation.CampaignId equals campaign.Id
+        where donation.TenantId == resolvedTenantId && campaign.TenantId == resolvedTenantId
+        orderby donation.ProcessedAtUtc descending
+        select new PublicDonationDto(
+            donation.DonationId,
+            donation.CampaignId,
+            campaign.Title,
+            donation.Amount,
+            donation.ProcessedAtUtc))
+        .Take(take)
+        .ToListAsync(cancellationToken);
+    var totalRaised = campaigns.Sum(c => c.TotalRaised);
+    var publishedGoal = campaigns.Sum(c => c.GoalAmount);
+    var averageProgress = campaigns.Count == 0
+        ? 0
+        : campaigns.Average(c => c.GoalAmount <= 0 ? 0 : Math.Min(c.TotalRaised / c.GoalAmount * 100, 100));
+
+    return Results.Ok(new TransparencySnapshotDto(
+        resolvedTenantId,
+        totalRaised,
+        publishedGoal,
+        Math.Round(averageProgress, 2),
+        campaigns.Count,
+        recentDonations,
+        DateTimeOffset.UtcNow));
+})
+    .WithTags("Campanhas publicas")
+    .WithName("GetPublicTransparency")
+    .WithSummary("Consulta a projecao publica de arrecadacao e doacoes anonimizadas.");
+
 app.MapGet("/api/public/campaigns/search", async (
     string q,
     string? tenantId,
@@ -397,97 +484,6 @@ app.MapGet("/api/public/campaigns/search", async (
     .WithTags("Campanhas publicas")
     .WithName("SearchCampaigns")
     .WithSummary("Pesquisa campanhas por titulo e descricao com tolerancia a erros.");
-
-var donations = app.MapGroup("/api/donations").WithTags("Doacoes");
-if (enforceAuth)
-{
-    donations.RequireAuthorization("DonorsOnly");
-}
-
-donations.MapPost("/", async (
-    DonationIntentRequest request,
-    CampaignsDbContext db,
-    IPublishEndpoint publishEndpoint,
-    HttpContext http,
-    CancellationToken cancellationToken) =>
-{
-    if (request.Amount <= 0)
-    {
-        return Results.BadRequest(new { error = "Valor da doacao deve ser maior que zero." });
-    }
-
-    var paymentMethod = request.PaymentMethod.Trim().ToLowerInvariant();
-    if (paymentMethod is not ("pix" or "credit_card" or "bank_slip"))
-    {
-        return Results.ValidationProblem(new Dictionary<string, string[]>
-        {
-            ["paymentMethod"] = ["Use pix, credit_card ou bank_slip."]
-        });
-    }
-
-    var tenantId = http.TenantId();
-    var campaign = await db.Campaigns.FirstOrDefaultAsync(c => c.Id == request.CampaignId && c.TenantId == tenantId, cancellationToken);
-    if (campaign is null)
-    {
-        return Results.NotFound(new { error = "Campanha nao encontrada." });
-    }
-
-    if (!CampaignRules.CanReceiveDonation(campaign.Status, campaign.StartDate, campaign.EndDate))
-    {
-        return Results.BadRequest(new { error = "Nao e possivel doar para campanhas concluidas ou canceladas." });
-    }
-
-    var donorId = http.User.FindFirstValue("sub") ?? request.DonorId;
-    var donorEmail = http.User.FindFirstValue("email") ?? request.DonorEmail;
-    if (string.IsNullOrWhiteSpace(donorId) || string.IsNullOrWhiteSpace(donorEmail))
-    {
-        return Results.ValidationProblem(new Dictionary<string, string[]>
-        {
-            ["donor"] = ["A identidade autenticada do doador é obrigatória."]
-        });
-    }
-
-    var donation = new Donation
-    {
-        CampaignId = campaign.Id,
-        TenantId = tenantId,
-        DonorId = donorId,
-        DonorEmail = donorEmail,
-        Amount = request.Amount,
-        PaymentMethod = paymentMethod,
-        Status = "Pending"
-    };
-
-    db.Donations.Add(donation);
-    var payload = new DonationIntentCreatedPayload(
-        donation.Id,
-        campaign.Id,
-        donation.DonorId,
-        donation.DonorEmail,
-        donation.Amount,
-        tenantId,
-        paymentMethod);
-
-    await publishEndpoint.Publish(
-        IntegrationEvent.Create(
-            EventTypes.DonationIntentCreated,
-            tenantId,
-            http.CorrelationId(),
-            "campaigns-api",
-            JsonSerializer.Serialize(payload, jsonOptions)),
-        cancellationToken);
-
-    await db.SaveChangesAsync(cancellationToken);
-
-    return Results.Accepted($"/api/donations/{donation.Id}", new
-    {
-        donation.Id,
-        donation.Status,
-        message = "Doacao recebida e enviada para processamento assincrono."
-    });
-})
-    .WithName("CreateDonationIntent")
-    .WithSummary("Registra a intencao de doacao e inicia o processamento assincrono.");
 
 using (var scope = app.Services.CreateScope())
 {

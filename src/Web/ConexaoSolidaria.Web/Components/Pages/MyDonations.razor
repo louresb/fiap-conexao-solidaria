@@ -1,0 +1,127 @@
+@page "/minhas-doacoes"
+@attribute [Authorize(Roles = "Doador")]
+@using ConexaoSolidaria.Contracts.Donations
+@inject SolidariaApiClient Api
+
+<PageTitle>Minhas doações | Conexão Solidária</PageTitle>
+
+<section class="page-heading donor-heading @Tenant.AccentClass">
+    <div class="section-inner">
+        <p class="eyebrow">Área do doador</p>
+        <h1>Seu impacto, contribuição por contribuição.</h1>
+        <p>@Tenant.Name · um histórico privado das doações vinculadas à sua conta.</p>
+    </div>
+</section>
+
+<section class="section-inner donor-page">
+    @if (Loading)
+    {
+        <div class="page-loading">Carregando suas contribuições...</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="notice notice-error" role="alert">@Error</div>
+    }
+    else
+    {
+        <div class="donor-metrics" aria-label="Resumo das suas doações">
+            <div><span>Total confirmado</span><strong>@ConfirmedTotal.ToString("C2", Culture)</strong><small>impacto já processado</small></div>
+            <div><span>Campanhas apoiadas</span><strong>@SupportedCampaigns</strong><small>iniciativas diferentes</small></div>
+            <div><span>Contribuições</span><strong>@ConfirmedCount</strong><small>pagamentos confirmados</small></div>
+            <div><span>Em processamento</span><strong>@PendingCount</strong><small>aguardando confirmação</small></div>
+        </div>
+
+        <div class="donor-history-heading split-heading">
+            <div>
+                <p class="eyebrow">Histórico privado</p>
+                <h2>Minhas contribuições</h2>
+            </div>
+            <a class="button button-primary" href="/?tenant=@Tenant.Id">Apoiar outra campanha</a>
+        </div>
+
+        @if (Donations.Count == 0)
+        {
+            <div class="empty-state donor-empty">
+                <h3>Seu primeiro impacto começa aqui.</h3>
+                <p>Escolha uma campanha ativa e acompanhe cada etapa da contribuição nesta página.</p>
+                <a class="button button-dark" href="/?tenant=@Tenant.Id">Conhecer campanhas</a>
+            </div>
+        }
+        else
+        {
+            <div class="donor-history-list">
+                @foreach (var donation in Donations)
+                {
+                    <article>
+                        <div class="donation-status-mark @StatusClass(donation.Status)" aria-hidden="true">@StatusInitial(donation.Status)</div>
+                        <div class="donation-main">
+                            <span>@donation.CreatedAtUtc.LocalDateTime.ToString("dd 'de' MMMM 'de' yyyy", Culture)</span>
+                            <h3>@donation.CampaignTitle</h3>
+                            <small>@PaymentMethodLabel(donation.PaymentMethod) · referência @donation.Id.ToString()[..8].ToUpperInvariant()</small>
+                        </div>
+                        <div class="donation-value">
+                            <strong>@donation.Amount.ToString("C2", Culture)</strong>
+                            <span class="status-badge @StatusClass(donation.Status)">@StatusLabel(donation.Status)</span>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <aside class="donor-privacy-note">
+            <strong>Privacidade por padrão</strong>
+            <p>Esta visão usa a identidade do seu acesso e o tenant da organização. Nenhum identificador de outro doador pode ser consultado por esta rota.</p>
+        </aside>
+    }
+</section>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private UserApiContext User { get; set; } = new(false, "", "", "", "", false, false);
+    private TenantBrand Tenant => TenantCatalog.Resolve(User.TenantId);
+    private IReadOnlyList<DonationDto> Donations { get; set; } = [];
+    private bool Loading { get; set; } = true;
+    private string Error { get; set; } = string.Empty;
+    private decimal ConfirmedTotal => Donations.Where(IsConfirmed).Sum(item => item.Amount);
+    private int ConfirmedCount => Donations.Count(IsConfirmed);
+    private int PendingCount => Donations.Count(item => item.Status == "PendingPayment");
+    private int SupportedCampaigns => Donations.Where(IsConfirmed).Select(item => item.CampaignId).Distinct().Count();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            User = await Api.GetUserContextAsync();
+            Donations = await Api.GetMyDonationsAsync(CancellationToken.None);
+        }
+        catch
+        {
+            Error = "Não foi possível carregar seu histórico de doações agora.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private static bool IsConfirmed(DonationDto donation) => donation.Status == "Confirmed";
+    private static string StatusInitial(string status) => status == "Confirmed" ? "✓" : status == "Rejected" ? "!" : "·";
+    private static string StatusClass(string status) => status switch
+    {
+        "Confirmed" => "donation-confirmed",
+        "Rejected" => "donation-rejected",
+        _ => "donation-pending"
+    };
+    private static string StatusLabel(string status) => status switch
+    {
+        "Confirmed" => "Confirmada",
+        "Rejected" => "Não concluída",
+        _ => "Processando"
+    };
+    private static string PaymentMethodLabel(string paymentMethod) => paymentMethod switch
+    {
+        "credit_card" => "Cartão",
+        "bank_slip" => "Boleto",
+        _ => "Pix"
+    };
+}

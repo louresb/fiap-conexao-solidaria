@@ -22,9 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BuildingBlocks\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Contracts\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Services\Campaigns\ConexaoSolidaria.Campaigns.Api\ConexaoSolidaria.Campaigns.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Campaigns\ConexaoSolidaria.Campaigns.Data\ConexaoSolidaria.Campaigns.Data.csproj" />
-    <ProjectReference Include="..\..\src\Services\Donations\ConexaoSolidaria.Donations.Worker\ConexaoSolidaria.Donations.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Services\Campaigns\ConexaoSolidaria.Campaigns.Infrastructure\ConexaoSolidaria.Campaigns.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Campaigns\ConexaoSolidaria.Campaigns.Worker\ConexaoSolidaria.Campaigns.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Services\Donations\ConexaoSolidaria.Donations.Api\ConexaoSolidaria.Donations.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Payments\ConexaoSolidaria.Payments.Api\ConexaoSolidaria.Payments.Api.csproj" />
   </ItemGroup>
 

@@ -8,9 +8,9 @@ using ConexaoSolidaria.Contracts.Identity;
 using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Identity.Api.Data;
 using ConexaoSolidaria.Identity.Api.Keycloak;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
-using ConexaoSolidaria.Infrastructure.OpenApi;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
 
 using MassTransit;
 
@@ -224,7 +224,7 @@ app.MapGet("/api/donors/{id:guid}", async (Guid id, IdentityDbContext db, HttpCo
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.Run();

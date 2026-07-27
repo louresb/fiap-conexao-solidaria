@@ -98,9 +98,13 @@
     private static decimal ProgressOf(CampaignDto campaign) => campaign.GoalAmount <= 0 ? 0 : Math.Min(campaign.TotalRaised / campaign.GoalAmount * 100, 100);
     private static string StatusLabel(CampaignStatus status) => status switch
     {
-        CampaignStatus.Ativa => "Ativa",
+        CampaignStatus.Rascunho => "Rascunho",
+        CampaignStatus.EmRevisao => "Em revisão",
+        CampaignStatus.Aprovada => "Aprovada",
+        CampaignStatus.Ativa => "Publicada",
         CampaignStatus.Concluida => "Concluída",
-        _ => "Cancelada"
+        CampaignStatus.Cancelada => "Cancelada",
+        _ => status.ToString()
     };
     private static string EventLabel(string eventType) => eventType switch
     {
@@ -108,6 +112,7 @@
         "PaymentConfirmed" => "Pagamento confirmado",
         "DonationProcessed" => "Doação processada",
         "CampaignCreated" => "Campanha criada",
+        "CampaignPublished" => "Campanha publicada",
         "CampaignUpdated" => "Campanha atualizada",
         "CampaignCancelled" => "Campanha cancelada",
         _ => eventType

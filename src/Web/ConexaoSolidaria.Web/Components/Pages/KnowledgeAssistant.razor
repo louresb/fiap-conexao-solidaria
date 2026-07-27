@@ -30,6 +30,7 @@
         {
             <div class="question-bubble">@LastQuestion</div>
             <div class="answer-block">
+                <span class="answer-mode">@(Answer.AnswerMode == "grounded-generation" ? "Síntese fundamentada por IA" : "Resposta extrativa")</span>
                 <p>@Answer.Answer</p>
                 @if (Answer.Sources.Count > 0)
                 {

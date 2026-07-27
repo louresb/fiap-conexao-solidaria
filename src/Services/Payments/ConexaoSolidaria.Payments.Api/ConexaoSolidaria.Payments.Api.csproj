@@ -7,8 +7,8 @@
 </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\BuildingBlocks\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\BuildingBlocks\ConexaoSolidaria.Infrastructure\ConexaoSolidaria.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Contracts\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Platform\ConexaoSolidaria.ServiceDefaults\ConexaoSolidaria.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,6 +16,10 @@
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.16" />
     <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />

@@ -13,7 +13,8 @@ public sealed class CampaignsDbContext : DbContext
     }
 
     public DbSet<Campaign> Campaigns => Set<Campaign>();
-    public DbSet<Donation> Donations => Set<Donation>();
+    public DbSet<DonationProjection> DonationProjections => Set<DonationProjection>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -31,19 +32,14 @@ public sealed class CampaignsDbContext : DbContext
             builder.HasIndex(c => new { c.TenantId, c.Status });
         });
 
-        modelBuilder.Entity<Donation>(builder =>
+        modelBuilder.Entity<DonationProjection>(builder =>
         {
-            builder.ToTable("donations");
-            builder.HasKey(d => d.Id);
+            builder.ToTable("donation_projections");
+            builder.HasKey(d => d.DonationId);
             builder.Property(d => d.TenantId).HasMaxLength(80).IsRequired();
-            builder.Property(d => d.DonorId).HasMaxLength(120).IsRequired();
-            builder.Property(d => d.DonorEmail).HasMaxLength(180).IsRequired();
             builder.Property(d => d.Amount).HasPrecision(18, 2);
-            builder.Property(d => d.PaymentMethod).HasMaxLength(32).IsRequired();
-            builder.Property(d => d.Status).HasMaxLength(40).IsRequired();
-            builder.HasOne(d => d.Campaign)
-                .WithMany(c => c.Donations)
-                .HasForeignKey(d => d.CampaignId);
+            builder.HasIndex(d => new { d.TenantId, d.ProcessedAtUtc });
+            builder.HasIndex(d => new { d.TenantId, d.CampaignId });
         });
 
         modelBuilder.AddInboxStateEntity();
@@ -53,10 +49,11 @@ public sealed class CampaignsDbContext : DbContext
 
     public static async Task SeedDemoDataAsync(CampaignsDbContext db, CancellationToken cancellationToken = default)
     {
-        await db.Database.EnsureCreatedAsync(cancellationToken);
+        await db.Database.MigrateAsync(cancellationToken);
 
         if (await db.Campaigns.AnyAsync(cancellationToken))
         {
+            await SeedDonationProjectionsAsync(db, cancellationToken);
             return;
         }
 
@@ -168,6 +165,70 @@ public sealed class CampaignsDbContext : DbContext
                 GoalAmount = 110000,
                 TotalRaised = 41600,
                 Status = CampaignStatus.Ativa
+            });
+
+        await db.SaveChangesAsync(cancellationToken);
+        await SeedDonationProjectionsAsync(db, cancellationToken);
+    }
+
+    private static async Task SeedDonationProjectionsAsync(
+        CampaignsDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (await db.DonationProjections.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        db.DonationProjections.AddRange(
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000001"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000001"),
+                TenantId = "esperanca-solidaria",
+                Amount = 250,
+                ProcessedAtUtc = now.AddHours(-2)
+            },
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000002"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000002"),
+                TenantId = "esperanca-solidaria",
+                Amount = 120,
+                ProcessedAtUtc = now.AddHours(-7)
+            },
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000003"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000004"),
+                TenantId = "mare-limpa",
+                Amount = 340,
+                ProcessedAtUtc = now.AddHours(-3)
+            },
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000004"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000005"),
+                TenantId = "mare-limpa",
+                Amount = 95,
+                ProcessedAtUtc = now.AddHours(-10)
+            },
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000005"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000007"),
+                TenantId = "futuro-em-rede",
+                Amount = 500,
+                ProcessedAtUtc = now.AddHours(-4)
+            },
+            new DonationProjection
+            {
+                DonationId = Guid.Parse("20000000-0000-0000-0000-000000000006"),
+                CampaignId = Guid.Parse("10000000-0000-0000-0000-000000000009"),
+                TenantId = "futuro-em-rede",
+                Amount = 180,
+                ProcessedAtUtc = now.AddHours(-11)
             });
 
         await db.SaveChangesAsync(cancellationToken);

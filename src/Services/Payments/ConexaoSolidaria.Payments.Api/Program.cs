@@ -1,12 +1,12 @@
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Payments;
-using ConexaoSolidaria.Infrastructure.Http;
-using ConexaoSolidaria.Infrastructure.Observability;
-using ConexaoSolidaria.Infrastructure.OpenApi;
 using ConexaoSolidaria.Payments.Api.Consumers;
 using ConexaoSolidaria.Payments.Api.Data;
 using ConexaoSolidaria.Payments.Api.Providers;
 using ConexaoSolidaria.Payments.Api.Services;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
 
 using MassTransit;
 
@@ -232,7 +232,7 @@ app.MapPost("/api/payment-webhooks/fake", async (
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.Run();

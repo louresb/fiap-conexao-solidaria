@@ -9,10 +9,20 @@
             <NavLink href="/" Match="NavLinkMatch.All">Campanhas</NavLink>
             <NavLink href="/transparencia">Transparência</NavLink>
             <NavLink href="/assistente">Assistente</NavLink>
+            <AuthorizeView Roles="Doador">
+                <Authorized>
+                    <NavLink href="/minhas-doacoes">Minhas doações</NavLink>
+                </Authorized>
+            </AuthorizeView>
             <AuthorizeView Roles="GestorONG">
                 <Authorized>
                     <NavLink href="/gestao">Gestão</NavLink>
                     <NavLink href="/gestao/auditoria">Auditoria</NavLink>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="AdminSaaS">
+                <Authorized>
+                    <NavLink href="/administracao">Plataforma</NavLink>
                 </Authorized>
             </AuthorizeView>
         </nav>
@@ -55,10 +65,20 @@
                             <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">Campanhas</NavLink>
                             <NavLink href="/transparencia" @onclick="CloseMobileMenu">Transparência</NavLink>
                             <NavLink href="/assistente" @onclick="CloseMobileMenu">Assistente</NavLink>
+                            <AuthorizeView Roles="Doador">
+                                <Authorized>
+                                    <NavLink href="/minhas-doacoes" @onclick="CloseMobileMenu">Minhas doações</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
                             <AuthorizeView Roles="GestorONG">
                                 <Authorized>
                                     <NavLink href="/gestao" @onclick="CloseMobileMenu">Gestão</NavLink>
                                     <NavLink href="/gestao/auditoria" @onclick="CloseMobileMenu">Auditoria</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Roles="AdminSaaS">
+                                <Authorized>
+                                    <NavLink href="/administracao" @onclick="CloseMobileMenu">Plataforma</NavLink>
                                 </Authorized>
                             </AuthorizeView>
                         </nav>

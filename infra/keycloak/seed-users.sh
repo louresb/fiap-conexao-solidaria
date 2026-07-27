@@ -41,6 +41,16 @@ if [[ -n "${KEYCLOAK_WEB_CLIENT_SECRET:-}" ]]; then
     -s "secret=$KEYCLOAK_WEB_CLIENT_SECRET" >/dev/null
 fi
 
+if [[ -n "${PUBLIC_APP_URL:-}" ]]; then
+  web_client_id=${web_client_id:-$("$KCADM" get clients -r "$REALM" -q clientId=conexao-web --fields id --format csv --noquotes | tail -n 1)}
+  "$KCADM" update "clients/$web_client_id" -r "$REALM" \
+    -s "rootUrl=$PUBLIC_APP_URL" \
+    -s "baseUrl=$PUBLIC_APP_URL" \
+    -s "redirectUris=[\"$PUBLIC_APP_URL/*\"]" \
+    -s "webOrigins=[\"$PUBLIC_APP_URL\"]" \
+    -s "attributes={\"pkce.code.challenge.method\":\"S256\",\"post.logout.redirect.uris\":\"$PUBLIC_APP_URL/*\"}" >/dev/null
+fi
+
 create_user() {
   local username="$1"
   local first_name="$2"
@@ -70,11 +80,18 @@ create_user() {
   "$KCADM" add-roles -r "$REALM" --uusername "$username" --rolename "$role" >/dev/null
 }
 
+if ! "$KCADM" get roles/AdminSaaS -r "$REALM" >/dev/null 2>&1; then
+  "$KCADM" create roles -r "$REALM" \
+    -s 'name=AdminSaaS' \
+    -s 'description=Visao operacional da plataforma e dos tenants' >/dev/null
+fi
+
 create_user "gestor.esperanca@conexaosolidaria.local" "Gestor" "Esperanca" "esperanca-solidaria" "GestorONG" "$DEMO_MANAGER_PASSWORD"
 create_user "doador.esperanca@conexaosolidaria.local" "Doador" "Esperanca" "esperanca-solidaria" "Doador" "$DEMO_DONOR_PASSWORD"
 create_user "gestor.mare@conexaosolidaria.local" "Gestor" "Mare Limpa" "mare-limpa" "GestorONG" "$DEMO_MANAGER_PASSWORD"
 create_user "doador.mare@conexaosolidaria.local" "Doador" "Mare Limpa" "mare-limpa" "Doador" "$DEMO_DONOR_PASSWORD"
 create_user "gestor.futuro@conexaosolidaria.local" "Gestor" "Futuro em Rede" "futuro-em-rede" "GestorONG" "$DEMO_MANAGER_PASSWORD"
 create_user "doador.futuro@conexaosolidaria.local" "Doador" "Futuro em Rede" "futuro-em-rede" "Doador" "$DEMO_DONOR_PASSWORD"
+create_user "admin.plataforma@conexaosolidaria.local" "Admin" "Plataforma" "platform" "AdminSaaS" "$DEMO_ADMIN_PASSWORD"
 
 echo "Usuarios locais do Keycloak configurados."
