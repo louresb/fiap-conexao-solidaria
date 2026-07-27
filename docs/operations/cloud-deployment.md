@@ -16,6 +16,7 @@ cd infra/terraform/azure
 terraform plan -var="acknowledge_aks_costs=true" -out azure.tfplan
 terraform apply azure.tfplan
 cd ../../..
+.\scripts\Configure-GitHubCloudVariables.ps1 -Provider azure -ConfirmGitHubMutation
 .\scripts\Publish-CloudImages.ps1 -Provider azure -ImageTag <sha-ou-tag>
 .\scripts\Initialize-AzureSecrets.ps1
 .\scripts\Deploy-Azure.ps1 -ImageTag <sha-ou-tag>
@@ -36,6 +37,7 @@ aws login --profile conexao-solidaria-terraform
 ./scripts/Initialize-TerraformBackend.ps1 -Provider aws -AwsProfile conexao-solidaria-terraform -ExpectedAwsAccountId <account-id> -ConfirmCloudMutation
 terraform -chdir=infra/terraform/aws plan
 terraform -chdir=infra/terraform/aws apply
+.\scripts\Configure-GitHubCloudVariables.ps1 -Provider aws -AwsAppHost <host-publico> -ConfirmGitHubMutation
 .\scripts\Publish-CloudImages.ps1 -Provider aws -ImageTag <sha-ou-tag>
 .\scripts\Deploy-Aws.ps1 -ImageTag <sha-ou-tag>
 ```
@@ -56,8 +58,8 @@ Nenhuma access key ou client secret cloud é armazenada no GitHub. Terraform cri
 
 | Provider | Variables |
 |---|---|
-| Azure | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `ACR_NAME`, `AKS_RESOURCE_GROUP`, `AKS_CLUSTER`, `AZURE_INGRESS_PUBLIC_IP_NAME`, `APP_HOST`, `K8S_NAMESPACE` |
-| AWS | `AWS_GITHUB_PUBLISH_ROLE_ARN`, `AWS_GITHUB_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_ACCOUNT_ID`, `EKS_CLUSTER`, `APP_HOST`, `K8S_NAMESPACE` |
+| Azure | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `ACR_NAME`, `AKS_RESOURCE_GROUP`, `AKS_CLUSTER`, `AZURE_INGRESS_PUBLIC_IP_NAME`, `AZURE_APP_HOST`, `K8S_NAMESPACE` |
+| AWS | `AWS_GITHUB_PUBLISH_ROLE_ARN`, `AWS_GITHUB_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_ACCOUNT_ID`, `EKS_CLUSTER`, `AWS_APP_HOST`, `K8S_NAMESPACE` |
 
 Flags de execução:
 
@@ -66,3 +68,4 @@ Flags de execução:
 - Os environments `azure` e `aws` podem exigir aprovação manual antes do deploy.
 
 Os valores vêm dos outputs em `infra/terraform/<provider>`. As flags de deploy só devem ser ativadas depois do bootstrap inicial e do teste de readiness.
+O script `Configure-GitHubCloudVariables.ps1` mantém todas as flags desligadas por padrão; use `-EnablePublish` ou `-EnableDeploy` somente na janela de entrega correspondente.

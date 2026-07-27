@@ -418,7 +418,7 @@ jobs:
             --values deploy/helm/conexao-solidaria/values.aws.yaml \
             --set-string image.registry="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com" \
             --set-string image.tag="${GITHUB_SHA}" \
-            --set-string ingress.host="${{ vars.APP_HOST }}" \
+            --set-string ingress.host="${{ vars.AWS_APP_HOST }}" \
             --wait --atomic --timeout 10m
 
   deploy-aks:
@@ -455,11 +455,11 @@ jobs:
               --values values.azure.yaml \
               --set-string image.registry='${{ vars.ACR_NAME }}.azurecr.io' \
               --set-string image.tag='${GITHUB_SHA}' \
-              --set-string ingress.host='${{ vars.APP_HOST }}' \
+              --set-string ingress.host='${{ vars.AZURE_APP_HOST }}' \
               --set-string azureRouting.publicIpName='${{ vars.AZURE_INGRESS_PUBLIC_IP_NAME }}' \
               --set-string azureRouting.publicIpResourceGroup='${{ vars.AKS_RESOURCE_GROUP }}' \
               --wait --atomic --timeout 10m"
 
       - name: Verify public rollout
         shell: bash
-        run: curl --fail --silent --show-error --retry 12 --retry-delay 10 "https://${{ vars.APP_HOST }}/health/ready"
+        run: curl --fail --silent --show-error --retry 12 --retry-delay 10 "https://${{ vars.AZURE_APP_HOST }}/health/ready"
