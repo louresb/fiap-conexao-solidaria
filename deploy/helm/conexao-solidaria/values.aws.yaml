@@ -71,6 +71,7 @@ ingress:
   host: conexao-solidaria.example.com
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   additionalPaths:
     - path: /auth
       pathType: Prefix

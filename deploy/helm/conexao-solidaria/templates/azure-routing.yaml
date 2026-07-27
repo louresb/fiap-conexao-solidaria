@@ -8,6 +8,7 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   controllerNamePrefix: {{ include "conexao-solidaria.fullname" . }}-public
+  forceSSLRedirect: true
   loadBalancerAnnotations:
     service.beta.kubernetes.io/azure-pip-name: {{ .Values.azureRouting.publicIpName | quote }}
     service.beta.kubernetes.io/azure-load-balancer-resource-group: {{ .Values.azureRouting.publicIpResourceGroup | quote }}

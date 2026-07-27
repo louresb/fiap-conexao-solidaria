@@ -43,6 +43,9 @@ fi
 
 if [[ -n "${PUBLIC_APP_URL:-}" ]]; then
   web_client_id=${web_client_id:-$("$KCADM" get clients -r "$REALM" -q clientId=conexao-web --fields id --format csv --noquotes | tail -n 1)}
+  if [[ "$PUBLIC_APP_URL" == https://* ]]; then
+    "$KCADM" update "realms/$REALM" -s sslRequired=external >/dev/null
+  fi
   "$KCADM" update "clients/$web_client_id" -r "$REALM" \
     -s "rootUrl=$PUBLIC_APP_URL" \
     -s "baseUrl=$PUBLIC_APP_URL" \

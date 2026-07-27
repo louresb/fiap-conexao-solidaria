@@ -122,6 +122,10 @@ jobs:
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 
+          grep -Fq 'forceSSLRedirect: true' /tmp/values.azure.rendered.yaml
+          grep -Fq 'nginx.ingress.kubernetes.io/force-ssl-redirect: "true"' /tmp/values.aws.rendered.yaml
+          grep -Fq 'sslRequired=external' infra/keycloak/seed-users.sh
+
           for script in scripts/Deploy-Aws.ps1 scripts/Deploy-Azure.ps1; do
             grep -Fq 'KC_HTTP_RELATIVE_PATH=/auth' "${script}"
             grep -Fq 'KC_HTTP_MANAGEMENT_RELATIVE_PATH=/' "${script}"
