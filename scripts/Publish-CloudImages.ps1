@@ -3,7 +3,7 @@ param(
     [ValidateSet("azure", "aws")]
     [string]$Provider,
     [string]$ImageTag,
-    [string]$AwsProfile = "default"
+    [string]$AwsProfile = "conexao-solidaria"
 )
 
 $ErrorActionPreference = "Stop"

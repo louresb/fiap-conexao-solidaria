@@ -58,7 +58,22 @@ function Set-RepositoryVariable([string]$Name, [string]$Value) {
     } "Nao foi possivel configurar a variable '$Name' em '$Repository'."
 }
 
+function Remove-RepositoryVariable([string]$Name, [string[]]$ExistingVariables) {
+    if ($ExistingVariables -notcontains $Name) {
+        return
+    }
+
+    $null = Invoke-Checked {
+        gh variable delete $Name --repo $Repository
+    } "Nao foi possivel remover a variable obsoleta '$Name' em '$Repository'."
+}
+
 $null = Invoke-Checked { gh auth status } "GitHub CLI nao esta autenticada. Execute 'gh auth login'."
+$existingVariables = @(
+    Invoke-Checked {
+        gh variable list --repo $Repository --json name --jq '.[].name'
+    } "Nao foi possivel consultar as variables existentes em '$Repository'."
+)
 Set-RepositoryVariable "K8S_NAMESPACE" $KubernetesNamespace
 
 if ($Provider -eq "azure") {
@@ -91,9 +106,24 @@ else {
     Set-RepositoryVariable "AWS_ACCOUNT_ID" (Read-OutputValue $outputs "aws_account_id")
     Set-RepositoryVariable "AWS_REGION" (Read-OutputValue $outputs "aws_region")
     Set-RepositoryVariable "AWS_GITHUB_PUBLISH_ROLE_ARN" (Read-OutputValue $outputs "github_actions_ecr_role_arn")
-    Set-RepositoryVariable "AWS_GITHUB_DEPLOY_ROLE_ARN" $deployRoleArn
-    Set-RepositoryVariable "EKS_CLUSTER" $clusterName
-    Set-RepositoryVariable "AWS_APP_HOST" $AwsAppHost
+    if ([string]::IsNullOrWhiteSpace($deployRoleArn)) {
+        Remove-RepositoryVariable "AWS_GITHUB_DEPLOY_ROLE_ARN" $existingVariables
+    }
+    else {
+        Set-RepositoryVariable "AWS_GITHUB_DEPLOY_ROLE_ARN" $deployRoleArn
+    }
+    if ([string]::IsNullOrWhiteSpace($clusterName)) {
+        Remove-RepositoryVariable "EKS_CLUSTER" $existingVariables
+    }
+    else {
+        Set-RepositoryVariable "EKS_CLUSTER" $clusterName
+    }
+    if ([string]::IsNullOrWhiteSpace($AwsAppHost)) {
+        Remove-RepositoryVariable "AWS_APP_HOST" $existingVariables
+    }
+    else {
+        Set-RepositoryVariable "AWS_APP_HOST" $AwsAppHost
+    }
     Set-RepositoryVariable "ENABLE_AWS_PUBLISH" $EnablePublish.IsPresent.ToString().ToLowerInvariant()
     Set-RepositoryVariable "ENABLE_AWS_DEPLOY" $EnableDeploy.IsPresent.ToString().ToLowerInvariant()
 }

@@ -34,11 +34,12 @@ Com `enable_eks=false`, Terraform cria somente os nove repositórios ECR e as ro
 
 ```powershell
 aws login --profile conexao-solidaria-terraform
+$env:AWS_PROFILE = "conexao-solidaria-terraform"
 ./scripts/Initialize-TerraformBackend.ps1 -Provider aws -AwsProfile conexao-solidaria-terraform -ExpectedAwsAccountId <account-id> -ConfirmCloudMutation
 terraform -chdir=infra/terraform/aws plan
 terraform -chdir=infra/terraform/aws apply
 .\scripts\Configure-GitHubCloudVariables.ps1 -Provider aws -AwsAppHost <host-publico> -ConfirmGitHubMutation
-.\scripts\Publish-CloudImages.ps1 -Provider aws -ImageTag <sha-ou-tag>
+.\scripts\Publish-CloudImages.ps1 -Provider aws -AwsProfile conexao-solidaria -ImageTag <sha-ou-tag>
 .\scripts\Deploy-Aws.ps1 -ImageTag <sha-ou-tag>
 ```
 
