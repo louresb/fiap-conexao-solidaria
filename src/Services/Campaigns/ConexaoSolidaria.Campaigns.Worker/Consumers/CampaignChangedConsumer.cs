@@ -24,7 +24,8 @@ public sealed class CampaignChangedConsumer(
         EventTypes.CampaignCreated,
         EventTypes.CampaignUpdated,
         EventTypes.CampaignPublished,
-        EventTypes.CampaignCancelled
+        EventTypes.CampaignCancelled,
+        EventTypes.CampaignProjectionUpdated
     ];
 
     public async Task Consume(ConsumeContext<IntegrationEvent> context)

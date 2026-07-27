@@ -1,20 +1,17 @@
 using System.Text.Json;
 
 using ConexaoSolidaria.Campaigns.Data;
-using ConexaoSolidaria.Campaigns.Infrastructure.Search;
+using ConexaoSolidaria.Contracts.Campaigns;
 using ConexaoSolidaria.Contracts.Events;
 
 using MassTransit;
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 
 namespace ConexaoSolidaria.Campaigns.Worker.Consumers;
 
 public sealed class DonationProcessedConsumer(
     CampaignsDbContext db,
-    ICampaignSearchIndexer search,
-    IDistributedCache cache,
     ILogger<DonationProcessedConsumer> logger) : IConsumer<IntegrationEvent>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -66,11 +63,29 @@ public sealed class DonationProcessedConsumer(
         }
 
         await db.SaveChangesAsync(context.CancellationToken);
-        await cache.RemoveAsync($"active-campaigns:{campaign.TenantId}", context.CancellationToken);
-        await search.IndexAsync(campaign, context.CancellationToken);
+
+        var projectionUpdated = new CampaignDto(
+            campaign.Id,
+            campaign.TenantId,
+            campaign.Title,
+            campaign.Description,
+            campaign.StartDate,
+            campaign.EndDate,
+            campaign.GoalAmount,
+            campaign.TotalRaised,
+            campaign.Status);
+        await context.Publish(
+            IntegrationEvent.Create(
+                EventTypes.CampaignProjectionUpdated,
+                campaign.TenantId,
+                message.CorrelationId,
+                "campaigns-worker",
+                JsonSerializer.Serialize(projectionUpdated, JsonOptions),
+                message.EventId.ToString()),
+            context.CancellationToken);
 
         logger.LogInformation(
-            "Campaign {CampaignId} projection updated from donation {DonationId}. TotalRaised={TotalRaised}",
+            "Campaign {CampaignId} projection committed from donation {DonationId}. TotalRaised={TotalRaised}",
             campaign.Id,
             donation.DonationId,
             campaign.TotalRaised);
