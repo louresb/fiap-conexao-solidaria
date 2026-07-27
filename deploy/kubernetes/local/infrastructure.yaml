@@ -480,7 +480,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          args: ["start-dev", "--import-realm"]
+          args: ["start", "--import-realm"]
           ports:
             - { name: http, containerPort: 8080 }
             - { name: management, containerPort: 9000 }
@@ -493,6 +493,16 @@ spec:
                   key: keycloak-admin-password
             - { name: KC_HEALTH_ENABLED, value: "true" }
             - { name: KC_METRICS_ENABLED, value: "true" }
+            - { name: KC_HTTP_ENABLED, value: "true" }
+            - { name: KC_DB, value: postgres }
+            - { name: KC_DB_URL_HOST, value: conexao-solidaria-postgres }
+            - { name: KC_DB_URL_DATABASE, value: conexao_keycloak }
+            - { name: KC_DB_USERNAME, value: conexao }
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: postgres-password
             - { name: KC_HOSTNAME, value: "http://localhost:31082" }
             - { name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC, value: "true" }
           readinessProbe:
@@ -526,8 +536,6 @@ spec:
             - name: theme
               mountPath: /opt/keycloak/themes/conexao-solidaria/login
               readOnly: true
-            - name: data
-              mountPath: /opt/keycloak/data/h2
       volumes:
         - name: realm
           configMap:
@@ -542,16 +550,3 @@ spec:
                 path: resources/css/login.css
               - key: messages_pt_BR.properties
                 path: messages/messages_pt_BR.properties
-        - name: data
-          persistentVolumeClaim:
-            claimName: conexao-solidaria-keycloak
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: conexao-solidaria-keycloak
-spec:
-  accessModes: [ReadWriteOnce]
-  resources:
-    requests:
-      storage: 1Gi

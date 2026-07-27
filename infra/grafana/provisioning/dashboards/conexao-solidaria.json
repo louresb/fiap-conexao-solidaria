@@ -13,8 +13,8 @@
       "type": "stat",
       "title": "Componentes disponíveis",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
-      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 8 }] } } },
-      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(up{job=~\"gateway|web|.*-api|donations-worker\"})", "legendFormat": "serviços" }]
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 9 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(up{job=~\"gateway|web|.*-api|campaigns-worker\"})", "legendFormat": "serviços" }]
     },
     {
       "id": 2,
@@ -74,9 +74,25 @@
     },
     {
       "id": 9,
+      "type": "timeseries",
+      "title": "CPU por serviço",
+      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "cores" } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(rate(process_cpu_seconds_total[2m])) by (job)", "legendFormat": "{{job}}" }]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Memória por serviço",
+      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "Prometheus" }, "expr": "sum(process_working_set_bytes) by (job)", "legendFormat": "{{job}}" }]
+    },
+    {
+      "id": 11,
       "type": "logs",
       "title": "Logs estruturados",
-      "gridPos": { "x": 0, "y": 21, "w": 24, "h": 9 },
+      "gridPos": { "x": 0, "y": 29, "w": 24, "h": 9 },
       "options": { "showTime": true, "showLabels": true, "wrapLogMessage": true, "enableLogDetails": true },
       "targets": [{ "datasource": { "type": "loki", "uid": "Loki" }, "expr": "{level=~\".+\"}", "refId": "A" }]
     }

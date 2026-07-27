@@ -32,33 +32,28 @@ spec:
               drop: ["ALL"]
           command: ["/bin/bash", "/seed/seed-users.sh"]
           env:
-            - { name: KEYCLOAK_SERVER, value: http://conexao-solidaria-keycloak:8080 }
+            - { name: KEYCLOAK_SERVER, value: http://conexao-solidaria-keycloak:8080/auth }
             - { name: KEYCLOAK_ADMIN, value: admin }
+            - name: PUBLIC_APP_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: conexao-solidaria-cloud
+                  key: public-app-url
             - name: KEYCLOAK_ADMIN_PASSWORD
               valueFrom:
-                secretKeyRef:
-                  name: conexao-solidaria-runtime
-                  key: keycloak-admin-password
+                secretKeyRef: { name: conexao-solidaria-runtime, key: keycloak-admin-password }
             - name: KEYCLOAK_WEB_CLIENT_SECRET
               valueFrom:
-                secretKeyRef:
-                  name: conexao-solidaria-runtime
-                  key: keycloak-client-secret
+                secretKeyRef: { name: conexao-solidaria-runtime, key: keycloak-client-secret }
             - name: DEMO_MANAGER_PASSWORD
               valueFrom:
-                secretKeyRef:
-                  name: conexao-solidaria-runtime
-                  key: demo-manager-password
+                secretKeyRef: { name: conexao-solidaria-runtime, key: demo-manager-password }
             - name: DEMO_DONOR_PASSWORD
               valueFrom:
-                secretKeyRef:
-                  name: conexao-solidaria-runtime
-                  key: demo-donor-password
+                secretKeyRef: { name: conexao-solidaria-runtime, key: demo-donor-password }
             - name: DEMO_ADMIN_PASSWORD
               valueFrom:
-                secretKeyRef:
-                  name: conexao-solidaria-runtime
-                  key: demo-admin-password
+                secretKeyRef: { name: conexao-solidaria-runtime, key: demo-admin-password }
           resources:
             requests: { cpu: 100m, memory: 256Mi }
             limits: { cpu: "1", memory: 512Mi }
@@ -72,11 +67,7 @@ spec:
             sources:
               - configMap:
                   name: conexao-solidaria-keycloak-seed
-                  items:
-                    - key: seed-users.sh
-                      path: seed-users.sh
+                  items: [{ key: seed-users.sh, path: seed-users.sh }]
               - configMap:
                   name: conexao-solidaria-keycloak-profile
-                  items:
-                    - key: user-profile.json
-                      path: user-profile.json
+                  items: [{ key: user-profile.json, path: user-profile.json }]

@@ -196,6 +196,65 @@ $auditEvents = Wait-Until -FailureMessage "A trilha de auditoria correlacionada 
 }
 Assert-True (($auditEvents | Where-Object tenantId -ne $TenantId).Count -eq 0) "A auditoria retornou dados de outro tenant."
 
+Write-Step "Publicacao de campanha via Outbox"
+$campaignCorrelationId = "campaign-smoke-$([Guid]::NewGuid().ToString('N'))"
+$campaignHeaders = @{
+    Authorization = "Bearer $managerToken"
+    "X-Correlation-Id" = $campaignCorrelationId
+}
+$campaignBody = @{
+    title = "Campanha de validacao $([Guid]::NewGuid().ToString('N').Substring(0, 8))"
+    description = "Campanha criada automaticamente para validar publicacao e auditoria via Outbox."
+    startDate = (Get-Date).ToString("yyyy-MM-dd")
+    endDate = (Get-Date).AddDays(30).ToString("yyyy-MM-dd")
+    goalAmount = 1000
+    status = 4
+} | ConvertTo-Json
+$createdCampaign = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$gateway/api/management/campaigns" `
+    -Headers $campaignHeaders `
+    -ContentType "application/json" `
+    -Body $campaignBody
+foreach ($nextStatus in @(5, 6, 1)) {
+    $transitionBody = @{
+        title = $createdCampaign.title
+        description = $createdCampaign.description
+        startDate = $createdCampaign.startDate
+        endDate = $createdCampaign.endDate
+        goalAmount = $createdCampaign.goalAmount
+        status = $nextStatus
+    } | ConvertTo-Json
+    $createdCampaign = Invoke-RestMethod `
+        -Method Put `
+        -Uri "$gateway/api/management/campaigns/$($createdCampaign.id)" `
+        -Headers $campaignHeaders `
+        -ContentType "application/json" `
+        -Body $transitionBody
+}
+$campaignEvents = Wait-Until `
+    -Attempts 60 `
+    -DelayMilliseconds 1000 `
+    -FailureMessage "Os eventos de criacao e publicacao da campanha nao foram auditados. CorrelationId: $campaignCorrelationId" `
+    -Probe {
+    $events = @(Invoke-RestMethod "$gateway/api/audit/$campaignCorrelationId" -Headers $managerHeaders | ForEach-Object { $_ })
+    $eventTypes = @($events | ForEach-Object eventType)
+    if ($eventTypes -contains "CampaignCreated" -and $eventTypes -contains "CampaignPublished") {
+        $events
+    }
+}
+
+Write-Step "Read model publico e anonimizado"
+$transparency = Wait-Until -FailureMessage "A doacao nao foi materializada na transparencia publica." -Probe {
+    $snapshot = Invoke-RestMethod "$gateway/api/public/transparency?tenantId=$TenantId&limit=30"
+    if (@($snapshot.recentDonations | Where-Object donationId -eq $donation.id).Count -eq 1) {
+        $snapshot
+    }
+}
+Assert-True (
+    $null -eq ($transparency.recentDonations | Where-Object { $_.PSObject.Properties.Name -contains "donorEmail" })
+) "A projecao publica nao deve expor dados pessoais."
+
 Write-Step "Resposta baseada em fontes"
 $knowledge = Invoke-RestMethod `
     -Method Post `
@@ -207,9 +266,21 @@ Assert-True $knowledge.answered "A base de conhecimento nao respondeu."
 Assert-True ($knowledge.sources.Count -gt 0) "A resposta deve indicar pelo menos uma fonte."
 
 Write-Step "Tracing distribuido no Tempo"
-$tempoReady = Invoke-WebRequest -UseBasicParsing "$tempo/ready"
+$tempoReady = Wait-Until `
+    -Attempts 30 `
+    -DelayMilliseconds 1000 `
+    -FailureMessage "O Tempo nao ficou pronto dentro do prazo esperado." `
+    -Probe {
+        try {
+            $response = Invoke-WebRequest -UseBasicParsing "$tempo/ready"
+            if ($response.StatusCode -eq 200) { return $response }
+        }
+        catch {
+            return $null
+        }
+    }
 Assert-True ($tempoReady.StatusCode -eq 200) "O Tempo nao esta saudavel."
-$expectedTraceServices = @("gateway", "campaigns-api", "payments-api", "audit-api", "knowledge-api")
+$expectedTraceServices = @("gateway", "donations-api", "campaigns-api", "campaigns-worker", "payments-api", "audit-api", "knowledge-api")
 $tracedServices = Wait-Until `
     -Attempts 120 `
     -DelayMilliseconds 1000 `
@@ -223,7 +294,7 @@ $tracedServices = Wait-Until `
         if ($missing.Count -eq 0) { return $values }
         return $null
     }
-$journeyTraceServices = @("gateway", "campaigns-api", "payments-api", "donations-worker", "audit-api")
+$journeyTraceServices = @("gateway", "donations-api", "campaigns-api", "campaigns-worker", "payments-api", "audit-api")
 $traceQuery = [uri]::EscapeDataString("{ span.app.correlation_id = `"$($donorHeaders['X-Correlation-Id'])`" }")
 $journeyTrace = Wait-Until `
     -Attempts 120 `
@@ -253,13 +324,45 @@ if ($Runtime -eq "Kubernetes") {
     $downTargets = @($prometheus.data.result | Where-Object { $_.value[1] -ne "1" })
     Assert-True ($downTargets.Count -eq 0) "O Prometheus encontrou targets indisponiveis."
 
+    $applicationJobs = @(
+        "gateway", "web", "identity-api", "campaigns-api", "campaigns-worker",
+        "donations-api", "payments-api", "audit-api", "knowledge-api"
+    )
+    $targets = (Invoke-RestMethod "http://localhost:31091/api/v1/targets").data.activeTargets
+    $applicationTargets = @($targets | Where-Object { $_.labels.job -in $applicationJobs })
+    Assert-True ($applicationTargets.Count -eq $applicationJobs.Count) `
+        "O Prometheus nao possui um target para cada runtime da aplicacao."
+    Assert-True (@($applicationTargets | Where-Object health -ne "up").Count -eq 0) `
+        "Existe runtime da aplicacao sem coleta de metricas."
+
+    $jobMatcher = $applicationJobs -join "|"
+    $cpuQuery = [uri]::EscapeDataString(
+        "sum by (job) (rate(process_cpu_seconds_total{job=~`"$jobMatcher`"}[2m]))")
+    $memoryQuery = [uri]::EscapeDataString(
+        "sum by (job) (process_working_set_bytes{job=~`"$jobMatcher`"})")
+    $cpuSeries = (Invoke-RestMethod "http://localhost:31091/api/v1/query?query=$cpuQuery").data.result
+    $memorySeries = (Invoke-RestMethod "http://localhost:31091/api/v1/query?query=$memoryQuery").data.result
+    Assert-True (@($cpuSeries).Count -eq $applicationJobs.Count) `
+        "As series de CPU nao cobrem todos os runtimes."
+    Assert-True (@($memorySeries).Count -eq $applicationJobs.Count) `
+        "As series de memoria nao cobrem todos os runtimes."
+
     $grafana = Invoke-RestMethod "http://localhost:31090/api/health"
     Assert-True ($grafana.database -eq "ok") "O Grafana nao esta saudavel."
     $grafanaCredentials = [Convert]::ToBase64String(
         [Text.Encoding]::ASCII.GetBytes("admin:$($environment.GRAFANA_ADMIN_PASSWORD)"))
+    $grafanaHeaders = @{ Authorization = "Basic $grafanaCredentials" }
+    $dashboard = (Invoke-RestMethod `
+        -Headers $grafanaHeaders `
+        -Uri "http://localhost:31090/api/dashboards/uid/conexao-solidaria-operacao").dashboard
+    $dashboardTitles = @($dashboard.panels | ForEach-Object title)
+    Assert-True (@($dashboardTitles | Where-Object { $_ -like "CPU por servi*" }).Count -eq 1) `
+        "O dashboard nao possui o painel de CPU."
+    Assert-True (@($dashboardTitles | Where-Object { $_ -like "Mem*ria por servi*" }).Count -eq 1) `
+        "O dashboard nao possui o painel de memoria."
     $tempoDatasource = Invoke-WebRequest `
         -UseBasicParsing `
-        -Headers @{ Authorization = "Basic $grafanaCredentials" } `
+        -Headers $grafanaHeaders `
         -Uri "http://localhost:31090/api/datasources/proxy/uid/Tempo/ready"
     Assert-True ($tempoDatasource.StatusCode -eq 200) "O datasource Tempo nao esta acessivel pelo Grafana."
 
@@ -316,7 +419,9 @@ Write-Host "Smoke test concluido com sucesso." -ForegroundColor Green
     PaymentId = $payment.id
     CampaignTotalBefore = $beforeTotal
     CampaignTotalAfter = $updatedCampaign.totalRaised
+    PublicDonationHistory = $transparency.recentDonations.Count
     CorrelatedAuditEvents = $auditEvents.Count
+    CampaignLifecycleEvents = $campaignEvents.Count
     KnowledgeSources = $knowledge.sources.Count
     TracedServices = @($tracedServices).Count
     DistributedTraceId = $journeyTrace.traceID

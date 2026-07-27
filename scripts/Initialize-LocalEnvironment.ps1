@@ -24,6 +24,12 @@ if ((Test-Path $environmentFile) -and -not $Force) {
     $missingSecrets = @{
         KEYCLOAK_CLIENT_SECRET = { New-HexSecret 32 }
         ZABBIX_ADMIN_PASSWORD = { "Cs1!$(New-HexSecret 12)" }
+        DEMO_ADMIN_PASSWORD = { "Cs1!$(New-HexSecret 8)" }
+        AI_ENABLED = { "false" }
+        AI_ENDPOINT = { "" }
+        AI_MODEL = { "" }
+        AI_API_KEY = { New-HexSecret 32 }
+        AI_API_KEY_HEADER = { "api-key" }
     }
     $added = @()
 
@@ -47,6 +53,7 @@ if ((Test-Path $environmentFile) -and -not $Force) {
 
 $managerPassword = "Cs1!$(New-HexSecret 8)"
 $donorPassword = "Cs1!$(New-HexSecret 8)"
+$adminPassword = "Cs1!$(New-HexSecret 8)"
 $lines = @(
     "POSTGRES_PASSWORD=$(New-HexSecret)",
     "RABBITMQ_PASSWORD=$(New-HexSecret)",
@@ -59,7 +66,13 @@ $lines = @(
     "ZABBIX_ADMIN_PASSWORD=Cs1!$(New-HexSecret 12)",
     "PAYMENT_WEBHOOK_SECRET=$(New-HexSecret)",
     "DEMO_MANAGER_PASSWORD=$managerPassword",
-    "DEMO_DONOR_PASSWORD=$donorPassword"
+    "DEMO_DONOR_PASSWORD=$donorPassword",
+    "DEMO_ADMIN_PASSWORD=$adminPassword",
+    "AI_ENABLED=false",
+    "AI_ENDPOINT=",
+    "AI_MODEL=",
+    "AI_API_KEY=$(New-HexSecret 32)",
+    "AI_API_KEY_HEADER=api-key"
 )
 
 [System.IO.File]::WriteAllLines(
@@ -70,3 +83,4 @@ $lines = @(
 Write-Host "Credenciais locais geradas em $environmentFile"
 Write-Host "Gestores: gestor.<tenant>@conexaosolidaria.local / $managerPassword"
 Write-Host "Doadores: doador.<tenant>@conexaosolidaria.local / $donorPassword"
+Write-Host "Admin: admin.plataforma@conexaosolidaria.local / $adminPassword"

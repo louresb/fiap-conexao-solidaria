@@ -21,17 +21,18 @@ components:
       minAvailable: 1
     env:
       Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
-      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
       Auth__RequireHttpsMetadata: "true"
-      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+      DemoAccess__Enabled: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
   gateway:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
     env: &awsAuth
-      Auth__Authority: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
-      Auth__Issuer: https://auth.conexao-solidaria.example.com/realms/conexao-solidaria
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__Issuer: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
       Auth__RequireHttpsMetadata: "true"
-      Observability__LokiUrl: http://loki-gateway.observability.svc.cluster.local
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
   identity-api:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
@@ -40,6 +41,11 @@ components:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
     env: *awsAuth
+  campaigns-worker:
+    replicaCount: 2
+    disruptionBudget: *pdb
+    env:
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
   payments-api:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
@@ -51,18 +57,32 @@ components:
   knowledge-api:
     autoscaling: *autoscaling
     disruptionBudget: *pdb
-  donations-worker:
+  donations-api:
     replicaCount: 2
     disruptionBudget: *pdb
 
 ingress:
   enabled: true
-  className: alb
+  className: nginx
   host: conexao-solidaria.example.com
   annotations:
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  additionalPaths:
+    - path: /auth
+      pathType: Prefix
+      serviceName: conexao-solidaria-keycloak
+      servicePort: 8080
+  tls:
+    enabled: true
+    secretName: conexao-solidaria-tls
+
+certManager:
+  clusterIssuer:
+    enabled: true
+    name: letsencrypt-production
+    email: bruno.loures@hotmail.com
 
 networkPolicy:
   enabled: true
+  allowedIngressNamespaces:
+    - ingress-nginx

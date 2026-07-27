@@ -22,8 +22,19 @@ spec:
                 name: {{ include "conexao-solidaria.fullname" . }}-web
                 port:
                   name: http
-  {{- with .Values.ingress.tls }}
+          {{- range .Values.ingress.additionalPaths }}
+          - path: {{ .path | quote }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ tpl .serviceName $ }}
+                port:
+                  number: {{ .servicePort }}
+          {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
   tls:
-    {{- toYaml . | nindent 4 }}
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | quote }}
   {{- end }}
 {{- end }}

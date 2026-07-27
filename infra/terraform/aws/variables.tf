@@ -4,21 +4,79 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "environment" {
-  description = "Deployment environment name."
+variable "expected_aws_account_id" {
+  description = "Optional account allow-list guard. Set it locally before planning or applying."
   type        = string
-  default     = "production"
+  default     = null
+  nullable    = true
 
   validation {
-    condition     = contains(["development", "staging", "production"], var.environment)
-    error_message = "Environment must be development, staging, or production."
+    condition     = var.expected_aws_account_id == null || can(regex("^[0-9]{12}$", var.expected_aws_account_id))
+    error_message = "expected_aws_account_id must be a 12-digit AWS account ID."
   }
 }
 
+variable "environment" {
+  description = "Deployment environment name."
+  type        = string
+  default     = "demo"
+
+  validation {
+    condition     = contains(["development", "demo", "staging", "production"], var.environment)
+    error_message = "Environment must be development, demo, staging, or production."
+  }
+}
+
+variable "enable_github_oidc" {
+  description = "Create repository-scoped GitHub Actions roles backed by temporary OIDC credentials."
+  type        = bool
+  default     = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository allowed to assume the CI roles, in owner/name format."
+  type        = string
+  default     = "louresb/fiap-conexao-solidaria"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository))
+    error_message = "github_repository must use owner/name format."
+  }
+}
+
+variable "github_deployment_environment" {
+  description = "Protected GitHub environment allowed to assume the EKS deployment role."
+  type        = string
+  default     = "aws"
+}
+
+variable "enable_eks" {
+  description = "Provision the paid EKS, VPC, NAT gateway, and worker-node runtime. Disabled by default."
+  type        = bool
+  default     = false
+}
+
+variable "acknowledge_eks_costs" {
+  description = "Explicit acknowledgement required when enable_eks is true."
+  type        = bool
+  default     = false
+}
+
 variable "cluster_name" {
-  description = "EKS cluster name."
+  description = "EKS cluster name prefix."
   type        = string
   default     = "conexao-solidaria"
+}
+
+variable "kubernetes_namespace" {
+  description = "Kubernetes namespace that the GitHub deployment role may administer."
+  type        = string
+  default     = "conexao-solidaria"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", var.kubernetes_namespace))
+    error_message = "kubernetes_namespace must be a valid lowercase DNS label."
+  }
 }
 
 variable "kubernetes_version" {
@@ -100,11 +158,11 @@ variable "node_max_size" {
 variable "ecr_image_retention_count" {
   description = "Number of tagged images retained in each ECR repository."
   type        = number
-  default     = 20
+  default     = 10
 
   validation {
-    condition     = var.ecr_image_retention_count >= 5
-    error_message = "At least five tagged images must be retained."
+    condition     = var.ecr_image_retention_count >= 3
+    error_message = "At least three tagged images must be retained."
   }
 }
 

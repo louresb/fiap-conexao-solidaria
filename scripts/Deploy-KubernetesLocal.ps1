@@ -13,7 +13,8 @@ $imageTagState = Join-Path $stateDirectory "kubernetes-image-tag.txt"
 $applicationWorkloads = @(
     "audit-api",
     "campaigns-api",
-    "donations-worker",
+    "campaigns-worker",
+    "donations-api",
     "gateway",
     "identity-api",
     "knowledge-api",
@@ -220,8 +221,11 @@ $secretYaml = kubectl create secret generic conexao-solidaria-runtime `
     --from-literal="payment-webhook-secret=$($environment.PAYMENT_WEBHOOK_SECRET)" `
     --from-literal="demo-manager-password=$($environment.DEMO_MANAGER_PASSWORD)" `
     --from-literal="demo-donor-password=$($environment.DEMO_DONOR_PASSWORD)" `
+    --from-literal="demo-admin-password=$($environment.DEMO_ADMIN_PASSWORD)" `
+    --from-literal="ai-api-key=$($environment.AI_API_KEY)" `
     --from-literal="identity-db-connection=Host=conexao-solidaria-postgres;Port=5432;Database=conexao_identity;Username=conexao;Password=$($environment.POSTGRES_PASSWORD)" `
     --from-literal="campaigns-db-connection=Host=conexao-solidaria-postgres;Port=5432;Database=conexao_campaigns;Username=conexao;Password=$($environment.POSTGRES_PASSWORD)" `
+    --from-literal="donations-db-connection=Host=conexao-solidaria-postgres;Port=5432;Database=conexao_donations;Username=conexao;Password=$($environment.POSTGRES_PASSWORD)" `
     --from-literal="payments-db-connection=Host=conexao-solidaria-postgres;Port=5432;Database=conexao_payments;Username=conexao;Password=$($environment.POSTGRES_PASSWORD)" `
     --from-literal="redis-connection=conexao-solidaria-redis:6379,password=$($environment.REDIS_PASSWORD),abortConnect=false" `
     --from-literal="mongo-connection=mongodb://conexao:$($environment.MONGO_PASSWORD)@conexao-solidaria-mongodb:27017/?authSource=admin" `

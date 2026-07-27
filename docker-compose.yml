@@ -121,6 +121,7 @@ services:
       KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?execute scripts/Initialize-LocalEnvironment.ps1}
       DEMO_MANAGER_PASSWORD: ${DEMO_MANAGER_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
       DEMO_DONOR_PASSWORD: ${DEMO_DONOR_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:?execute scripts/Initialize-LocalEnvironment.ps1}
     volumes: ["./infra/keycloak:/seed:ro"]
     entrypoint: ["/bin/bash", "/seed/seed-users.sh"]
     depends_on:
@@ -234,6 +235,7 @@ services:
 
   identity-api:
     build: { context: ., dockerfile: src/Services/Identity/ConexaoSolidaria.Identity.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-identity-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -241,6 +243,11 @@ services:
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      AI__Enabled: ${AI_ENABLED:-false}
+      AI__Endpoint: ${AI_ENDPOINT:-}
+      AI__Model: ${AI_MODEL:-}
+      AI__ApiKey: ${AI_API_KEY:-}
+      AI__ApiKeyHeader: ${AI_API_KEY_HEADER:-api-key}
       Observability__LokiUrl: http://loki:3100
       Observability__OtlpEndpoint: http://otel-collector:4317
       Keycloak__Enabled: "true"
@@ -258,6 +265,7 @@ services:
 
   campaigns-api:
     build: { context: ., dockerfile: src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-campaigns-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -282,8 +290,31 @@ services:
       opensearch: { condition: service_healthy }
       keycloak-seed: { condition: service_completed_successfully }
 
+  campaigns-worker:
+    build: { context: ., dockerfile: src/Services/Campaigns/ConexaoSolidaria.Campaigns.Worker/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-campaigns-worker:${APP_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__CampaignsDb: "Host=postgres;Port=5432;Database=conexao_campaigns;Username=conexao;Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD},abortConnect=false"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: conexao
+      RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      OpenSearch__Enabled: "true"
+      OpenSearch__BaseUrl: http://opensearch:9200
+      Observability__LokiUrl: http://loki:3100
+      Observability__OtlpEndpoint: http://otel-collector:4317
+    ports: ["5107:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      opensearch: { condition: service_healthy }
+
   payments-api:
     build: { context: ., dockerfile: src/Services/Payments/ConexaoSolidaria.Payments.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-payments-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -304,24 +335,34 @@ services:
       rabbitmq: { condition: service_healthy }
       keycloak-seed: { condition: service_completed_successfully }
 
-  donations-worker:
-    build: { context: ., dockerfile: src/Services/Donations/ConexaoSolidaria.Donations.Worker/Dockerfile }
+  donations-api:
+    build: { context: ., dockerfile: src/Services/Donations/ConexaoSolidaria.Donations.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-donations-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__CampaignsDb: "Host=postgres;Port=5432;Database=conexao_campaigns;Username=conexao;Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__DonationsDb: "Host=postgres;Port=5432;Database=conexao_donations;Username=conexao;Password=${POSTGRES_PASSWORD}"
+      Services__CampaignsBaseUrl: http://campaigns-api:8080
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: conexao
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Observability__LokiUrl: http://loki:3100
       Observability__OtlpEndpoint: http://otel-collector:4317
+      Auth__Authority: http://keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:8080/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Auth__Enforce: "true"
     ports: ["5106:8080"]
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+      campaigns-api: { condition: service_started }
+      keycloak-seed: { condition: service_completed_successfully }
 
   audit-api:
     build: { context: ., dockerfile: src/Services/Audit/ConexaoSolidaria.Audit.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-audit-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -343,6 +384,7 @@ services:
 
   knowledge-api:
     build: { context: ., dockerfile: src/Services/Knowledge/ConexaoSolidaria.Knowledge.Api/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-knowledge-api:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -357,6 +399,7 @@ services:
 
   gateway:
     build: { context: ., dockerfile: src/Gateway/ConexaoSolidaria.Gateway/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-gateway:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -371,6 +414,7 @@ services:
 
   web:
     build: { context: ., dockerfile: src/Web/ConexaoSolidaria.Web/Dockerfile }
+    image: ${APP_IMAGE_PREFIX:-conexao-solidaria}-web:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -382,6 +426,7 @@ services:
       DemoAccess__Enabled: "true"
       DemoAccess__ManagerPassword: ${DEMO_MANAGER_PASSWORD}
       DemoAccess__DonorPassword: ${DEMO_DONOR_PASSWORD}
+      DemoAccess__AdminPassword: ${DEMO_ADMIN_PASSWORD}
       Observability__LokiUrl: http://loki:3100
       Observability__OtlpEndpoint: http://otel-collector:4317
     ports: ["5000:8080"]

@@ -1,0 +1,14 @@
+{{- if .Values.azureRouting.enabled }}
+apiVersion: approuting.kubernetes.azure.com/v1alpha1
+kind: NginxIngressController
+metadata:
+  name: {{ include "conexao-solidaria.fullname" . }}-public
+  labels:
+    {{- include "conexao-solidaria.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  controllerNamePrefix: {{ include "conexao-solidaria.fullname" . }}-public
+  loadBalancerAnnotations:
+    service.beta.kubernetes.io/azure-pip-name: {{ .Values.azureRouting.publicIpName | quote }}
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: {{ .Values.azureRouting.publicIpResourceGroup | quote }}
+{{- end }}

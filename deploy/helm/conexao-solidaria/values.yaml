@@ -85,6 +85,7 @@ components:
       Auth__ClientSecret: keycloak-client-secret
       DemoAccess__ManagerPassword: demo-manager-password
       DemoAccess__DonorPassword: demo-donor-password
+      DemoAccess__AdminPassword: demo-admin-password
 
   gateway:
     imageRepository: conexao-solidaria-gateway
@@ -102,11 +103,13 @@ components:
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
       ReverseProxy__Clusters__identity__Destinations__primary__Address: http://conexao-solidaria-identity-api:8080/
       ReverseProxy__Clusters__campaigns__Destinations__primary__Address: http://conexao-solidaria-campaigns-api:8080/
+      ReverseProxy__Clusters__donations__Destinations__primary__Address: http://conexao-solidaria-donations-api:8080/
       ReverseProxy__Clusters__payments__Destinations__primary__Address: http://conexao-solidaria-payments-api:8080/
       ReverseProxy__Clusters__audit__Destinations__primary__Address: http://conexao-solidaria-audit-api:8080/
       ReverseProxy__Clusters__knowledge__Destinations__primary__Address: http://conexao-solidaria-knowledge-api:8080/
       Readiness__Dependencies__identity: http://conexao-solidaria-identity-api:8080/health/ready
       Readiness__Dependencies__campaigns: http://conexao-solidaria-campaigns-api:8080/health/ready
+      Readiness__Dependencies__donations: http://conexao-solidaria-donations-api:8080/health/ready
       Readiness__Dependencies__payments: http://conexao-solidaria-payments-api:8080/health/ready
       Readiness__Dependencies__audit: http://conexao-solidaria-audit-api:8080/health/ready
       Readiness__Dependencies__knowledge: http://conexao-solidaria-knowledge-api:8080/health/ready
@@ -155,6 +158,24 @@ components:
       ConnectionStrings__Redis: redis-connection
       RabbitMq__Password: rabbitmq-password
 
+  campaigns-worker:
+    imageRepository: conexao-solidaria-campaigns-worker
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      RabbitMq__Host: conexao-solidaria-rabbitmq
+      RabbitMq__Username: conexao
+      OpenSearch__Enabled: "true"
+      OpenSearch__BaseUrl: http://conexao-solidaria-opensearch:9200
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+    secretEnv:
+      ConnectionStrings__CampaignsDb: campaigns-db-connection
+      ConnectionStrings__Redis: redis-connection
+      RabbitMq__Password: rabbitmq-password
+
   payments-api:
     imageRepository: conexao-solidaria-payments-api
     service:
@@ -175,8 +196,8 @@ components:
       RabbitMq__Password: rabbitmq-password
       FakePayment__WebhookSecret: payment-webhook-secret
 
-  donations-worker:
-    imageRepository: conexao-solidaria-donations-worker
+  donations-api:
+    imageRepository: conexao-solidaria-donations-api
     service:
       enabled: true
       type: ClusterIP
@@ -185,9 +206,14 @@ components:
       ASPNETCORE_ENVIRONMENT: Production
       RabbitMq__Host: conexao-solidaria-rabbitmq
       RabbitMq__Username: conexao
+      Services__CampaignsBaseUrl: http://conexao-solidaria-campaigns-api:8080
+      Auth__Authority: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria
+      Auth__Issuer: http://localhost:31082/realms/conexao-solidaria
+      Auth__Audience: conexao-solidaria
+      Auth__Enforce: "true"
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
     secretEnv:
-      ConnectionStrings__CampaignsDb: campaigns-db-connection
+      ConnectionStrings__DonationsDb: donations-db-connection
       RabbitMq__Password: rabbitmq-password
 
   audit-api:
@@ -219,19 +245,41 @@ components:
       ASPNETCORE_ENVIRONMENT: Production
       RabbitMq__Host: conexao-solidaria-rabbitmq
       RabbitMq__Username: conexao
+      AI__Enabled: "false"
+      AI__Endpoint: ""
+      AI__Model: ""
+      AI__ApiKeyHeader: api-key
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
     secretEnv:
       RabbitMq__Password: rabbitmq-password
+      AI__ApiKey: ai-api-key
 
 ingress:
   enabled: false
   className: nginx
   annotations: {}
   host: conexao-solidaria.local
-  tls: []
+  additionalPaths: []
+  tls:
+    enabled: false
+    secretName: conexao-solidaria-tls
+
+certManager:
+  clusterIssuer:
+    enabled: false
+    name: letsencrypt-production
+    email: ""
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+azureRouting:
+  enabled: false
+  publicIpName: ""
+  publicIpResourceGroup: ""
 
 networkPolicy:
   enabled: false
+  allowedIngressNamespaces:
+    - ingress-nginx
 
 topologySpreadConstraints:
   enabled: true

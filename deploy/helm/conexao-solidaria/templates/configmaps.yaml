@@ -17,7 +17,7 @@ data:
   Observability__OtlpEndpoint: {{ . | quote }}
   {{- end }}
   {{- range $key, $value := $component.env }}
-  {{ $key }}: {{ $value | quote }}
+  {{ $key }}: {{ tpl ($value | toString) $ | quote }}
   {{- end }}
 {{- end }}
 {{- end }}

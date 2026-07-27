@@ -7,18 +7,42 @@ scrape_configs:
     static_configs:
       - targets: ["conexao-solidaria-otel-collector:8888"]
 
-  - job_name: conexao-solidaria-apps
-    metrics_path: /metrics
+  - job_name: gateway
     static_configs:
-      - targets:
-          - conexao-solidaria-web:80
-          - conexao-solidaria-gateway:8080
-          - conexao-solidaria-identity-api:8080
-          - conexao-solidaria-campaigns-api:8080
-          - conexao-solidaria-payments-api:8080
-          - conexao-solidaria-audit-api:8080
-          - conexao-solidaria-knowledge-api:8080
-          - conexao-solidaria-donations-worker:8080
+      - targets: ["conexao-solidaria-gateway:8080"]
+
+  - job_name: web
+    static_configs:
+      - targets: ["conexao-solidaria-web:80"]
+
+  - job_name: identity-api
+    static_configs:
+      - targets: ["conexao-solidaria-identity-api:8080"]
+
+  - job_name: campaigns-api
+    static_configs:
+      - targets: ["conexao-solidaria-campaigns-api:8080"]
+
+  - job_name: campaigns-worker
+    static_configs:
+      - targets: ["conexao-solidaria-campaigns-worker:8080"]
+
+  - job_name: donations-api
+    static_configs:
+      - targets: ["conexao-solidaria-donations-api:8080"]
+
+  - job_name: payments-api
+    static_configs:
+      - targets: ["conexao-solidaria-payments-api:8080"]
+
+  - job_name: audit-api
+    static_configs:
+      - targets: ["conexao-solidaria-audit-api:8080"]
+
+  - job_name: knowledge-api
+    static_configs:
+      - targets: ["conexao-solidaria-knowledge-api:8080"]
+
   - job_name: rabbitmq
     static_configs:
       - targets: [conexao-solidaria-rabbitmq:15692]

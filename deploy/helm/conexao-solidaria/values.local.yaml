@@ -29,10 +29,13 @@ components:
   campaigns-api:
     env:
       ASPNETCORE_ENVIRONMENT: Development
+  campaigns-worker:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
   payments-api:
     env:
       ASPNETCORE_ENVIRONMENT: Development
-  donations-worker:
+  donations-api:
     env:
       ASPNETCORE_ENVIRONMENT: Development
   audit-api:

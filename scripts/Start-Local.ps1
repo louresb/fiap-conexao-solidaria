@@ -78,5 +78,6 @@ if ($Operations) {
 }
 Write-Host "Gestor:     gestor.esperanca@conexaosolidaria.local / $($environment.DEMO_MANAGER_PASSWORD)"
 Write-Host "Doador:     doador.esperanca@conexaosolidaria.local / $($environment.DEMO_DONOR_PASSWORD)"
+Write-Host "Admin:      admin.plataforma@conexaosolidaria.local / $($environment.DEMO_ADMIN_PASSWORD)"
 Write-Host ""
 Write-Host "Valide o fluxo completo com: .\scripts\Test-Local.ps1"

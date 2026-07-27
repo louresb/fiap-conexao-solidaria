@@ -23,7 +23,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ toJson $component.env | sha256sum }}
+        checksum/config: {{ printf "%s:%s" (toJson $component.env) $.Values.ingress.host | sha256sum }}
       labels:
         {{- include "conexao-solidaria.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: {{ $name }}
