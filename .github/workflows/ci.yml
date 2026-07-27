@@ -117,7 +117,8 @@ jobs:
 
           for cloud in aws azure; do
             rendered="/tmp/values.${cloud}.rendered.yaml"
-            test "$(grep -c 'http://conexao-solidaria-keycloak:8080/auth' "${rendered}")" -eq 1
+            grep -Fq 'Keycloak__BaseUrl: "http://conexao-solidaria-keycloak:8080/auth"' "${rendered}"
+            grep -Fq 'Readiness__Dependencies__IdentityProvider: "http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration"' "${rendered}"
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 
@@ -127,6 +128,7 @@ jobs:
             grep -Fq 'KC_PROXY_HEADERS=xforwarded' "${script}"
             grep -Fq '"upgrade", "--install"' "${script}"
             grep -Fq '"--atomic"' "${script}"
+            grep -Fq '/auth/realms/conexao-solidaria/.well-known/openid-configuration' "${script}"
           done
 
   containers:
