@@ -14,18 +14,18 @@
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "Direct",
-        "requested": "[10.0.9, )",
-        "resolved": "10.0.9",
-        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ==",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "d4Atx9IHq7JgX0F/h7Db+m9zAUzC+cKdI9k+OWnnyQIOUQtfvjIEuhvbjPigVMkAmPUgCbJ8Yp6M9ghUqHtJSQ==",
         "dependencies": {
           "Microsoft.OpenApi": "2.0.0"
         }
       },
       "Microsoft.OpenApi": {
         "type": "Direct",
-        "requested": "[2.7.5, )",
-        "resolved": "2.7.5",
-        "contentHash": "0FA67RSnRM4tcBKqiqVu/HPdZ9+QOKbmeRjxRUGTCjPU4C0bmUhd97Dso7Yild5P7nOV6GxJ2xrK0Kv/O9xp0w=="
+        "requested": "[3.9.0, )",
+        "resolved": "3.9.0",
+        "contentHash": "2sDK6AFY1L/Xg8JvwlaDoPwzGqCftjUgHG2NhCy8gNV/1v4eXziYoH39e/pwC7oTBJInuYUUJqfkRpIMPQ/Fyw=="
       },
       "prometheus-net.AspNetCore": {
         "type": "Direct",
@@ -223,8 +223,8 @@
         "type": "Project",
         "dependencies": {
           "ConexaoSolidaria.Contracts": "[1.0.0, )",
-          "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
-          "Microsoft.OpenApi": "[2.7.5, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.10, )",
+          "Microsoft.OpenApi": "[3.9.0, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.17.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.17.0, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.17.0, )",
