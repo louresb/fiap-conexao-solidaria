@@ -2,6 +2,7 @@ locals {
   name           = "${var.name_prefix}-${var.environment}"
   acr_name       = coalesce(var.container_registry_name, replace("${var.name_prefix}${var.environment}", "-", ""))
   key_vault_name = "kv-${substr(local.acr_name, 0, 21)}"
+  ai_name        = coalesce(var.ai_services_name, "ai-${local.acr_name}")
 
   common_tags = merge({
     Project     = "ConexaoSolidaria"
@@ -81,6 +82,43 @@ resource "azurerm_key_vault" "platform" {
     default_action             = "Deny"
     ip_rules                   = var.api_server_authorized_ip_ranges
     virtual_network_subnet_ids = [azurerm_subnet.aks.id]
+  }
+}
+
+resource "azurerm_cognitive_account" "grounded_ai" {
+  count = var.ai_services_enabled ? 1 : 0
+
+  name                          = local.ai_name
+  location                      = var.ai_services_location
+  resource_group_name           = azurerm_resource_group.platform.name
+  kind                          = "AIServices"
+  sku_name                      = "S0"
+  custom_subdomain_name         = local.ai_name
+  project_management_enabled    = true
+  local_auth_enabled            = true
+  public_network_access_enabled = true
+  tags                          = local.common_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_cognitive_deployment" "grounded_ai" {
+  count = var.ai_services_enabled ? 1 : 0
+
+  name                 = var.ai_model_deployment_name
+  cognitive_account_id = azurerm_cognitive_account.grounded_ai[0].id
+
+  model {
+    format  = "OpenAI"
+    name    = var.ai_model_name
+    version = var.ai_model_version
+  }
+
+  sku {
+    name     = "GlobalStandard"
+    capacity = var.ai_model_capacity
   }
 }
 

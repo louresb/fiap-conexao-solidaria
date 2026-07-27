@@ -42,6 +42,62 @@ variable "container_registry_name" {
   }
 }
 
+variable "ai_services_enabled" {
+  description = "Whether to provision the pay-per-token Azure AI account and grounded-generation deployment."
+  type        = bool
+  default     = false
+}
+
+variable "ai_services_name" {
+  description = "Globally unique Azure AI Services account name. Null derives a name from the ACR name."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = (
+      var.ai_services_name == null ||
+      can(regex("^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$", var.ai_services_name))
+    )
+    error_message = "ai_services_name must contain 3-64 lowercase letters, numbers, or hyphens."
+  }
+}
+
+variable "ai_services_location" {
+  description = "Azure region used by the grounded-generation model."
+  type        = string
+  default     = "East US 2"
+}
+
+variable "ai_model_deployment_name" {
+  description = "Deployment name sent as the model in OpenAI-compatible requests."
+  type        = string
+  default     = "gpt-5-4-mini"
+}
+
+variable "ai_model_name" {
+  description = "Azure AI model name used for grounded generation."
+  type        = string
+  default     = "gpt-5.4-mini"
+}
+
+variable "ai_model_version" {
+  description = "Pinned Azure AI model version."
+  type        = string
+  default     = "2026-03-17"
+}
+
+variable "ai_model_capacity" {
+  description = "Small GlobalStandard token capacity used by the demonstration environment."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.ai_model_capacity >= 1 && var.ai_model_capacity <= 10
+    error_message = "ai_model_capacity must be between 1 and 10."
+  }
+}
+
 variable "kubernetes_version" {
   description = "AKS Kubernetes minor version. Azure resolves the latest supported patch."
   type        = string

@@ -7,6 +7,8 @@ param(
     [string]$AiModel,
     [ValidateSet("api-key", "Authorization")]
     [string]$AiApiKeyHeader = "api-key",
+    [ValidateSet("max_tokens", "max_completion_tokens")]
+    [string]$AiTokenLimitParameter = "max_tokens",
     [string]$AiApiKey,
     [switch]$SkipSecretBootstrap,
     [switch]$SkipObservability
@@ -322,7 +324,8 @@ if ($aiEnabled) {
         "--set-string", "components.knowledge-api.env.AI__Enabled=true",
         "--set-string", "components.knowledge-api.env.AI__Endpoint=$AiEndpoint",
         "--set-string", "components.knowledge-api.env.AI__Model=$AiModel",
-        "--set-string", "components.knowledge-api.env.AI__ApiKeyHeader=$AiApiKeyHeader"
+        "--set-string", "components.knowledge-api.env.AI__ApiKeyHeader=$AiApiKeyHeader",
+        "--set-string", "components.knowledge-api.env.AI__TokenLimitParameter=$AiTokenLimitParameter"
     )
 }
 

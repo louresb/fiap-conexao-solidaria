@@ -251,6 +251,7 @@ components:
       AI__Endpoint: ""
       AI__Model: ""
       AI__ApiKeyHeader: api-key
+      AI__TokenLimitParameter: max_tokens
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
     secretEnv:
       RabbitMq__Password: rabbitmq-password

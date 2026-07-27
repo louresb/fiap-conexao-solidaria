@@ -22,6 +22,28 @@ cd ../../..
 .\scripts\Deploy-Azure.ps1 -ImageTag <sha-ou-tag>
 ```
 
+### Azure AI fundamentada
+
+O Azure AI Services e o deployment de modelo são opcionais e cobrados por consumo. Para uma janela de avaliação, habilite `ai_services_enabled`, revise modelo, região e capacidade no plano Terraform e armazene a chave somente no Key Vault:
+
+```powershell
+$key = az cognitiveservices account keys list `
+  --resource-group <resource-group> `
+  --name <ai-services-account> `
+  --query key1 -o tsv
+az keyvault secret set --vault-name <key-vault> --name ai-api-key --value $key --output none
+Remove-Variable key
+
+.\scripts\Deploy-Azure.ps1 `
+  -ImageTag <sha-ou-tag> `
+  -AiEndpoint <ai_chat_completions_endpoint> `
+  -AiModel <ai_model_deployment_name> `
+  -AiTokenLimitParameter max_completion_tokens `
+  -SkipSecretBootstrap
+```
+
+A API limita o contexto aos documentos recuperados, exige citações conhecidas e retorna ao modo extrativo se o provedor recusar as fontes ou ficar indisponível.
+
 O reconhecimento de custo libera somente o plano salvo; nenhum `apply` deve ser executado antes da revisão de SKU, quota e estimativa no Azure Cost Management. Para encerrar a janela:
 
 O workload acadêmico usa `Chile Central`: a região é permitida pela policy da assinatura, oferece AKS 1.35 e libera a SKU econômica `Standard_B4as_v2` com cota suficiente. O backend de estado permanece em `Brazil South` e não impõe a região do workload.

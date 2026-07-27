@@ -16,6 +16,7 @@ public sealed class GroundedGenerationOptions
     public string ApiKeyHeader { get; set; } = "api-key";
     public string Model { get; set; } = string.Empty;
     public int MaximumOutputTokens { get; set; } = 350;
+    public string TokenLimitParameter { get; set; } = "max_tokens";
 }
 
 public sealed record GroundedGenerationResult(string Answer, string Model);
@@ -73,12 +74,12 @@ public sealed class OpenAiCompatibleGroundedAnswerGenerator(
             request.Headers.TryAddWithoutValidation(_options.ApiKeyHeader, _options.ApiKey);
         }
 
-        request.Content = JsonContent.Create(new
+        var requestPayload = new Dictionary<string, object>
         {
-            model = _options.Model,
-            temperature = 0,
-            max_tokens = Math.Clamp(_options.MaximumOutputTokens, 100, 800),
-            messages = new object[]
+            ["model"] = _options.Model,
+            ["temperature"] = 0,
+            [_options.TokenLimitParameter] = Math.Clamp(_options.MaximumOutputTokens, 100, 800),
+            ["messages"] = new object[]
             {
                 new
                 {
@@ -94,7 +95,8 @@ public sealed class OpenAiCompatibleGroundedAnswerGenerator(
                     content = BuildGroundedPrompt(question, sources)
                 }
             }
-        }, options: JsonOptions);
+        };
+        request.Content = JsonContent.Create(requestPayload, options: JsonOptions);
 
         using var response = await httpClient.SendAsync(
             request,
@@ -132,6 +134,11 @@ public sealed class OpenAiCompatibleGroundedAnswerGenerator(
         if (string.IsNullOrWhiteSpace(_options.Model))
         {
             throw new InvalidOperationException("AI:Model is required when grounded generation is enabled.");
+        }
+        if (_options.TokenLimitParameter is not ("max_tokens" or "max_completion_tokens"))
+        {
+            throw new InvalidOperationException(
+                "AI:TokenLimitParameter must be max_tokens or max_completion_tokens.");
         }
     }
 
