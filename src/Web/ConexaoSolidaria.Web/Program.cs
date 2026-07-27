@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using ConexaoSolidaria.Contracts.Auth;
+using ConexaoSolidaria.ServiceDefaults.Health;
 using ConexaoSolidaria.ServiceDefaults.Observability;
 using ConexaoSolidaria.Web.Components;
 using ConexaoSolidaria.Web.Services;
@@ -117,6 +118,10 @@ builder.Services.AddHttpClient<SolidariaApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:5000");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddHttpClient("readiness", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 
 var app = builder.Build();
 
@@ -151,7 +156,38 @@ app.MapPost("/auth/logout", () => Results.SignOut(
     .RequireAuthorization();
 
 app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "web" }));
-app.MapGet("/health/ready", () => Results.Ok(new { status = "Healthy", dependencies = new[] { "gateway", "keycloak" } }));
+app.MapGet("/health/ready", async (
+    IHttpClientFactory clients,
+    IConfiguration configuration,
+    CancellationToken cancellationToken) =>
+{
+    var gatewayBaseUrl = configuration["Gateway:BaseUrl"]?.TrimEnd('/')
+        ?? throw new InvalidOperationException("Gateway:BaseUrl is required.");
+    var identityAuthority = configuration["Auth:Authority"]?.TrimEnd('/')
+        ?? throw new InvalidOperationException("Auth:Authority is required.");
+    var dependencies = new Dictionary<string, string>
+    {
+        ["gateway"] = configuration["Readiness:Dependencies:Gateway"]
+            ?? $"{gatewayBaseUrl}/health/ready",
+        ["identity-provider"] = configuration["Readiness:Dependencies:IdentityProvider"]
+            ?? $"{identityAuthority}/.well-known/openid-configuration"
+    };
+    var client = clients.CreateClient("readiness");
+    var readiness = await HttpDependencyReadinessProbe.CheckAsync(
+        client,
+        dependencies,
+        cancellationToken);
+
+    var payload = new
+    {
+        status = readiness.IsHealthy ? "Healthy" : "Unhealthy",
+        service = "web",
+        dependencies = readiness.Dependencies
+    };
+    return readiness.IsHealthy
+        ? Results.Ok(payload)
+        : Results.Json(payload, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 app.MapMetrics();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

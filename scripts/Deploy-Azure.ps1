@@ -227,6 +227,17 @@ foreach ($component in $applicationWorkloads) {
     } "$component nao ficou pronto."
 }
 
+$null = Invoke-Checked {
+    kubectl wait certificate/conexao-solidaria-tls -n $namespace --for=condition=Ready --timeout=8m
+} "O certificado TLS nao ficou pronto. Verifique DNS e o challenge ACME."
+$null = Invoke-Checked {
+    curl.exe --fail --silent --show-error --retry 12 --retry-delay 10 "$publicAppUrl/health/ready"
+} "O endpoint publico nao passou no readiness check."
+$null = Invoke-Checked {
+    curl.exe --fail --silent --show-error --retry 6 --retry-delay 5 `
+        "$publicAppUrl/auth/realms/conexao-solidaria/.well-known/openid-configuration"
+} "O discovery OIDC publico do Keycloak nao esta acessivel."
+
 Write-Host ""
 Write-Host "Conexao Solidaria publicada na Azure." -ForegroundColor Green
 Write-Host "Produto:  $publicAppUrl"

@@ -80,6 +80,8 @@ components:
       Auth__RequireHttpsMetadata: "false"
       DemoAccess__Enabled: "false"
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
+      Readiness__Dependencies__Gateway: http://conexao-solidaria-gateway:8080/health/ready
+      Readiness__Dependencies__IdentityProvider: http://conexao-solidaria-keycloak:8080/realms/conexao-solidaria/.well-known/openid-configuration
     secretEnv:
       ConnectionStrings__Redis: redis-connection
       Auth__ClientSecret: keycloak-client-secret

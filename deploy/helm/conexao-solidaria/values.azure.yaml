@@ -22,6 +22,7 @@ components:
       Auth__RequireHttpsMetadata: "true"
       DemoAccess__Enabled: "true"
       Observability__LokiUrl: http://conexao-solidaria-loki:3100
+      Readiness__Dependencies__IdentityProvider: http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration
   gateway:
     replicaCount: 1
     autoscaling: *autoscaling
