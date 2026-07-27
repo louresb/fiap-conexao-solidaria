@@ -136,6 +136,9 @@ jobs:
             grep -Fq 'Keycloak__BaseUrl: "http://conexao-solidaria-keycloak:8080/auth"' "${rendered}"
             grep -Fq 'Readiness__Dependencies__IdentityProvider: "http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration"' "${rendered}"
             grep -Fq 'Proxy__TrustForwardedHeaders: "true"' "${rendered}"
+            grep -Fq 'nginx.ingress.kubernetes.io/affinity: cookie' "${rendered}"
+            grep -Fq 'nginx.ingress.kubernetes.io/proxy-buffer-size: 32k' "${rendered}"
+            grep -Fq 'nginx.ingress.kubernetes.io/session-cookie-secure: "true"' "${rendered}"
             test "$(grep -c 'https://conexao-solidaria.example.com/auth/realms/conexao-solidaria' "${rendered}")" -ge 10
           done
 
@@ -151,7 +154,8 @@ jobs:
           ! grep -q '^kind: PersistentVolumeClaim$' /tmp/cloud-observability.yaml
           test "$(grep -c 'emptyDir:' /tmp/cloud-observability.yaml)" -ge 5
 
-          grep -Fq 'forceSSLRedirect: true' /tmp/values.azure.rendered.yaml
+          grep -Fq 'nginx.ingress.kubernetes.io/force-ssl-redirect: "true"' /tmp/values.azure.rendered.yaml
+          ! grep -Fq 'forceSSLRedirect:' /tmp/values.azure.rendered.yaml
           grep -Fq 'nginx.ingress.kubernetes.io/force-ssl-redirect: "true"' /tmp/values.aws.rendered.yaml
           grep -Fq 'sslRequired=external' infra/keycloak/seed-users.sh
 
