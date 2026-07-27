@@ -13,7 +13,6 @@ Projeto desenvolvido para o Hackathon da pós-graduação em Arquitetura de Sist
 A aplicação combina Blazor, YARP, Keycloak e serviços .NET 10 com MassTransit/RabbitMQ. PostgreSQL mantém o estado transacional, Redis e OpenSearch atendem projeções de leitura, MongoDB preserva a auditoria append-only e OpenTelemetry/Tempo acompanham a jornada entre processos.
 
 - [Diagrama editável em Graphviz](docs/architecture/platform-architecture.dot)
-- [Decisões de persistência em PDF](docs/architecture/data-storage-decisions.pdf)
 - [Topologia de entrega AWS e Azure](docs/architecture/deployment-topology.png)
 - [Registro de decisões arquiteturais](docs/architecture/decisions/README.md)
 
