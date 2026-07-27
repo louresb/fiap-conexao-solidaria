@@ -93,7 +93,8 @@ function Start-PortForwards {
         @{ Service = "conexao-solidaria-campaigns-api"; Local = 31102; Remote = 8080 },
         @{ Service = "conexao-solidaria-payments-api"; Local = 31103; Remote = 8080 },
         @{ Service = "conexao-solidaria-audit-api"; Local = 31104; Remote = 8080 },
-        @{ Service = "conexao-solidaria-knowledge-api"; Local = 31105; Remote = 8080 }
+        @{ Service = "conexao-solidaria-knowledge-api"; Local = 31105; Remote = 8080 },
+        @{ Service = "conexao-solidaria-donations-api"; Local = 31106; Remote = 8080 }
     )
     $processIds = @()
     $processesByPort = @{}
@@ -342,5 +343,6 @@ Write-Host "            http://localhost:31102/scalar/v1 (Campaigns)"
 Write-Host "            http://localhost:31103/scalar/v1 (Payments)"
 Write-Host "            http://localhost:31104/scalar/v1 (Audit)"
 Write-Host "            http://localhost:31105/scalar/v1 (Knowledge)"
+Write-Host "            http://localhost:31106/scalar/v1 (Donations)"
 Write-Host ""
 Write-Host "Valide o fluxo com: .\scripts\Test-KubernetesLocal.ps1"
