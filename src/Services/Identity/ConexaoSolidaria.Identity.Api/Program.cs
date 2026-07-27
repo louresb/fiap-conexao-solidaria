@@ -185,7 +185,10 @@ app.MapPost("/api/donors/register", async (
         PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
     };
 
-    await keycloak.ProvisionDonorAsync(request with { Email = normalizedEmail, Cpf = normalizedCpf }, tenantId, cancellationToken);
+    await keycloak.ProvisionDonorAsync(
+        request with { FullName = donor.FullName, Email = normalizedEmail, Cpf = normalizedCpf },
+        tenantId,
+        cancellationToken);
     db.Donors.Add(donor);
 
     var payload = JsonSerializer.Serialize(new

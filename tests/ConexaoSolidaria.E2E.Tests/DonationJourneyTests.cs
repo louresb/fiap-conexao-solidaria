@@ -81,6 +81,37 @@ public sealed class DonationJourneyTests : PageTest
 
     [Fact]
     [Trait("Category", "E2E")]
+    public async Task Visitor_can_register_and_authenticate_as_a_donor()
+    {
+        EnsureConfigured();
+
+        var uniqueSuffix = Guid.NewGuid().ToString("N");
+        var email = $"doador.e2e.{uniqueSuffix}@example.test";
+        var password = "SolidariaE2e2026";
+
+        await Page.GotoAsync("/cadastro");
+        await Page.WaitForTimeoutAsync(1_000);
+        await Page.GetByLabel("Nome completo").FillAsync("Doador E2E Conexão Solidária");
+        await Page.GetByLabel("E-mail").FillAsync(email);
+        await Page.GetByLabel("CPF").FillAsync(CreateValidCpf());
+        await Page.GetByLabel("Senha").FillAsync(password);
+        await Page.Locator(".consent-field input[type=checkbox]").CheckAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Criar conta" }).ClickAsync();
+
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Cadastro concluído" }))
+            .ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Entrar agora" }).ClickAsync();
+        await Page.Locator("#username").FillAsync(email);
+        await Page.Locator("#password").FillAsync(password);
+        await Page.Locator("#kc-login").ClickAsync();
+
+        await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Sair" })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Minhas doações" })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Gestão" })).ToHaveCountAsync(0);
+    }
+
+    [Fact]
+    [Trait("Category", "E2E")]
     public async Task Manager_can_authenticate_and_create_a_campaign()
     {
         EnsureConfigured();
@@ -140,5 +171,26 @@ public sealed class DonationJourneyTests : PageTest
             throw new InvalidOperationException(
                 "E2E_BASE_URL deve apontar para uma instancia ativa da plataforma.");
         }
+    }
+
+    private static string CreateValidCpf()
+    {
+        string seed;
+        do
+        {
+            seed = Random.Shared.Next(100_000_000, 1_000_000_000).ToString("D9");
+        }
+        while (seed.Distinct().Count() == 1);
+
+        var firstDigit = CalculateCpfDigit(seed, 10);
+        var secondDigit = CalculateCpfDigit($"{seed}{firstDigit}", 11);
+        return $"{seed}{firstDigit}{secondDigit}";
+    }
+
+    private static int CalculateCpfDigit(string digits, int initialWeight)
+    {
+        var sum = digits.Select((digit, index) => (digit - '0') * (initialWeight - index)).Sum();
+        var remainder = sum % 11;
+        return remainder < 2 ? 0 : 11 - remainder;
     }
 }

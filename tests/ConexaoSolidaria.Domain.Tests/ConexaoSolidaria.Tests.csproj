@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\Contracts\ConexaoSolidaria.Contracts\ConexaoSolidaria.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Services\Audit\ConexaoSolidaria.Audit.Api\ConexaoSolidaria.Audit.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Donations\ConexaoSolidaria.Donations.Api\ConexaoSolidaria.Donations.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\ConexaoSolidaria.Identity.Api\ConexaoSolidaria.Identity.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Knowledge\ConexaoSolidaria.Knowledge.Api\ConexaoSolidaria.Knowledge.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\Payments\ConexaoSolidaria.Payments.Api\ConexaoSolidaria.Payments.Api.csproj" />
   </ItemGroup>
