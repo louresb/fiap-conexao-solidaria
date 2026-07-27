@@ -1,5 +1,6 @@
 location                = "West Central US"
 environment             = "production"
+acknowledge_aks_costs   = false
 name_prefix             = "conexao-solidaria"
 container_registry_name = "conexaosolidariablouresfiap26"
 ingress_dns_label        = "conexao-solidaria-blouresfiap26"

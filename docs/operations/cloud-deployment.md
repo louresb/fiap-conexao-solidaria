@@ -13,7 +13,7 @@ O perfil Azure cria AKS Free, ACR Basic, Key Vault, Log Analytics, rede, IP púb
 ```powershell
 ./scripts/Initialize-TerraformBackend.ps1 -Provider azure -AzureSuffix <sufixo-unico> -ExpectedAzureSubscriptionId <subscription-id> -ConfirmCloudMutation
 cd infra/terraform/azure
-terraform plan -out azure.tfplan
+terraform plan -var="acknowledge_aks_costs=true" -out azure.tfplan
 terraform apply azure.tfplan
 cd ../../..
 .\scripts\Publish-CloudImages.ps1 -Provider azure -ImageTag <sha-ou-tag>
@@ -21,7 +21,7 @@ cd ../../..
 .\scripts\Deploy-Azure.ps1 -ImageTag <sha-ou-tag>
 ```
 
-Antes do `apply`, revise SKU, região e estimativa no Azure Cost Management. Para encerrar a janela:
+O reconhecimento de custo libera somente o plano salvo; nenhum `apply` deve ser executado antes da revisão de SKU, quota e estimativa no Azure Cost Management. Para encerrar a janela:
 
 ```powershell
 terraform -chdir=infra/terraform/azure destroy

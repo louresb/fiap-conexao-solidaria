@@ -4,6 +4,12 @@ variable "location" {
   default     = "West Central US"
 }
 
+variable "acknowledge_aks_costs" {
+  description = "Explicit acknowledgement required before planning or provisioning the paid AKS runtime."
+  type        = bool
+  default     = false
+}
+
 variable "environment" {
   description = "Deployment environment name."
   type        = string

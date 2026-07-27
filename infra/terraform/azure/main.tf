@@ -10,6 +10,17 @@ locals {
   }, var.tags)
 }
 
+resource "terraform_data" "aks_cost_guard" {
+  input = var.acknowledge_aks_costs
+
+  lifecycle {
+    precondition {
+      condition     = var.acknowledge_aks_costs
+      error_message = "AKS worker nodes, disks, public IP, registry, and telemetry incur recurring costs. Set acknowledge_aks_costs=true only for an intentional deployment window."
+    }
+  }
+}
+
 resource "azurerm_resource_group" "platform" {
   name     = "rg-${local.name}"
   location = var.location
@@ -160,6 +171,8 @@ resource "azurerm_kubernetes_cluster" "platform" {
   }
 
   tags = local.common_tags
+
+  depends_on = [terraform_data.aks_cost_guard]
 }
 
 resource "azurerm_role_assignment" "aks_acr_pull" {
