@@ -6,6 +6,11 @@ image:
   registry: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
   tag: latest
 
+defaults:
+  resources:
+    requests:
+      cpu: 50m
+
 serviceAccount:
   annotations: {}
 
