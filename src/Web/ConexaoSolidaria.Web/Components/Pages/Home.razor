@@ -1,31 +1,32 @@
 @page "/"
 @using ConexaoSolidaria.Contracts.Campaigns
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>@Tenant.Name | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["HomePageTitle", Tenant.Name]</PageTitle>
 
 <section class="tenant-hero @Tenant.AccentClass" style="background-image: linear-gradient(90deg, rgba(10, 35, 29, .9) 0%, rgba(10, 35, 29, .7) 38%, rgba(10, 35, 29, .08) 72%), url('@Tenant.HeroImage')">
     <div class="hero-inner">
         <h1>@Tenant.Name</h1>
-        <p class="hero-copy">@Tenant.Purpose</p>
+        <p class="hero-copy">@Localizer[$"TenantPurpose.{Tenant.Id}"]</p>
         <div class="hero-actions">
-            <a class="button button-primary" href="#campanhas">Conhecer campanhas</a>
-            <a class="button button-on-dark" href="/transparencia?tenant=@Tenant.Id">Ver transparência</a>
+            <a class="button button-primary" href="#campanhas">@Localizer["ExploreCampaigns"]</a>
+            <a class="button button-on-dark" href="/transparencia?tenant=@Tenant.Id">@Localizer["ViewTransparency"]</a>
         </div>
-        <div class="hero-trust" aria-label="Compromissos da organização">
-            <span>Impacto acompanhado</span>
-            <span>Prestação de contas</span>
-            <span>Doação segura</span>
+        <div class="hero-trust" aria-label="@Localizer["OrganizationCommitments"]">
+            <span>@Localizer["TrackedImpact"]</span>
+            <span>@Localizer["Accountability"]</span>
+            <span>@Localizer["SecureDonation"]</span>
         </div>
     </div>
 </section>
 
-<section class="impact-band" aria-label="Resumo de impacto">
+<section class="impact-band" aria-label="@Localizer["ImpactSummary"]">
     <div class="section-inner impact-grid">
-        <div><strong>@Campaigns.Count</strong><span>campanhas ativas</span></div>
-        <div><strong>@TotalRaised.ToString("C0", Culture)</strong><span>arrecadados</span></div>
-        <div><strong>@AverageProgress.ToString("0")%</strong><span>da meta média</span></div>
-        <div><strong>100%</strong><span>dos eventos auditáveis</span></div>
+        <div><strong>@Campaigns.Count</strong><span>@Localizer["ActiveCampaigns"]</span></div>
+        <div><strong>@TotalRaised.ToString("C0", Culture)</strong><span>@Localizer["Raised"]</span></div>
+        <div><strong>@AverageProgress.ToString("0")%</strong><span>@Localizer["AverageGoal"]</span></div>
+        <div><strong>100%</strong><span>@Localizer["AuditableEvents"]</span></div>
     </div>
 </section>
 
@@ -33,15 +34,15 @@
     <div class="section-inner">
         <div class="section-heading split-heading">
             <div>
-                <p class="eyebrow">Escolha onde participar</p>
-                <h2>Campanhas em andamento</h2>
-                <p>Acompanhe a meta, a arrecadação e o impacto esperado antes de contribuir.</p>
+                <p class="eyebrow">@Localizer["ParticipationEyebrow"]</p>
+                <h2>@Localizer["OngoingCampaigns"]</h2>
+                <p>@Localizer["OngoingCampaignsDescription"]</p>
             </div>
             <div class="search-control">
-                <label for="campaign-search">Buscar campanha</label>
+                <label for="campaign-search">@Localizer["SearchCampaign"]</label>
                 <div>
-                    <input id="campaign-search" @bind="SearchTerm" @bind:event="oninput" placeholder="Ex.: educação, alimento, mangue" />
-                    <button class="button button-dark" type="button" @onclick="SearchAsync" disabled="@Loading">Buscar</button>
+                    <input id="campaign-search" @bind="SearchTerm" @bind:event="oninput" placeholder="@Localizer["SearchPlaceholder"]" />
+                    <button class="button button-dark" type="button" @onclick="SearchAsync" disabled="@Loading">@Localizer["Search"]</button>
                 </div>
             </div>
         </div>
@@ -52,14 +53,14 @@
         }
         else if (Loading)
         {
-            <div class="loading-state">Carregando campanhas...</div>
+            <div class="loading-state">@Localizer["LoadingCampaigns"]</div>
         }
         else if (DisplayCampaigns.Count == 0)
         {
             <div class="empty-state">
-                <h3>Nenhuma campanha encontrada</h3>
-                <p>Experimente outro termo ou consulte todas as iniciativas.</p>
-                <button class="button button-outline" type="button" @onclick="ClearSearchAsync">Limpar busca</button>
+                <h3>@Localizer["NoCampaignFound"]</h3>
+                <p>@Localizer["NoCampaignFoundDescription"]</p>
+                <button class="button button-outline" type="button" @onclick="ClearSearchAsync">@Localizer["ClearSearch"]</button>
             </div>
         }
         else
@@ -77,13 +78,13 @@
 <section class="confidence-band">
     <div class="section-inner confidence-layout">
         <div>
-            <p class="eyebrow">Confiança por princípio</p>
-            <h2>Da contribuição ao resultado, sem pontos cegos.</h2>
+            <p class="eyebrow">@Localizer["ConfidenceEyebrow"]</p>
+            <h2>@Localizer["ConfidenceTitle"]</h2>
         </div>
         <div class="confidence-list">
-            <div><strong>01</strong><span>Pagamento confirmado pelo provedor</span></div>
-            <div><strong>02</strong><span>Doação processada de forma assíncrona</span></div>
-            <div><strong>03</strong><span>Total e trilha de auditoria atualizados</span></div>
+            <div><strong>01</strong><span>@Localizer["PaymentConfirmed"]</span></div>
+            <div><strong>02</strong><span>@Localizer["DonationProcessed"]</span></div>
+            <div><strong>03</strong><span>@Localizer["AuditUpdated"]</span></div>
         </div>
     </div>
 </section>
@@ -92,7 +93,7 @@
     [SupplyParameterFromQuery(Name = "tenant")]
     public string? TenantId { get; set; }
 
-    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
     private IReadOnlyList<ActiveCampaignDto> Campaigns { get; set; } = [];
     private IReadOnlyList<ActiveCampaignDto> SearchResults { get; set; } = [];
@@ -119,7 +120,7 @@
         }
         catch
         {
-            Error = "Não foi possível carregar as campanhas agora. Tente novamente em instantes.";
+            Error = Localizer["CampaignLoadError"];
         }
         finally
         {
@@ -145,7 +146,7 @@
         }
         catch
         {
-            Error = "A busca está temporariamente indisponível.";
+            Error = Localizer["SearchUnavailable"];
         }
         finally
         {

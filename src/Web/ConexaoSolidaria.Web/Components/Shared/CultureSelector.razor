@@ -1,0 +1,30 @@
+@inject NavigationManager Navigation
+@inject IStringLocalizer<WebResources> Localizer
+
+<details class="language-menu">
+    <summary aria-label="@Localizer["Language"]">@CurrentCode</summary>
+    <div class="language-popover">
+        @foreach (var culture in WebCultures.Supported)
+        {
+            <a href="@CultureHref(culture.Name)"
+               lang="@culture.Name"
+               aria-current="@(culture.Name == CurrentCulture.Name ? "true" : null)">
+                @Localizer[$"Language.{culture.Name}"]
+            </a>
+        }
+    </div>
+</details>
+
+@code {
+    private System.Globalization.CultureInfo CurrentCulture =>
+        WebCultures.Resolve(System.Globalization.CultureInfo.CurrentUICulture.Name);
+
+    private string CurrentCode => CurrentCulture.TwoLetterISOLanguageName.ToUpperInvariant();
+
+    private string CultureHref(string culture)
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var returnUrl = string.IsNullOrWhiteSpace(relative) ? "/" : $"/{relative}";
+        return $"/culture/set?culture={Uri.EscapeDataString(culture)}&returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+}

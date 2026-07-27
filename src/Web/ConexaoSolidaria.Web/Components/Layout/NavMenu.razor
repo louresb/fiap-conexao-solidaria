@@ -1,35 +1,37 @@
+@inject IStringLocalizer<WebResources> Localizer
+
 <header class="site-header">
     <div class="header-inner">
-        <a class="brand" href="/" aria-label="Página inicial da Conexão Solidária">
+        <a class="brand" href="/" aria-label="@Localizer["BrandHomeAria"]">
             <span class="brand-mark" aria-hidden="true">CS</span>
-            <span><strong>Conexão Solidária</strong><small>Rede de impacto social</small></span>
+            <span><strong>Conexão Solidária</strong><small>@Localizer["BrandTagline"]</small></span>
         </a>
 
-        <nav class="primary-nav" aria-label="Navegação principal">
-            <NavLink href="/" Match="NavLinkMatch.All">Campanhas</NavLink>
-            <NavLink href="/transparencia">Transparência</NavLink>
-            <NavLink href="/assistente">Assistente</NavLink>
+        <nav class="primary-nav" aria-label="@Localizer["PrimaryNavigation"]">
+            <NavLink href="/" Match="NavLinkMatch.All">@Localizer["Campaigns"]</NavLink>
+            <NavLink href="/transparencia">@Localizer["Transparency"]</NavLink>
+            <NavLink href="/assistente">@Localizer["Assistant"]</NavLink>
             <AuthorizeView Roles="Doador">
                 <Authorized>
-                    <NavLink href="/minhas-doacoes">Minhas doações</NavLink>
+                    <NavLink href="/minhas-doacoes">@Localizer["MyDonations"]</NavLink>
                 </Authorized>
             </AuthorizeView>
             <AuthorizeView Roles="GestorONG">
                 <Authorized>
-                    <NavLink href="/gestao">Gestão</NavLink>
-                    <NavLink href="/gestao/auditoria">Auditoria</NavLink>
+                    <NavLink href="/gestao">@Localizer["Management"]</NavLink>
+                    <NavLink href="/gestao/auditoria">@Localizer["Audit"]</NavLink>
                 </Authorized>
             </AuthorizeView>
             <AuthorizeView Roles="AdminSaaS">
                 <Authorized>
-                    <NavLink href="/administracao">Plataforma</NavLink>
+                    <NavLink href="/administracao">@Localizer["Platform"]</NavLink>
                 </Authorized>
             </AuthorizeView>
         </nav>
 
         <div class="header-actions">
             <details class="tenant-menu">
-                <summary aria-label="Selecionar organização">Organizações</summary>
+                <summary aria-label="@Localizer["SelectOrganization"]">@Localizer["Organizations"]</summary>
                 <div class="tenant-popover">
                     @foreach (var tenant in TenantCatalog.All)
                     {
@@ -39,20 +41,23 @@
                     }
                 </div>
             </details>
-            <AuthorizeView>
-                <Authorized Context="auth">
-                    <span class="user-name">@DisplayName(auth.User)</span>
-                    <form method="post" action="/account/logout">
-                        <AntiforgeryToken />
-                        <button class="button button-quiet" type="submit">Sair</button>
-                    </form>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="button button-outline" href="/acesso">Entrar</a>
-                </NotAuthorized>
-            </AuthorizeView>
+            <CultureSelector />
+            <div class="desktop-auth">
+                <AuthorizeView>
+                    <Authorized Context="auth">
+                        <span class="user-name">@DisplayName(auth.User)</span>
+                        <form method="post" action="/account/logout">
+                            <AntiforgeryToken />
+                            <button class="button button-quiet" type="submit">@Localizer["SignOut"]</button>
+                        </form>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="button button-outline" href="/acesso">@Localizer["SignIn"]</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
             <div class="mobile-menu">
-                <button type="button" aria-label="Abrir navegação" aria-expanded="@(MobileMenuOpen ? "true" : "false")" @onclick="ToggleMobileMenu">
+                <button type="button" aria-label="@Localizer["OpenNavigation"]" aria-expanded="@(MobileMenuOpen ? "true" : "false")" @onclick="ToggleMobileMenu">
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
@@ -60,35 +65,49 @@
                 @if (MobileMenuOpen)
                 {
                     <div class="mobile-menu-popover">
-                        <nav aria-label="Navegação móvel">
-                            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">Campanhas</NavLink>
-                            <NavLink href="/transparencia" @onclick="CloseMobileMenu">Transparência</NavLink>
-                            <NavLink href="/assistente" @onclick="CloseMobileMenu">Assistente</NavLink>
+                        <nav aria-label="@Localizer["MobileNavigation"]">
+                            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">@Localizer["Campaigns"]</NavLink>
+                            <NavLink href="/transparencia" @onclick="CloseMobileMenu">@Localizer["Transparency"]</NavLink>
+                            <NavLink href="/assistente" @onclick="CloseMobileMenu">@Localizer["Assistant"]</NavLink>
                             <AuthorizeView Roles="Doador">
                                 <Authorized>
-                                    <NavLink href="/minhas-doacoes" @onclick="CloseMobileMenu">Minhas doações</NavLink>
+                                    <NavLink href="/minhas-doacoes" @onclick="CloseMobileMenu">@Localizer["MyDonations"]</NavLink>
                                 </Authorized>
                             </AuthorizeView>
                             <AuthorizeView Roles="GestorONG">
                                 <Authorized>
-                                    <NavLink href="/gestao" @onclick="CloseMobileMenu">Gestão</NavLink>
-                                    <NavLink href="/gestao/auditoria" @onclick="CloseMobileMenu">Auditoria</NavLink>
+                                    <NavLink href="/gestao" @onclick="CloseMobileMenu">@Localizer["Management"]</NavLink>
+                                    <NavLink href="/gestao/auditoria" @onclick="CloseMobileMenu">@Localizer["Audit"]</NavLink>
                                 </Authorized>
                             </AuthorizeView>
                             <AuthorizeView Roles="AdminSaaS">
                                 <Authorized>
-                                    <NavLink href="/administracao" @onclick="CloseMobileMenu">Plataforma</NavLink>
+                                    <NavLink href="/administracao" @onclick="CloseMobileMenu">@Localizer["Platform"]</NavLink>
                                 </Authorized>
                             </AuthorizeView>
                         </nav>
                         <div class="mobile-tenant-list">
-                            <strong>Organizações</strong>
+                            <strong>@Localizer["Organizations"]</strong>
                             @foreach (var tenant in TenantCatalog.All)
                             {
                                 <a href="/?tenant=@tenant.Id" @onclick="CloseMobileMenu">
                                     <span>@tenant.Name</span>
                                 </a>
                             }
+                        </div>
+                        <div class="mobile-auth">
+                            <AuthorizeView>
+                                <Authorized Context="mobileAuth">
+                                    <span>@DisplayName(mobileAuth.User)</span>
+                                    <form method="post" action="/account/logout">
+                                        <AntiforgeryToken />
+                                        <button class="button button-outline button-full" type="submit">@Localizer["SignOut"]</button>
+                                    </form>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <a class="button button-outline button-full" href="/acesso">@Localizer["SignIn"]</a>
+                                </NotAuthorized>
+                            </AuthorizeView>
                         </div>
                     </div>
                 }
@@ -103,8 +122,8 @@
     private void ToggleMobileMenu() => MobileMenuOpen = !MobileMenuOpen;
     private void CloseMobileMenu() => MobileMenuOpen = false;
 
-    private static string DisplayName(System.Security.Claims.ClaimsPrincipal user) =>
+    private string DisplayName(System.Security.Claims.ClaimsPrincipal user) =>
         user.FindFirst("given_name")?.Value
         ?? user.Identity?.Name
-        ?? "Minha conta";
+        ?? Localizer["MyAccount"];
 }

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="BrandHomeAria" xml:space="preserve"><value>Página inicial da Conexão Solidária</value></data>
+  <data name="BrandTagline" xml:space="preserve"><value>Rede de impacto social</value></data>
+  <data name="PrimaryNavigation" xml:space="preserve"><value>Navegação principal</value></data>
+  <data name="Campaigns" xml:space="preserve"><value>Campanhas</value></data>
+  <data name="Transparency" xml:space="preserve"><value>Transparência</value></data>
+  <data name="Assistant" xml:space="preserve"><value>Assistente</value></data>
+  <data name="MyDonations" xml:space="preserve"><value>Minhas doações</value></data>
+  <data name="Management" xml:space="preserve"><value>Gestão</value></data>
+  <data name="Audit" xml:space="preserve"><value>Auditoria</value></data>
+  <data name="Platform" xml:space="preserve"><value>Plataforma</value></data>
+  <data name="SelectOrganization" xml:space="preserve"><value>Selecionar organização</value></data>
+  <data name="Organizations" xml:space="preserve"><value>Organizações</value></data>
+  <data name="SignOut" xml:space="preserve"><value>Sair</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Entrar</value></data>
+  <data name="OpenNavigation" xml:space="preserve"><value>Abrir navegação</value></data>
+  <data name="MobileNavigation" xml:space="preserve"><value>Navegação móvel</value></data>
+  <data name="MyAccount" xml:space="preserve"><value>Minha conta</value></data>
+  <data name="Language" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Language.pt-BR" xml:space="preserve"><value>Português</value></data>
+  <data name="Language.en-US" xml:space="preserve"><value>English</value></data>
+  <data name="HomePageTitle" xml:space="preserve"><value>{0} | Conexão Solidária</value></data>
+  <data name="TenantPurpose.esperanca-solidaria" xml:space="preserve"><value>Segurança alimentar, educação e resposta comunitária com prestação de contas aberta.</value></data>
+  <data name="TenantPurpose.mare-limpa" xml:space="preserve"><value>Recuperação costeira e educação ambiental conduzidas com a comunidade.</value></data>
+  <data name="TenantPurpose.futuro-em-rede" xml:space="preserve"><value>Inclusão digital e formação tecnológica para ampliar autonomia e oportunidades.</value></data>
+  <data name="ExploreCampaigns" xml:space="preserve"><value>Conhecer campanhas</value></data>
+  <data name="ViewTransparency" xml:space="preserve"><value>Ver transparência</value></data>
+  <data name="OrganizationCommitments" xml:space="preserve"><value>Compromissos da organização</value></data>
+  <data name="TrackedImpact" xml:space="preserve"><value>Impacto acompanhado</value></data>
+  <data name="Accountability" xml:space="preserve"><value>Prestação de contas</value></data>
+  <data name="SecureDonation" xml:space="preserve"><value>Doação segura</value></data>
+  <data name="ImpactSummary" xml:space="preserve"><value>Resumo de impacto</value></data>
+  <data name="ActiveCampaigns" xml:space="preserve"><value>campanhas ativas</value></data>
+  <data name="Raised" xml:space="preserve"><value>arrecadados</value></data>
+  <data name="AverageGoal" xml:space="preserve"><value>da meta média</value></data>
+  <data name="AuditableEvents" xml:space="preserve"><value>dos eventos auditáveis</value></data>
+  <data name="ParticipationEyebrow" xml:space="preserve"><value>Escolha onde participar</value></data>
+  <data name="OngoingCampaigns" xml:space="preserve"><value>Campanhas em andamento</value></data>
+  <data name="OngoingCampaignsDescription" xml:space="preserve"><value>Acompanhe a meta, a arrecadação e o impacto esperado antes de contribuir.</value></data>
+  <data name="SearchCampaign" xml:space="preserve"><value>Buscar campanha</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Ex.: educação, alimento, mangue</value></data>
+  <data name="Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="LoadingCampaigns" xml:space="preserve"><value>Carregando campanhas...</value></data>
+  <data name="NoCampaignFound" xml:space="preserve"><value>Nenhuma campanha encontrada</value></data>
+  <data name="NoCampaignFoundDescription" xml:space="preserve"><value>Experimente outro termo ou consulte todas as iniciativas.</value></data>
+  <data name="ClearSearch" xml:space="preserve"><value>Limpar busca</value></data>
+  <data name="CampaignLoadError" xml:space="preserve"><value>Não foi possível carregar as campanhas agora. Tente novamente em instantes.</value></data>
+  <data name="SearchUnavailable" xml:space="preserve"><value>A busca está temporariamente indisponível.</value></data>
+  <data name="ConfidenceEyebrow" xml:space="preserve"><value>Confiança por princípio</value></data>
+  <data name="ConfidenceTitle" xml:space="preserve"><value>Da contribuição ao resultado, sem pontos cegos.</value></data>
+  <data name="PaymentConfirmed" xml:space="preserve"><value>Pagamento confirmado pelo provedor</value></data>
+  <data name="DonationProcessed" xml:space="preserve"><value>Doação processada de forma assíncrona</value></data>
+  <data name="AuditUpdated" xml:space="preserve"><value>Total e trilha de auditoria atualizados</value></data>
+  <data name="ViewCampaignAria" xml:space="preserve"><value>Conhecer {0}</value></data>
+  <data name="DaysToContribute" xml:space="preserve"><value>{0} dias para contribuir</value></data>
+  <data name="ProgressAria" xml:space="preserve"><value>{0} por cento da meta</value></data>
+  <data name="GoalOf" xml:space="preserve"><value>de {0}</value></data>
+  <data name="Category.Meio ambiente" xml:space="preserve"><value>Meio ambiente</value></data>
+  <data name="Category.Inclusão digital" xml:space="preserve"><value>Inclusão digital</value></data>
+  <data name="Category.Desenvolvimento social" xml:space="preserve"><value>Desenvolvimento social</value></data>
+</root>

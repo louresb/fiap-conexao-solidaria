@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 concurrency:
@@ -339,7 +340,7 @@ jobs:
 
   publish-ecr:
     name: Mirror ECR - ${{ matrix.component }}
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_PUBLISH == 'true'
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.ENABLE_AWS_PUBLISH == 'true'
     needs: [containers, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -391,7 +392,7 @@ jobs:
 
   publish-acr:
     name: Mirror ACR - ${{ matrix.component }}
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_AZURE_PUBLISH == 'true'
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.ENABLE_AZURE_PUBLISH == 'true'
     needs: [containers, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -435,7 +436,7 @@ jobs:
 
   deploy-eks:
     name: Deploy to EKS
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_DEPLOY == 'true'
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.ENABLE_AWS_DEPLOY == 'true'
     needs: publish-ecr
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -468,7 +469,7 @@ jobs:
 
   deploy-aks:
     name: Deploy to AKS
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_AZURE_DEPLOY == 'true'
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.ENABLE_AZURE_DEPLOY == 'true'
     needs: publish-acr
     runs-on: ubuntu-latest
     timeout-minutes: 15

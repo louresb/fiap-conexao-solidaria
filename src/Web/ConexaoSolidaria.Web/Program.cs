@@ -4,6 +4,7 @@ using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.ServiceDefaults.Health;
 using ConexaoSolidaria.ServiceDefaults.Http;
 using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.Web;
 using ConexaoSolidaria.Web.Components;
 using ConexaoSolidaria.Web.Services;
 
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 using Prometheus;
@@ -95,6 +97,19 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = WebCultures.Supported.Select(culture => culture.Name).ToArray();
+    options.SetDefaultCulture(WebCultures.Default.Name)
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+    options.RequestCultureProviders =
+    [
+        new CookieRequestCultureProvider(),
+        new QueryStringRequestCultureProvider()
+    ];
+});
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -127,6 +142,7 @@ var app = builder.Build();
 
 app.UseConfiguredForwardedHeaders(builder.Configuration);
 app.UseConexaoSolidariaSecurityHeaders();
+app.UseRequestLocalization();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -147,6 +163,25 @@ app.MapGet("/account/login", (string? returnUrl) =>
     return Results.Challenge(
         new AuthenticationProperties { RedirectUri = destination },
         [OpenIdConnectDefaults.AuthenticationScheme]);
+});
+
+app.MapGet("/culture/set", (HttpContext context, string culture, string? returnUrl) =>
+{
+    var selectedCulture = WebCultures.Resolve(culture);
+    context.Response.Cookies.Append(
+        CookieRequestCultureProvider.DefaultCookieName,
+        CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(selectedCulture)),
+        new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            IsEssential = true,
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Secure = context.Request.IsHttps
+        });
+
+    var destination = IsLocalReturnUrl(returnUrl) ? returnUrl! : "/";
+    return Results.LocalRedirect(destination);
 });
 
 app.MapPost("/account/logout", () => Results.SignOut(
