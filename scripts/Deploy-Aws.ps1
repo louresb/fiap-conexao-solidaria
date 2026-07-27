@@ -313,6 +313,10 @@ $helmArguments = @(
     "--atomic",
     "--timeout", "10m"
 )
+$helmUpgradeHelp = helm upgrade --help | Out-String
+if ($helmUpgradeHelp -match "--force-conflicts") {
+    $helmArguments += "--force-conflicts"
+}
 if ($aiEnabled) {
     $helmArguments += @(
         "--set-string", "components.knowledge-api.env.AI__Enabled=true",
