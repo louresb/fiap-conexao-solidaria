@@ -131,6 +131,8 @@ public sealed class DonationJourneyTests : PageTest
         await Page.Locator("#password").FillAsync(password);
         await Page.Locator("#kc-login").ClickAsync();
 
+        await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Sair" })).ToBeVisibleAsync();
+        await WaitForInteractiveAppAsync();
         await Page.GotoAsync("/gestao/campanhas/nova");
         await Expect(Page.Locator(".editor-page form")).ToBeVisibleAsync();
         await WaitForInteractiveAppAsync();
