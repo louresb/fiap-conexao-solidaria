@@ -44,12 +44,28 @@ public sealed class GroundedAnswerGeneratorTests
 
         using var payload = JsonDocument.Parse(handler.Body!);
         Assert.Equal("gpt-4o-mini", payload.RootElement.GetProperty("model").GetString());
+        Assert.Equal(350, payload.RootElement.GetProperty("max_tokens").GetInt32());
 
         var messages = payload.RootElement.GetProperty("messages");
         var prompt = messages[1].GetProperty("content").GetString();
         Assert.Contains("Como a ONG presta contas?", prompt, StringComparison.Ordinal);
         Assert.Contains("[DOCUMENTO:transparencia]", prompt, StringComparison.Ordinal);
         Assert.Contains(Sources[0].Excerpt, prompt, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_supports_the_current_completion_token_parameter()
+    {
+        var handler = new RecordingHandler(
+            HttpStatusCode.OK,
+            """{"choices":[{"message":{"content":"Resposta fundamentada [transparencia]."}}]}""");
+        var generator = CreateGenerator(handler, tokenLimitParameter: "max_completion_tokens");
+
+        await generator.GenerateAsync("Como funciona?", Sources, CancellationToken.None);
+
+        using var payload = JsonDocument.Parse(handler.Body!);
+        Assert.Equal(350, payload.RootElement.GetProperty("max_completion_tokens").GetInt32());
+        Assert.False(payload.RootElement.TryGetProperty("max_tokens", out _));
     }
 
     [Fact]
@@ -101,7 +117,8 @@ public sealed class GroundedAnswerGeneratorTests
     private static OpenAiCompatibleGroundedAnswerGenerator CreateGenerator(
         HttpMessageHandler handler,
         string endpoint = "https://example.services.ai.azure.com/openai/v1/chat/completions",
-        string apiKeyHeader = "api-key")
+        string apiKeyHeader = "api-key",
+        string tokenLimitParameter = "max_tokens")
     {
         var options = Options.Create(new GroundedGenerationOptions
         {
@@ -110,7 +127,8 @@ public sealed class GroundedAnswerGeneratorTests
             ApiKey = "test-key",
             ApiKeyHeader = apiKeyHeader,
             Model = "gpt-4o-mini",
-            MaximumOutputTokens = 350
+            MaximumOutputTokens = 350,
+            TokenLimitParameter = tokenLimitParameter
         });
 
         return new OpenAiCompatibleGroundedAnswerGenerator(

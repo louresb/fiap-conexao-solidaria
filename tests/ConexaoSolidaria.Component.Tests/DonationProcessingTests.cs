@@ -55,6 +55,14 @@ public sealed class DonationProcessingTests
         await using var host = await CreateCampaignsHostAsync();
         var campaign = await SeedCampaignAsync(host, 950m);
         var consumer = host.Harness.GetConsumerHarness<DonationProcessedConsumer>();
+        var readModelConsumer = host.Harness.GetConsumerHarness<CampaignChangedConsumer>();
+        var cacheKey = $"active-campaigns:{campaign.TenantId}";
+        await using (var setupScope = host.Services.CreateAsyncScope())
+        {
+            var cache = setupScope.ServiceProvider.GetRequiredService<IDistributedCache>();
+            await cache.SetStringAsync(cacheKey, "stale-projection");
+        }
+
         var payload = new DonationProcessedPayload(
             Guid.NewGuid(),
             campaign.Id,
@@ -64,6 +72,8 @@ public sealed class DonationProcessingTests
 
         await host.Harness.Bus.Publish(message);
         Assert.True(await consumer.Consumed.Any<IntegrationEvent>(x => x.Context.Message.EventId == message.EventId));
+        Assert.True(await readModelConsumer.Consumed.Any<IntegrationEvent>(
+            x => x.Context.Message.EventType == EventTypes.CampaignProjectionUpdated));
 
         await using var scope = host.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<CampaignsDbContext>();
@@ -72,6 +82,13 @@ public sealed class DonationProcessingTests
         var goalEvents = host.Harness.Published.Select<IntegrationEvent>()
             .Where(x => x.Context.Message.EventType == EventTypes.CampaignGoalReached)
             .ToList();
+        var projectionEvents = host.Harness.Published.Select<IntegrationEvent>()
+            .Where(x => x.Context.Message.EventType == EventTypes.CampaignProjectionUpdated)
+            .ToList();
+        var storedCache = await scope.ServiceProvider
+            .GetRequiredService<IDistributedCache>()
+            .GetStringAsync(cacheKey);
+        var search = scope.ServiceProvider.GetRequiredService<RecordingSearchIndexer>();
 
         Assert.Equal(1025m, stored.TotalRaised);
         Assert.Equal(campaign.TenantId, publicDonation.TenantId);
@@ -80,6 +97,11 @@ public sealed class DonationProcessingTests
         Assert.Single(goalEvents);
         Assert.Equal(message.CorrelationId, goalEvents[0].Context.Message.CorrelationId);
         Assert.Equal(message.EventId.ToString(), goalEvents[0].Context.Message.CausationId);
+        Assert.Single(projectionEvents);
+        Assert.Equal(message.CorrelationId, projectionEvents[0].Context.Message.CorrelationId);
+        Assert.Equal(message.EventId.ToString(), projectionEvents[0].Context.Message.CausationId);
+        Assert.Null(storedCache);
+        Assert.Equal(1, search.IndexCount);
     }
 
     [Fact]

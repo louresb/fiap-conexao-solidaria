@@ -43,6 +43,24 @@ output "key_vault_csi_client_id" {
   value       = azurerm_kubernetes_cluster.platform.key_vault_secrets_provider[0].secret_identity[0].client_id
 }
 
+output "ai_services_account_name" {
+  description = "Azure AI Services account used for grounded generation, when enabled."
+  value       = try(azurerm_cognitive_account.grounded_ai[0].name, null)
+}
+
+output "ai_chat_completions_endpoint" {
+  description = "OpenAI-compatible chat completions endpoint, when Azure AI is enabled."
+  value = try(
+    "https://${azurerm_cognitive_account.grounded_ai[0].custom_subdomain_name}.services.ai.azure.com/openai/v1/chat/completions",
+    null
+  )
+}
+
+output "ai_model_deployment_name" {
+  description = "Azure AI deployment name sent in the request model field."
+  value       = try(azurerm_cognitive_deployment.grounded_ai[0].name, null)
+}
+
 output "ingress_public_ip_name" {
   description = "Static public IP resource consumed by the AKS application routing controller."
   value       = azurerm_public_ip.ingress.name
