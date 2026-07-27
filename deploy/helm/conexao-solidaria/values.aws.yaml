@@ -1,6 +1,8 @@
 global:
   environment: production
   cloudProvider: aws
+  observability:
+    otlpEndpoint: http://conexao-solidaria-otel-collector:4317
 
 image:
   registry: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com

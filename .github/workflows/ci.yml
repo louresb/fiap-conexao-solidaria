@@ -135,6 +135,7 @@ jobs:
             rendered="/tmp/values.${cloud}.rendered.yaml"
             grep -Fq 'Keycloak__BaseUrl: "http://conexao-solidaria-keycloak:8080/auth"' "${rendered}"
             grep -Fq 'Readiness__Dependencies__IdentityProvider: "http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration"' "${rendered}"
+            grep -Fq 'Observability__OtlpEndpoint: "http://conexao-solidaria-otel-collector:4317"' "${rendered}"
             grep -Fq 'Proxy__TrustForwardedHeaders: "true"' "${rendered}"
             grep -Fq 'nginx.ingress.kubernetes.io/affinity: cookie' "${rendered}"
             grep -Fq 'nginx.ingress.kubernetes.io/proxy-buffer-size: 32k' "${rendered}"

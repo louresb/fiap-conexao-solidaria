@@ -151,6 +151,15 @@ if ($loadBalancerAddresses.Count -eq 0) {
 }
 
 if ([string]::IsNullOrWhiteSpace($AppHost)) {
+    $existingAppHost = (& kubectl get ingress conexao-solidaria `
+        -n $namespace `
+        -o 'jsonpath={.spec.rules[0].host}' 2>$null | Out-String).Trim()
+    if (-not [string]::IsNullOrWhiteSpace($existingAppHost)) {
+        $AppHost = $existingAppHost
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($AppHost)) {
     $AppHost = "$($loadBalancerAddresses[0]).sslip.io"
 }
 else {
