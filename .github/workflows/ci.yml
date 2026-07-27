@@ -157,6 +157,14 @@ jobs:
           ! grep -q '^  volumeClaimTemplates:' /tmp/cloud-observability.yaml
           ! grep -q '^kind: PersistentVolumeClaim$' /tmp/cloud-observability.yaml
           test "$(grep -c 'emptyDir:' /tmp/cloud-observability.yaml)" -ge 5
+          grep -Fq 'name: conexao-solidaria-zabbix-bootstrap' /tmp/cloud-observability.yaml
+          grep -Fq 'key: zabbix-admin-password' /tmp/cloud-observability.yaml
+
+          for provider in \
+            deploy/kubernetes/cloud/aws-secret-provider.template.yaml \
+            deploy/kubernetes/cloud/azure-secret-provider.template.yaml; do
+            grep -Fq 'zabbix-admin-password' "${provider}"
+          done
 
           grep -Fq 'nginx.ingress.kubernetes.io/force-ssl-redirect: "true"' /tmp/values.azure.rendered.yaml
           ! grep -Fq 'forceSSLRedirect:' /tmp/values.azure.rendered.yaml
@@ -170,6 +178,7 @@ jobs:
             grep -Fq '"upgrade", "--install"' "${script}"
             grep -Fq '"--atomic"' "${script}"
             grep -Fq '/auth/realms/conexao-solidaria/.well-known/openid-configuration' "${script}"
+            grep -Fq 'job/conexao-solidaria-zabbix-bootstrap' "${script}"
           done
 
   containers:

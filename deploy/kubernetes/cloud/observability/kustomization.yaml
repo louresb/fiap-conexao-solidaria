@@ -4,6 +4,7 @@ resources:
   - ../../local/tracing.yaml
   - ../../local/monitoring.yaml
   - ../../local/zabbix.yaml
+  - ../zabbix-bootstrap-job.yaml
 patches:
   - target:
       kind: Deployment

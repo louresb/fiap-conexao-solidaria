@@ -43,6 +43,40 @@ function Apply-FileConfigMap([string]$Name, [string]$FromFile) {
     Apply-Generated $yaml "Nao foi possivel aplicar o ConfigMap $Name."
 }
 
+function Ensure-RuntimeSecretKey([string]$Key) {
+    $encoded = kubectl get secret conexao-solidaria-runtime `
+        -n $namespace `
+        -o "jsonpath={.data.$Key}" 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($encoded | Out-String))) {
+        return
+    }
+
+    $null = Invoke-Checked {
+        kubectl delete secret conexao-solidaria-runtime -n $namespace --ignore-not-found=true --wait=true
+    } "Nao foi possivel atualizar o segredo de runtime."
+    $null = Invoke-Checked {
+        kubectl delete pod `
+            -n $namespace `
+            -l app.kubernetes.io/name=secret-sync `
+            --wait=true
+    } "Nao foi possivel reiniciar o sincronizador de segredos."
+    $null = Invoke-Checked {
+        kubectl rollout status deployment/conexao-solidaria-secret-sync -n $namespace --timeout=5m
+    } "O sincronizador de segredos nao ficou pronto."
+
+    for ($attempt = 1; $attempt -le 45; $attempt++) {
+        $encoded = kubectl get secret conexao-solidaria-runtime `
+            -n $namespace `
+            -o "jsonpath={.data.$Key}" 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($encoded | Out-String))) {
+            return
+        }
+        Start-Sleep -Seconds 2
+    }
+
+    throw "O segredo de runtime nao contem a chave '$Key'."
+}
+
 $null = Invoke-Checked { az account show --output none --only-show-errors } `
     "Azure CLI nao esta autenticada. Execute 'az login' antes do deploy."
 $null = Invoke-Checked { helm version --short } "Helm 3 nao esta disponivel."
@@ -130,6 +164,7 @@ $null = Invoke-Checked {
 $null = Invoke-Checked {
     kubectl get secret conexao-solidaria-runtime -n $namespace -o name
 } "O segredo de runtime nao foi sincronizado pelo CSI driver."
+Ensure-RuntimeSecretKey "zabbix-admin-password"
 
 $cloudSettings = kubectl create configmap conexao-solidaria-cloud `
     -n $namespace `
@@ -211,6 +246,11 @@ if (-not $SkipObservability) {
     Apply-FileConfigMap "conexao-solidaria-grafana-datasources" "datasources.yml=deploy/kubernetes/local/grafana-datasources.yml"
     Apply-FileConfigMap "conexao-solidaria-grafana-dashboard-provider" "dashboards.yml=infra/grafana/provisioning/dashboards/dashboards.yml"
     Apply-FileConfigMap "conexao-solidaria-grafana-dashboard" "conexao-solidaria.json=infra/grafana/provisioning/dashboards/conexao-solidaria.json"
+    Apply-FileConfigMap "conexao-solidaria-zabbix-bootstrap" "Initialize-Zabbix.ps1=scripts/Initialize-Zabbix.ps1"
+
+    $null = Invoke-Checked {
+        kubectl delete job/conexao-solidaria-zabbix-bootstrap -n $namespace --ignore-not-found=true
+    } "Nao foi possivel preparar o bootstrap do Zabbix."
 
     $cloudObservabilityYaml = Invoke-Checked {
         kubectl kustomize deploy/kubernetes/cloud/observability --load-restrictor LoadRestrictionsNone
@@ -261,6 +301,21 @@ foreach ($component in $applicationWorkloads) {
     $null = Invoke-Checked {
         kubectl rollout status "deployment/conexao-solidaria-$component" -n $namespace --timeout=10m
     } "$component nao ficou pronto."
+}
+
+if (-not $SkipObservability) {
+    try {
+        $null = Invoke-Checked {
+            kubectl wait job/conexao-solidaria-zabbix-bootstrap `
+                -n $namespace `
+                --for=condition=Complete `
+                --timeout=7m
+        } "O bootstrap do Zabbix nao foi concluido."
+    }
+    catch {
+        kubectl logs job/conexao-solidaria-zabbix-bootstrap -n $namespace --all-containers=true
+        throw
+    }
 }
 
 $null = Invoke-Checked {

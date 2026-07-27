@@ -20,6 +20,8 @@ A execução canônica da [pipeline Platform CI/CD](https://github.com/louresb/f
 
 PostgreSQL, Redis, RabbitMQ, MongoDB, OpenSearch, Keycloak, Loki, Tempo, Prometheus, Grafana e Zabbix são executados no cluster nesta versão. PostgreSQL, RabbitMQ, MongoDB e OpenSearch preservam dados em PVCs da StorageClass padrão. Cache e telemetria usam `emptyDir` no perfil cloud para respeitar os limites de disco do nó econômico; podem perder histórico quando um pod é recriado. A evolução para serviços gerenciados preserva os contratos de conexão, mensageria e observabilidade.
 
+O deploy provisiona o Zabbix por um Job idempotente. A senha administrativa é gerada no Key Vault ou Secrets Manager, sincronizada pelo Secrets Store CSI e substitui a credencial padrão sem ser gravada nos manifests. O mesmo Job cria a jornada sintética `Jornada publica da plataforma`, com verificações do Gateway, da consulta pública de campanhas e da aplicação web.
+
 ## Azure
 
 O perfil Azure cria AKS Free, ACR Basic, Key Vault, Log Analytics, rede, IP público com hostname Azure e identidade federada do GitHub. Segredos são sincronizados pelo Secrets Store CSI.
