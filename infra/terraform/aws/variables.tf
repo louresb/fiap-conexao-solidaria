@@ -138,7 +138,7 @@ variable "cluster_endpoint_public_access_cidrs" {
 variable "node_instance_types" {
   description = "Allowed EC2 instance types for the managed node group."
   type        = list(string)
-  default     = ["t3.large"]
+  default     = ["m7i-flex.large"]
 }
 
 variable "node_min_size" {

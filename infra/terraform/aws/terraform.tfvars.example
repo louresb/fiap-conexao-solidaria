@@ -15,7 +15,7 @@ cluster_name        = "conexao-solidaria"
 kubernetes_namespace = "conexao-solidaria"
 kubernetes_version  = "1.35"
 single_nat_gateway  = true
-node_instance_types = ["t3.large"]
+node_instance_types = ["m7i-flex.large"]
 
 # Replace with the operator or CI egress /32 before enabling EKS public access.
 cluster_endpoint_public_access       = false
