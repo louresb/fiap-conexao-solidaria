@@ -347,6 +347,22 @@ if ($Runtime -eq "Kubernetes") {
     Assert-True (@($memorySeries).Count -eq $applicationJobs.Count) `
         "As series de memoria nao cobrem todos os runtimes."
 
+    $confirmedDonationsQuery = [uri]::EscapeDataString(
+        'sum(conexao_donations_processed_total{status="confirmed"})')
+    $confirmedDonations = Wait-Until `
+        -Attempts 30 `
+        -DelayMilliseconds 1000 `
+        -FailureMessage "O Prometheus nao registrou a doacao confirmada." `
+        -Probe {
+            $result = (Invoke-RestMethod `
+                "http://localhost:31091/api/v1/query?query=$confirmedDonationsQuery").data.result
+            if (@($result).Count -eq 1 -and [decimal]$result[0].value[1] -ge 1) {
+                return $result[0]
+            }
+
+            return $null
+        }
+
     $grafana = Invoke-RestMethod "http://localhost:31090/api/health"
     Assert-True ($grafana.database -eq "ok") "O Grafana nao esta saudavel."
     $grafanaCredentials = [Convert]::ToBase64String(
@@ -360,6 +376,12 @@ if ($Runtime -eq "Kubernetes") {
         "O dashboard nao possui o painel de CPU."
     Assert-True (@($dashboardTitles | Where-Object { $_ -like "Mem*ria por servi*" }).Count -eq 1) `
         "O dashboard nao possui o painel de memoria."
+    $donationsPanel = @($dashboard.panels | Where-Object title -eq "Doações processadas")
+    Assert-True ($donationsPanel.Count -eq 1) `
+        "O dashboard nao possui o painel de doacoes processadas."
+    Assert-True ($donationsPanel[0].targets[0].expr -eq `
+        'sum(conexao_donations_processed_total{status="confirmed"})') `
+        "O painel de doacoes processadas consulta um label diferente do consumer."
     $tempoDatasource = Invoke-WebRequest `
         -UseBasicParsing `
         -Headers $grafanaHeaders `
