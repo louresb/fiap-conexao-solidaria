@@ -24,6 +24,8 @@ cd ../../..
 
 O reconhecimento de custo libera somente o plano salvo; nenhum `apply` deve ser executado antes da revisão de SKU, quota e estimativa no Azure Cost Management. Para encerrar a janela:
 
+O workload acadêmico usa `Chile Central`: a região é permitida pela policy da assinatura, oferece AKS 1.35 e libera a SKU econômica `Standard_B4as_v2` com cota suficiente. O backend de estado permanece em `Brazil South` e não impõe a região do workload.
+
 ```powershell
 terraform -chdir=infra/terraform/azure destroy
 ```

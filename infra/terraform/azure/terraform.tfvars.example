@@ -1,4 +1,4 @@
-location                = "West Central US"
+location                = "Chile Central"
 environment             = "production"
 acknowledge_aks_costs   = false
 name_prefix             = "conexao-solidaria"

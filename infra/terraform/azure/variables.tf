@@ -1,7 +1,7 @@
 variable "location" {
   description = "Azure region used by the platform."
   type        = string
-  default     = "West Central US"
+  default     = "Chile Central"
 }
 
 variable "acknowledge_aks_costs" {
