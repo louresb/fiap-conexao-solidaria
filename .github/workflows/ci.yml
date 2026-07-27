@@ -125,6 +125,8 @@ jobs:
             grep -Fq 'KC_HTTP_RELATIVE_PATH=/auth' "${script}"
             grep -Fq 'KC_HTTP_MANAGEMENT_RELATIVE_PATH=/' "${script}"
             grep -Fq 'KC_PROXY_HEADERS=xforwarded' "${script}"
+            grep -Fq '"upgrade", "--install"' "${script}"
+            grep -Fq '"--atomic"' "${script}"
           done
 
   containers:

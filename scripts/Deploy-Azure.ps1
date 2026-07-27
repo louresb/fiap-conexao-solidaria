@@ -43,8 +43,8 @@ function Apply-FileConfigMap([string]$Name, [string]$FromFile) {
 
 $null = Invoke-Checked { az account show --output none --only-show-errors } `
     "Azure CLI nao esta autenticada. Execute 'az login' antes do deploy."
-$null = Invoke-Checked { docker info --format '{{.ServerVersion}}' } `
-    "Docker Desktop nao esta disponivel para renderizar o chart Helm."
+$null = Invoke-Checked { helm version --short } "Helm 3 nao esta disponivel."
+$null = Invoke-Checked { kubectl version --client=true } "kubectl nao esta disponivel."
 
 $aiEnabled = -not [string]::IsNullOrWhiteSpace($AiEndpoint) -or
     -not [string]::IsNullOrWhiteSpace($AiModel) -or
@@ -193,14 +193,18 @@ if (-not $SkipObservability) {
 }
 
 $helmArguments = @(
-    "template", "conexao-solidaria", "deploy/helm/conexao-solidaria",
-    "-f", "deploy/helm/conexao-solidaria/values.azure.yaml",
+    "upgrade", "--install", "conexao-solidaria", "deploy/helm/conexao-solidaria",
+    "--namespace", $namespace,
+    "--create-namespace",
+    "--values", "deploy/helm/conexao-solidaria/values.azure.yaml",
     "--set-string", "image.registry=$registryName.azurecr.io",
     "--set-string", "image.tag=$ImageTag",
     "--set-string", "ingress.host=$hostname",
     "--set-string", "azureRouting.publicIpName=$publicIpName",
     "--set-string", "azureRouting.publicIpResourceGroup=$resourceGroup",
-    "--namespace", $namespace
+    "--wait",
+    "--atomic",
+    "--timeout", "10m"
 )
 if ($aiEnabled) {
     $helmArguments += @(
@@ -211,8 +215,7 @@ if ($aiEnabled) {
     )
 }
 
-$renderedChart = docker run --rm -v "${root}:/src" -w /src alpine/helm:3.18.4 @helmArguments
-Apply-Generated $renderedChart "Nao foi possivel aplicar o chart da aplicacao."
+$null = Invoke-Checked { helm @helmArguments } "Nao foi possivel publicar a aplicacao no AKS."
 
 $applicationWorkloads = @(
     "audit-api", "campaigns-api", "campaigns-worker", "donations-api", "gateway",
