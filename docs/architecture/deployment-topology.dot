@@ -1,35 +1,43 @@
 digraph Deployment {
-  graph [rankdir=LR, bgcolor="#F7F9F8", pad="0.35", nodesep="0.45", ranksep="0.70", splines=polyline, fontname="Arial", fontsize=18, labelloc="t", label="CONEXÃO SOLIDÁRIA  |  ENTREGA E PORTABILIDADE MULTICLOUD"];
-  node [shape=rect, style="rounded,filled", color="#CAD5CF", fillcolor="#FFFFFF", fontname="Arial", fontcolor="#17211D", fontsize=11, margin="0.20,0.14"];
-  edge [color="#75867D", fontname="Arial", fontcolor="#52615A", fontsize=9, arrowsize=0.75];
+  graph [rankdir=LR, bgcolor="#F7F9F8", pad="0.35", nodesep="0.42", ranksep="0.66", splines=polyline, fontname="Arial", fontsize=18, labelloc="t", label="CONEXÃO SOLIDÁRIA  |  ENTREGA E PORTABILIDADE MULTICLOUD"];
+  node [shape=rect, style="rounded,filled", color="#CAD5CF", fillcolor="#FFFFFF", fontname="Arial", fontcolor="#17211D", fontsize=10, margin="0.18,0.13"];
+  edge [color="#75867D", fontname="Arial", fontcolor="#52615A", fontsize=8, arrowsize=0.7];
 
   developer [label="PULL REQUEST / MAIN", fillcolor="#FFF4D2", color="#E8BC4B"];
-  actions [label="GITHUB ACTIONS\nBuild • 25 testes • Helm lint\nTrivy • SBOM • Docker build", fillcolor="#EDF4F0", color="#176B50"];
+  actions [label="GITHUB ACTIONS\nBuild • Testes • E2E • Helm/Terraform\nTrivy • SBOM • Docker build", fillcolor="#EDF4F0", color="#176B50"];
+  oidc [label="OIDC FEDERADO\nGitHub → Azure / AWS\nSem access keys permanentes", fillcolor="#E5F1DF", color="#5E8D47"];
 
   subgraph cluster_registry {
     label="REGISTROS PRIVADOS";
     style="rounded,filled"; color="#D5DCE8"; fillcolor="#F1F4F9"; fontcolor="#35445F";
     ghcr [label="GHCR\nImagem padrão"];
-    ecr [label="AWS ECR\nImagem AWS", fillcolor="#FCE8D8", color="#D77729"];
-    acr [label="AZURE ACR\nImagem Azure", fillcolor="#E4ECF8", color="#4B6FA8"];
+    ecr [label="AWS ECR\nImagens AWS", fillcolor="#FCE8D8", color="#D77729"];
+    acr [label="AZURE ACR BASIC\nImagens Azure", fillcolor="#E4ECF8", color="#4B6FA8"];
   }
 
   subgraph cluster_runtime {
-    label="MESMO HELM CHART  |  CONFIGURAÇÃO POR VALUES";
+    label="MESMO HELM CHART  |  VALUES POR AMBIENTE";
     style="rounded,filled"; color="#C9D5D9"; fillcolor="#EFF4F6"; fontcolor="#304D58";
-    local [label="DOCKER DESKTOP KUBERNETES\nRuntime completo local", fillcolor="#FFFFFF"];
-    aws [label="AWS EKS\nALB • ECR • Managed services ready", fillcolor="#FFF0E3", color="#D77729"];
-    azure [label="AZURE AKS\nIngress • ACR • Managed services ready", fillcolor="#E8F0FB", color="#4B6FA8"];
+    local [label="DOCKER DESKTOP KUBERNETES\nStack completa e testes E2E", fillcolor="#FFFFFF"];
+    azure [label="AZURE AKS\nACR • Key Vault CSI • IP/DNS\nIngress + cert-manager", fillcolor="#E8F0FB", color="#4B6FA8"];
+    aws [label="AWS EKS SOB DEMANDA\nECR • Secrets Manager CSI • EBS\nNLB/DNS • ingress • cert-manager", fillcolor="#FFF0E3", color="#D77729"];
   }
 
-  secrets [label="GITHUB ENVIRONMENTS + SECRETS\nDeploy opcional e protegido", fillcolor="#F5E5E7", color="#A84D58"];
+  dependencies [label="DEPENDÊNCIAS NO CLUSTER\nPostgreSQL • Redis • RabbitMQ • MongoDB\nOpenSearch • Keycloak • Observabilidade", fillcolor="#FBF8F1", color="#BFAE83"];
+  isolation [label="DADOS INDEPENDENTES POR CLUSTER\nSem promessa de active-active distribuído", fillcolor="#F5E5E7", color="#A84D58"];
 
   developer -> actions [label="push / PR"];
+  oidc -> actions [dir=back, label="tokens curtos"];
   actions -> ghcr;
   actions -> ecr;
   actions -> acr;
   ghcr -> local;
-  ecr -> aws;
   acr -> azure;
-  secrets -> actions [label="credenciais", style=dashed];
+  ecr -> aws;
+  dependencies -> local [dir=back];
+  dependencies -> azure [dir=back];
+  dependencies -> aws [dir=back];
+  local -> isolation [style=dashed];
+  azure -> isolation [style=dashed];
+  aws -> isolation [style=dashed];
 }
