@@ -1,0 +1,67 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      dotnet-runtime:
+        patterns:
+          - Microsoft.*
+          - System.*
+      observability:
+        patterns:
+          - OpenTelemetry.*
+          - Serilog.*
+          - prometheus-net.*
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:15"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      workflow-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: terraform
+    directories:
+      - /infra/terraform/aws
+      - /infra/terraform/azure
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:30"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 3
+    groups:
+      infrastructure-dependencies:
+        group-by: dependency-name
+
+  - package-ecosystem: docker
+    directories:
+      - /src/Web/ConexaoSolidaria.Web
+      - /src/Gateway/ConexaoSolidaria.Gateway
+      - /src/Services/Identity/ConexaoSolidaria.Identity.Api
+      - /src/Services/Campaigns/ConexaoSolidaria.Campaigns.Api
+      - /src/Services/Campaigns/ConexaoSolidaria.Campaigns.Worker
+      - /src/Services/Donations/ConexaoSolidaria.Donations.Api
+      - /src/Services/Payments/ConexaoSolidaria.Payments.Api
+      - /src/Services/Audit/ConexaoSolidaria.Audit.Api
+      - /src/Services/Knowledge/ConexaoSolidaria.Knowledge.Api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:45"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      container-images:
+        group-by: dependency-name

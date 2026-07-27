@@ -1,0 +1,29 @@
+aws_region              = "us-east-1"
+expected_aws_account_id = "123456789012"
+environment             = "demo"
+
+github_repository             = "louresb/fiap-conexao-solidaria"
+github_deployment_environment = "aws"
+enable_github_oidc             = true
+
+# Registry and CI identity are the default low-cost scope. Enabling EKS also creates
+# a VPC, NAT gateway, control plane, worker nodes, storage, logs, and public endpoints.
+enable_eks            = false
+acknowledge_eks_costs = false
+
+cluster_name        = "conexao-solidaria"
+kubernetes_namespace = "conexao-solidaria"
+single_nat_gateway  = true
+node_instance_types = ["t3.large"]
+
+# Replace with the operator or CI egress /32 before enabling EKS public access.
+cluster_endpoint_public_access       = false
+cluster_endpoint_public_access_cidrs = ["203.0.113.10/32"]
+
+ecr_image_retention_count = 10
+
+tags = {
+  Owner      = "louresb"
+  CostCenter = "fiap-hackathon"
+  Lifecycle  = "ephemeral"
+}

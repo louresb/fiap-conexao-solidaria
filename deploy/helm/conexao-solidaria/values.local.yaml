@@ -1,20 +1,52 @@
 global:
   environment: local
-  cloudProvider: local
+  cloudProvider: docker-desktop
+  observability:
+    otlpEndpoint: http://conexao-solidaria-otel-collector:4317
 
 image:
-  registry: localhost:5000
-  repository: conexao-solidaria-web
-  tag: local
+  registry: ""
+  tag: latest
   pullPolicy: IfNotPresent
 
-web:
-  replicaCount: 1
-  service:
-    type: NodePort
-    nodePort: 30080
-  ingress:
-    enabled: false
+components:
+  web:
+    replicaCount: 2
+    service:
+      type: ClusterIP
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      DemoAccess__Enabled: "true"
+  gateway:
+    replicaCount: 2
+    service:
+      type: ClusterIP
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  identity-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  campaigns-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  campaigns-worker:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  payments-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  donations-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  audit-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+  knowledge-api:
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
 
-observability:
-  otlpEndpoint: http://otel-collector:4317
+ingress:
+  enabled: false
+
+topologySpreadConstraints:
+  enabled: false

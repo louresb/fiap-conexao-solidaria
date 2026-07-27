@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Identity;
+
 using Microsoft.Extensions.Options;
 
 namespace ConexaoSolidaria.Identity.Api.Keycloak;
@@ -38,13 +40,15 @@ public sealed class KeycloakUserProvisioner : IKeycloakUserProvisioner
             return;
         }
 
+        var (firstName, lastName) = SplitFullName(request.FullName);
         var token = await GetAdminTokenAsync(cancellationToken);
         using var message = CreateAdminRequest(HttpMethod.Post, $"users", token);
         message.Content = JsonContent.Create(new
         {
             username = request.Email,
             email = request.Email,
-            firstName = request.FullName,
+            firstName,
+            lastName,
             enabled = true,
             emailVerified = true,
             attributes = new Dictionary<string, string[]>
@@ -78,6 +82,17 @@ public sealed class KeycloakUserProvisioner : IKeycloakUserProvisioner
 
         await AssignDonorRoleAsync(userId, token, cancellationToken);
         _logger.LogInformation("Keycloak donor {UserId} provisioned for tenant {TenantId}", userId, tenantId);
+    }
+
+    private static (string FirstName, string LastName) SplitFullName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length switch
+        {
+            0 => throw new ArgumentException("Full name is required.", nameof(fullName)),
+            1 => (parts[0], parts[0]),
+            _ => (parts[0], string.Join(' ', parts.Skip(1)))
+        };
     }
 
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken)

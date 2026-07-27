@@ -1,0 +1,30 @@
+{{- range $name, $component := .Values.components }}
+{{- $autoscaling := $component.autoscaling | default $.Values.defaults.autoscaling }}
+{{- if and (ne ($component.enabled | toString) "false") $autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "conexao-solidaria.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+  minReplicas: {{ $autoscaling.minReplicas }}
+  maxReplicas: {{ $autoscaling.maxReplicas }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

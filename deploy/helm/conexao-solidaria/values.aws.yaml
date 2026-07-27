@@ -1,23 +1,94 @@
 global:
-  environment: aws
+  environment: production
   cloudProvider: aws
 
 image:
-  registry: "<aws-account-id>.dkr.ecr.us-east-1.amazonaws.com"
-  repository: conexao-solidaria-web
+  registry: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
   tag: latest
-  pullPolicy: IfNotPresent
 
 serviceAccount:
+  annotations: {}
+
+components:
+  web:
+    autoscaling: &autoscaling
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    disruptionBudget: &pdb
+      enabled: true
+      minAvailable: 1
+    env:
+      Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Proxy__TrustForwardedHeaders: "true"
+      DemoAccess__Enabled: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+      Readiness__Dependencies__IdentityProvider: http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration
+  gateway:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: &awsAuth
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__Issuer: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+  identity-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env:
+      <<: *awsAuth
+      Keycloak__BaseUrl: http://conexao-solidaria-keycloak:8080/auth
+  campaigns-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  campaigns-worker:
+    replicaCount: 2
+    disruptionBudget: *pdb
+    env:
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+  payments-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  audit-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+    env: *awsAuth
+  knowledge-api:
+    autoscaling: *autoscaling
+    disruptionBudget: *pdb
+  donations-api:
+    replicaCount: 2
+    disruptionBudget: *pdb
+    env: *awsAuth
+
+ingress:
+  enabled: true
+  className: nginx
+  host: conexao-solidaria.example.com
   annotations:
-    eks.amazonaws.com/role-arn: ""
-
-web:
-  replicaCount: 2
-  ingress:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  additionalPaths:
+    - path: /auth
+      pathType: Prefix
+      serviceName: conexao-solidaria-keycloak
+      servicePort: 8080
+  tls:
     enabled: true
-    className: alb
-    host: conexao-solidaria.example.com
+    secretName: conexao-solidaria-tls
 
-observability:
-  otlpEndpoint: http://otel-collector.observability:4317
+certManager:
+  clusterIssuer:
+    enabled: true
+    name: letsencrypt-production
+    email: bruno.loures@hotmail.com
+
+networkPolicy:
+  enabled: true
+  allowedIngressNamespaces:
+    - ingress-nginx

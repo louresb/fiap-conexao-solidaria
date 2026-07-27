@@ -1,0 +1,104 @@
+{{- range $name, $component := .Values.components }}
+{{- if ne ($component.enabled | toString) "false" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "conexao-solidaria.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  replicas: {{ $component.replicaCount | default $.Values.defaults.replicaCount }}
+  revisionHistoryLimit: {{ $.Values.defaults.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "conexao-solidaria.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ printf "%s:%s" (toJson $component.env) $.Values.ingress.host | sha256sum }}
+      labels:
+        {{- include "conexao-solidaria.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $name }}
+    spec:
+      serviceAccountName: {{ include "conexao-solidaria.serviceAccountName" $ }}
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ $.Values.defaults.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $.Values.topologySpreadConstraints.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "conexao-solidaria.selectorLabels" $ | nindent 14 }}
+              app.kubernetes.io/component: {{ $name }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "conexao-solidaria.image" (dict "root" $ "component" $component) | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $component.port | default $.Values.defaults.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+          {{- with $component.secretEnv }}
+          env:
+            {{- range $envName, $secretKey := . }}
+            - name: {{ $envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.global.existingSecret }}
+                  key: {{ $secretKey }}
+            {{- end }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ $.Values.defaults.probes.startup.path }}
+              port: http
+            failureThreshold: {{ $.Values.defaults.probes.startup.failureThreshold }}
+            periodSeconds: {{ $.Values.defaults.probes.startup.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ $.Values.defaults.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ $.Values.defaults.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.defaults.probes.readiness.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ $.Values.defaults.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ $.Values.defaults.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.defaults.probes.liveness.periodSeconds }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml ($component.resources | default $.Values.defaults.resources) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}
+{{- end }}

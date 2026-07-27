@@ -1,30 +1,112 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">ConexaoSolidaria.Web</a>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/" aria-label="Página inicial da Conexão Solidária">
+            <span class="brand-mark" aria-hidden="true">CS</span>
+            <span><strong>Conexão Solidária</strong><small>Rede de impacto social</small></span>
+        </a>
+
+        <nav class="primary-nav" aria-label="Navegação principal">
+            <NavLink href="/" Match="NavLinkMatch.All">Campanhas</NavLink>
+            <NavLink href="/transparencia">Transparência</NavLink>
+            <NavLink href="/assistente">Assistente</NavLink>
+            <AuthorizeView Roles="Doador">
+                <Authorized>
+                    <NavLink href="/minhas-doacoes">Minhas doações</NavLink>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="GestorONG">
+                <Authorized>
+                    <NavLink href="/gestao">Gestão</NavLink>
+                    <NavLink href="/gestao/auditoria">Auditoria</NavLink>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="AdminSaaS">
+                <Authorized>
+                    <NavLink href="/administracao">Plataforma</NavLink>
+                </Authorized>
+            </AuthorizeView>
+        </nav>
+
+        <div class="header-actions">
+            <details class="tenant-menu">
+                <summary aria-label="Selecionar organização">Organizações</summary>
+                <div class="tenant-popover">
+                    @foreach (var tenant in TenantCatalog.All)
+                    {
+                        <a href="/?tenant=@tenant.Id">
+                            <strong>@tenant.Name</strong>
+                            <span>@tenant.Location</span>
+                        </a>
+                    }
+                </div>
+            </details>
+            <AuthorizeView>
+                <Authorized Context="auth">
+                    <span class="user-name">@DisplayName(auth.User)</span>
+                    <form method="post" action="/auth/logout">
+                        <AntiforgeryToken />
+                        <button class="button button-quiet" type="submit">Sair</button>
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="button button-outline" href="/acesso">Entrar</a>
+                </NotAuthorized>
+            </AuthorizeView>
+            <div class="mobile-menu">
+                <button type="button" aria-label="Abrir navegação" aria-expanded="@(MobileMenuOpen ? "true" : "false")" @onclick="ToggleMobileMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </button>
+                @if (MobileMenuOpen)
+                {
+                    <div class="mobile-menu-popover">
+                        <nav aria-label="Navegação móvel">
+                            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">Campanhas</NavLink>
+                            <NavLink href="/transparencia" @onclick="CloseMobileMenu">Transparência</NavLink>
+                            <NavLink href="/assistente" @onclick="CloseMobileMenu">Assistente</NavLink>
+                            <AuthorizeView Roles="Doador">
+                                <Authorized>
+                                    <NavLink href="/minhas-doacoes" @onclick="CloseMobileMenu">Minhas doações</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Roles="GestorONG">
+                                <Authorized>
+                                    <NavLink href="/gestao" @onclick="CloseMobileMenu">Gestão</NavLink>
+                                    <NavLink href="/gestao/auditoria" @onclick="CloseMobileMenu">Auditoria</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                            <AuthorizeView Roles="AdminSaaS">
+                                <Authorized>
+                                    <NavLink href="/administracao" @onclick="CloseMobileMenu">Plataforma</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                        </nav>
+                        <div class="mobile-tenant-list">
+                            <strong>Organizações</strong>
+                            @foreach (var tenant in TenantCatalog.All)
+                            {
+                                <a href="/?tenant=@tenant.Id" @onclick="CloseMobileMenu">
+                                    <span>@tenant.Name</span>
+                                    <small>@tenant.Location</small>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-</div>
+</header>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@code {
+    private bool MobileMenuOpen { get; set; }
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    private void ToggleMobileMenu() => MobileMenuOpen = !MobileMenuOpen;
+    private void CloseMobileMenu() => MobileMenuOpen = false;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+    private static string DisplayName(System.Security.Claims.ClaimsPrincipal user) =>
+        user.FindFirst("given_name")?.Value
+        ?? user.Identity?.Name
+        ?? "Minha conta";
+}

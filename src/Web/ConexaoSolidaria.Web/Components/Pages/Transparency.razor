@@ -1,0 +1,134 @@
+@page "/transparencia"
+@using ConexaoSolidaria.Contracts.Campaigns
+@inject SolidariaApiClient Api
+
+<PageTitle>Transparência | Conexão Solidária</PageTitle>
+
+<section class="page-heading @Tenant.AccentClass">
+    <div class="section-inner">
+        <p class="eyebrow">@Tenant.Name</p>
+        <h1>Transparência que pode ser acompanhada.</h1>
+        <p>Metas, arrecadação e execução reunidas para apoiar decisões conscientes.</p>
+    </div>
+</section>
+
+<section class="section-inner transparency-page">
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="notice notice-error">@Error</div>
+    }
+    else
+    {
+        <div class="transparency-metrics">
+            <div><span>Total mobilizado</span><strong>@Snapshot.TotalRaised.ToString("C0", Culture)</strong><small>nas campanhas ativas</small></div>
+            <div><span>Metas publicadas</span><strong>@Snapshot.PublishedGoal.ToString("C0", Culture)</strong><small>com prazo definido</small></div>
+            <div><span>Progresso médio</span><strong>@Snapshot.AverageProgress.ToString("0")%</strong><small>atualização contínua</small></div>
+            <div><span>Campanhas</span><strong>@Snapshot.ActiveCampaigns</strong><small>abertas para contribuição</small></div>
+        </div>
+
+        <section class="transparency-history" aria-labelledby="donation-history-title">
+            <div class="section-heading">
+                <p class="eyebrow">Histórico público</p>
+                <h2 id="donation-history-title">Contribuições confirmadas</h2>
+                <p>Valores materializados a partir dos eventos processados, sem identificação pessoal do doador.</p>
+            </div>
+            @if (Snapshot.RecentDonations.Count == 0)
+            {
+                <div class="notice">As próximas contribuições confirmadas aparecerão aqui.</div>
+            }
+            else
+            {
+                <div class="transparency-table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>Confirmação</th><th>Campanha</th><th>Identificação</th><th>Valor</th></tr></thead>
+                        <tbody>
+                            @foreach (var donation in Snapshot.RecentDonations)
+                            {
+                                <tr>
+                                    <td>@donation.ProcessedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", Culture)</td>
+                                    <td><a href="/campanhas/@donation.CampaignId?tenant=@Tenant.Id">@donation.CampaignTitle</a></td>
+                                    <td>Doação anônima</td>
+                                    <td><strong>@donation.Amount.ToString("C2", Culture)</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <div class="transparency-layout">
+            <div class="transparency-table-wrap">
+                <div class="section-heading">
+                    <p class="eyebrow">Evolução financeira</p>
+                    <h2>Arrecadação por campanha</h2>
+                </div>
+                <table class="data-table">
+                    <thead><tr><th>Campanha</th><th>Arrecadado</th><th>Meta</th><th>Progresso</th></tr></thead>
+                    <tbody>
+                        @foreach (var campaign in Campaigns.OrderByDescending(c => c.TotalRaised))
+                        {
+                            <tr>
+                                <td><a href="/campanhas/@campaign.Id?tenant=@Tenant.Id">@campaign.Title</a></td>
+                                <td>@campaign.TotalRaised.ToString("C0", Culture)</td>
+                                <td>@campaign.GoalAmount.ToString("C0", Culture)</td>
+                                <td><span class="table-progress"><i style="width:@Math.Min(campaign.ProgressPercent, 100).ToString("0.##", Invariant)%"></i></span><strong>@campaign.ProgressPercent.ToString("0")%</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="transparency-principles">
+                <p class="eyebrow">Como cuidamos dos dados</p>
+                <h2>Uma trilha verificável.</h2>
+                <ol>
+                    <li><strong>Registro</strong><span>Cada intenção recebe correlação própria.</span></li>
+                    <li><strong>Confirmação</strong><span>O total muda somente após o provedor confirmar.</span></li>
+                    <li><strong>Auditoria</strong><span>Os eventos ficam preservados em histórico append-only.</span></li>
+                </ol>
+                <details class="technical-detail">
+                    <summary>Atualização dos dados</summary>
+                    <p>Esta consulta foi atendida com status de cache <strong>@CacheStatus</strong>. O cache reduz latência sem substituir a fonte transacional.</p>
+                </details>
+            </aside>
+        </div>
+    }
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "tenant")] public string? TenantId { get; set; }
+
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+    private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
+    private IReadOnlyList<ActiveCampaignDto> Campaigns { get; set; } = [];
+    private TransparencySnapshotDto Snapshot { get; set; } = new(
+        string.Empty,
+        0,
+        0,
+        0,
+        0,
+        [],
+        DateTimeOffset.MinValue);
+    private string CacheStatus { get; set; } = "-";
+    private string Error { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            var campaignsTask = Api.GetActiveCampaignsAsync(Tenant.Id, CancellationToken.None);
+            var transparencyTask = Api.GetTransparencyAsync(Tenant.Id, CancellationToken.None);
+            await Task.WhenAll(campaignsTask, transparencyTask);
+            var collection = await campaignsTask;
+            Campaigns = collection.Items;
+            CacheStatus = collection.CacheStatus;
+            Snapshot = await transparencyTask;
+        }
+        catch
+        {
+            Error = "Não foi possível carregar o painel de transparência.";
+        }
+    }
+}

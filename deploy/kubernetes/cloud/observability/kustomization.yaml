@@ -1,0 +1,106 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../local/tracing.yaml
+  - ../../local/monitoring.yaml
+  - ../../local/zabbix.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: conexao-solidaria-loki
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: conexao-solidaria-loki
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: data
+                persistentVolumeClaim: null
+                emptyDir:
+                  sizeLimit: 2Gi
+  - target:
+      kind: Deployment
+      name: conexao-solidaria-prometheus
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: conexao-solidaria-prometheus
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: data
+                persistentVolumeClaim: null
+                emptyDir:
+                  sizeLimit: 2Gi
+  - target:
+      kind: Deployment
+      name: conexao-solidaria-grafana
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: conexao-solidaria-grafana
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: data
+                persistentVolumeClaim: null
+                emptyDir:
+                  sizeLimit: 1Gi
+  - target:
+      kind: StatefulSet
+      name: conexao-solidaria-tempo
+    patch: |-
+      - op: remove
+        path: /spec/volumeClaimTemplates
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: data
+          emptyDir:
+            sizeLimit: 2Gi
+  - target:
+      kind: StatefulSet
+      name: conexao-solidaria-zabbix-db
+    patch: |-
+      - op: remove
+        path: /spec/volumeClaimTemplates
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: data
+            emptyDir:
+              sizeLimit: 2Gi
+  - target:
+      kind: PersistentVolumeClaim
+      name: conexao-solidaria-loki
+    patch: |-
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: conexao-solidaria-loki
+      $patch: delete
+  - target:
+      kind: PersistentVolumeClaim
+      name: conexao-solidaria-prometheus
+    patch: |-
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: conexao-solidaria-prometheus
+      $patch: delete
+  - target:
+      kind: PersistentVolumeClaim
+      name: conexao-solidaria-grafana
+    patch: |-
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: conexao-solidaria-grafana
+      $patch: delete

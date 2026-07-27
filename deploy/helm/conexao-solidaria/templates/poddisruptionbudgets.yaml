@@ -1,0 +1,19 @@
+{{- range $name, $component := .Values.components }}
+{{- $pdb := $component.disruptionBudget | default $.Values.defaults.disruptionBudget }}
+{{- if and (ne ($component.enabled | toString) "false") $pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "conexao-solidaria.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "conexao-solidaria.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  minAvailable: {{ $pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "conexao-solidaria.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+{{- end }}
+{{- end }}

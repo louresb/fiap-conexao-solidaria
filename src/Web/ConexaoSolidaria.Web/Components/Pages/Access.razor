@@ -1,0 +1,69 @@
+@page "/acesso"
+@inject IConfiguration Configuration
+
+<PageTitle>Acessar | Conexão Solidária</PageTitle>
+
+<section class="access-page">
+    <div class="access-visual">
+        <img src="/images/inclusao-digital.jpg" alt="Pessoas participando de uma oficina comunitária de inclusão digital" />
+        <div>
+            <p class="eyebrow">Uma rede, diferentes formas de participar</p>
+            <h1>Conexão Solidária</h1>
+            <p>Entre para contribuir com campanhas ou acompanhar a operação da sua organização.</p>
+        </div>
+    </div>
+    <div class="access-options">
+        <p class="eyebrow">Acesso seguro</p>
+        <h2>Escolha seu espaço</h2>
+        <a class="access-role" href="/auth/login?returnUrl=/">
+            <span class="role-initial">D</span>
+            <span><strong>Área do doador</strong><small>Contribua e acompanhe suas participações.</small></span>
+            <i aria-hidden="true">→</i>
+        </a>
+        <a class="text-link access-register" href="/cadastro">Criar uma conta de doador</a>
+        <a class="access-role" href="/auth/login?returnUrl=/gestao">
+            <span class="role-initial manager">G</span>
+            <span><strong>Gestão da organização</strong><small>Gerencie campanhas, indicadores e auditoria.</small></span>
+            <i aria-hidden="true">→</i>
+        </a>
+        <a class="access-role" href="/auth/login?returnUrl=/administracao">
+            <span class="role-initial admin">A</span>
+            <span><strong>Administração da plataforma</strong><small>Acompanhe tenants e serviços críticos.</small></span>
+            <i aria-hidden="true">→</i>
+        </a>
+        <p class="access-security">Autenticação protegida por OpenID Connect e controle de acesso por perfil.</p>
+        @if (ShowLocalAccess)
+        {
+            <details class="access-help local-access">
+                <summary>Contas para avaliação</summary>
+                <div>
+                    <strong>Gestor Esperança</strong>
+                    <code>gestor.esperanca@conexaosolidaria.local</code>
+                    <code>@Configuration["DemoAccess:ManagerPassword"]</code>
+                </div>
+                <div>
+                    <strong>Doador Esperança</strong>
+                    <code>doador.esperanca@conexaosolidaria.local</code>
+                    <code>@Configuration["DemoAccess:DonorPassword"]</code>
+                </div>
+                <div>
+                    <strong>Admin da plataforma</strong>
+                    <code>admin.plataforma@conexaosolidaria.local</code>
+                    <code>@Configuration["DemoAccess:AdminPassword"]</code>
+                </div>
+            </details>
+        }
+        <details class="access-help">
+            <summary>Precisa de ajuda para acessar?</summary>
+            <p>Use uma conta vinculada à organização desejada. O perfil e o tenant são aplicados automaticamente após a autenticação.</p>
+        </details>
+    </div>
+</section>
+
+@code {
+    private bool ShowLocalAccess =>
+        Configuration.GetValue("DemoAccess:Enabled", false)
+        && !string.IsNullOrWhiteSpace(Configuration["DemoAccess:ManagerPassword"])
+        && !string.IsNullOrWhiteSpace(Configuration["DemoAccess:DonorPassword"])
+        && !string.IsNullOrWhiteSpace(Configuration["DemoAccess:AdminPassword"]);
+}

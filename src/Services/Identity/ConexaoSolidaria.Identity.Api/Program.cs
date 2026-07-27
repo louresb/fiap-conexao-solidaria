@@ -1,17 +1,27 @@
 using System.Text.Json;
+
 using BCrypt.Net;
+
 using ConexaoSolidaria.Contracts.Auth;
 using ConexaoSolidaria.Contracts.Events;
 using ConexaoSolidaria.Contracts.Identity;
 using ConexaoSolidaria.Contracts.Validation;
 using ConexaoSolidaria.Identity.Api.Data;
 using ConexaoSolidaria.Identity.Api.Keycloak;
-using ConexaoSolidaria.Infrastructure.Http;
+using ConexaoSolidaria.ServiceDefaults.Http;
+using ConexaoSolidaria.ServiceDefaults.Observability;
+using ConexaoSolidaria.ServiceDefaults.OpenApi;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Prometheus;
+
+using Scalar.AspNetCore;
+
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
@@ -32,6 +42,11 @@ builder.Host.UseSerilog((context, configuration) =>
     }
 });
 
+builder.Services.AddConexaoSolidariaTelemetry(
+    builder.Configuration,
+    builder.Environment,
+    "identity-api");
+
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityDb")));
 
@@ -47,6 +62,12 @@ builder.Services.AddScoped<IKeycloakUserProvisioner>(sp =>
 
 builder.Services.AddMassTransit(bus =>
 {
+    bus.AddEntityFrameworkOutbox<IdentityDbContext>(outbox =>
+    {
+        outbox.UsePostgres();
+        outbox.UseBusOutbox();
+    });
+
     bus.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(
@@ -66,6 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         var authority = builder.Configuration["Auth:Authority"]
             ?? throw new InvalidOperationException("Auth:Authority is required.");
         var audience = builder.Configuration["Auth:Audience"] ?? "conexao-solidaria";
+        options.MapInboundClaims = false;
         options.Authority = authority;
         options.Audience = audience;
         options.RequireHttpsMetadata = false;
@@ -81,7 +103,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddOpenApi();
+builder.Services.AddConexaoSolidariaOpenApi(
+    "Conexao Solidaria - Identity API",
+    "Cadastro de doadores, perfis e integracao de identidade multi-tenant.");
 
 var app = builder.Build();
 
@@ -93,15 +117,22 @@ app.UseHttpMetrics();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
-app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "identity-api" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy", service = "identity-api" }))
+    .WithTags("Operacao")
+    .WithName("IdentityLiveness")
+    .WithSummary("Verifica se a Identity API esta em execucao.");
 app.MapMetrics();
 app.MapGet("/health/ready", async (IdentityDbContext db, CancellationToken cancellationToken) =>
 {
     await db.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
     return Results.Ok(new { status = "Healthy", dependencies = new[] { "postgres" } });
-});
+})
+    .WithTags("Operacao")
+    .WithName("IdentityReadiness")
+    .WithSummary("Verifica a dependencia transacional da Identity API.");
 
 app.MapPost("/api/donors/register", async (
     DonorRegistrationRequest request,
@@ -154,9 +185,11 @@ app.MapPost("/api/donors/register", async (
         PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
     };
 
-    await keycloak.ProvisionDonorAsync(request with { Email = normalizedEmail, Cpf = normalizedCpf }, tenantId, cancellationToken);
+    await keycloak.ProvisionDonorAsync(
+        request with { FullName = donor.FullName, Email = normalizedEmail, Cpf = normalizedCpf },
+        tenantId,
+        cancellationToken);
     db.Donors.Add(donor);
-    await db.SaveChangesAsync(cancellationToken);
 
     var payload = JsonSerializer.Serialize(new
     {
@@ -170,8 +203,13 @@ app.MapPost("/api/donors/register", async (
         IntegrationEvent.Create(EventTypes.DonorRegistered, tenantId, http.CorrelationId(), "identity-api", payload),
         cancellationToken);
 
+    await db.SaveChangesAsync(cancellationToken);
+
     return Results.Created($"/api/donors/{donor.Id}", new DonorProfileDto(donor.Id, donor.TenantId, donor.FullName, donor.Email, MaskCpf(donor.Cpf)));
-});
+})
+    .WithTags("Doadores")
+    .WithName("RegisterDonor")
+    .WithSummary("Cadastra um doador no tenant atual e provisiona sua identidade.");
 
 app.MapGet("/api/donors/{id:guid}", async (Guid id, IdentityDbContext db, HttpContext http, CancellationToken cancellationToken) =>
 {
@@ -180,24 +218,16 @@ app.MapGet("/api/donors/{id:guid}", async (Guid id, IdentityDbContext db, HttpCo
     return donor is null
         ? Results.NotFound()
         : Results.Ok(new DonorProfileDto(donor.Id, donor.TenantId, donor.FullName, donor.Email, MaskCpf(donor.Cpf)));
-}).RequireAuthorization();
+})
+    .RequireAuthorization()
+    .WithTags("Doadores")
+    .WithName("GetDonorProfile")
+    .WithSummary("Consulta o perfil mascarado de um doador do tenant atual.");
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    if (!await db.Donors.AnyAsync(d => d.Email == "doador@demo.org"))
-    {
-        db.Donors.Add(new Donor
-        {
-            TenantId = AuthDefaults.DefaultTenantId,
-            FullName = "Doador Demo",
-            Email = "doador@demo.org",
-            Cpf = "39053344705",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Doador@123")
-        });
-        await db.SaveChangesAsync();
-    }
+    await db.Database.MigrateAsync();
 }
 
 app.Run();

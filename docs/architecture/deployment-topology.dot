@@ -1,0 +1,35 @@
+digraph Deployment {
+  graph [rankdir=LR, bgcolor="#F7F9F8", pad="0.35", nodesep="0.45", ranksep="0.70", splines=polyline, fontname="Arial", fontsize=18, labelloc="t", label="CONEXÃO SOLIDÁRIA  |  ENTREGA E PORTABILIDADE MULTICLOUD"];
+  node [shape=rect, style="rounded,filled", color="#CAD5CF", fillcolor="#FFFFFF", fontname="Arial", fontcolor="#17211D", fontsize=11, margin="0.20,0.14"];
+  edge [color="#75867D", fontname="Arial", fontcolor="#52615A", fontsize=9, arrowsize=0.75];
+
+  developer [label="PULL REQUEST / MAIN", fillcolor="#FFF4D2", color="#E8BC4B"];
+  actions [label="GITHUB ACTIONS\nBuild • 25 testes • Helm lint\nTrivy • SBOM • Docker build", fillcolor="#EDF4F0", color="#176B50"];
+
+  subgraph cluster_registry {
+    label="REGISTROS PRIVADOS";
+    style="rounded,filled"; color="#D5DCE8"; fillcolor="#F1F4F9"; fontcolor="#35445F";
+    ghcr [label="GHCR\nImagem padrão"];
+    ecr [label="AWS ECR\nImagem AWS", fillcolor="#FCE8D8", color="#D77729"];
+    acr [label="AZURE ACR\nImagem Azure", fillcolor="#E4ECF8", color="#4B6FA8"];
+  }
+
+  subgraph cluster_runtime {
+    label="MESMO HELM CHART  |  CONFIGURAÇÃO POR VALUES";
+    style="rounded,filled"; color="#C9D5D9"; fillcolor="#EFF4F6"; fontcolor="#304D58";
+    local [label="DOCKER DESKTOP KUBERNETES\nRuntime completo local", fillcolor="#FFFFFF"];
+    aws [label="AWS EKS\nALB • ECR • Managed services ready", fillcolor="#FFF0E3", color="#D77729"];
+    azure [label="AZURE AKS\nIngress • ACR • Managed services ready", fillcolor="#E8F0FB", color="#4B6FA8"];
+  }
+
+  secrets [label="GITHUB ENVIRONMENTS + SECRETS\nDeploy opcional e protegido", fillcolor="#F5E5E7", color="#A84D58"];
+
+  developer -> actions [label="push / PR"];
+  actions -> ghcr;
+  actions -> ecr;
+  actions -> acr;
+  ghcr -> local;
+  ecr -> aws;
+  acr -> azure;
+  secrets -> actions [label="credenciais", style=dashed];
+}

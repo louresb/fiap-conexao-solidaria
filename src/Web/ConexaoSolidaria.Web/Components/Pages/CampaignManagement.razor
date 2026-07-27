@@ -1,0 +1,119 @@
+@page "/gestao/campanhas"
+@attribute [Authorize(Roles = "GestorONG")]
+@using ConexaoSolidaria.Contracts.Campaigns
+@inject SolidariaApiClient Api
+
+<PageTitle>Campanhas | Gestão</PageTitle>
+
+<section class="management-heading">
+    <div class="section-inner split-heading">
+        <div><p class="eyebrow">Gestão de campanhas</p><h1>Campanhas</h1><p>Crie, atualize e encerre iniciativas preservando o histórico.</p></div>
+        <a class="button button-primary" href="/gestao/campanhas/nova">Nova campanha</a>
+    </div>
+</section>
+
+<section class="section-inner management-page">
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="notice notice-error">@Error</div>
+    }
+    <div class="filter-tabs" role="tablist" aria-label="Filtrar campanhas">
+        @foreach (var filter in Filters)
+        {
+            <button type="button" class="@(CurrentFilter == filter.Key ? "active" : null)" @onclick="() => CurrentFilter = filter.Key">@filter.Value</button>
+        }
+    </div>
+
+    <div class="campaign-admin-table">
+        <table class="data-table">
+            <thead><tr><th>Campanha</th><th>Período</th><th>Arrecadação</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
+            <tbody>
+                @foreach (var campaign in FilteredCampaigns)
+                {
+                    <tr>
+                        <td><strong>@campaign.Title</strong><small>@campaign.Description</small></td>
+                        <td>@campaign.StartDate.ToString("dd/MM/yy") – @campaign.EndDate.ToString("dd/MM/yy")</td>
+                        <td>@campaign.TotalRaised.ToString("C0", Culture)<small>Meta @campaign.GoalAmount.ToString("C0", Culture)</small></td>
+                        <td><span class="status-badge status-@campaign.Status.ToString().ToLowerInvariant()">@StatusLabel(campaign.Status)</span></td>
+                        <td class="table-actions">
+                            <a class="button button-quiet" href="/gestao/campanhas/@campaign.Id/editar">Editar</a>
+                            @if (campaign.Status == CampaignStatus.Ativa)
+                            {
+                                @if (PendingCancellation == campaign.Id)
+                                {
+                                    <button class="button button-danger" type="button" @onclick="() => CancelAsync(campaign.Id)">Confirmar</button>
+                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = null">Voltar</button>
+                                }
+                                else
+                                {
+                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = campaign.Id">Encerrar</button>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private static readonly IReadOnlyDictionary<string, string> Filters = new Dictionary<string, string>
+    {
+        ["all"] = "Todas",
+        ["active"] = "Publicadas",
+        ["workflow"] = "Em preparação",
+        ["closed"] = "Encerradas"
+    };
+    private IReadOnlyList<CampaignDto> Campaigns { get; set; } = [];
+    private string CurrentFilter { get; set; } = "all";
+    private Guid? PendingCancellation { get; set; }
+    private string Error { get; set; } = string.Empty;
+    private IEnumerable<CampaignDto> FilteredCampaigns => CurrentFilter switch
+    {
+        "active" => Campaigns.Where(c => c.Status == CampaignStatus.Ativa),
+        "workflow" => Campaigns.Where(c => c.Status is CampaignStatus.Rascunho or CampaignStatus.EmRevisao or CampaignStatus.Aprovada),
+        "closed" => Campaigns.Where(c => c.Status is CampaignStatus.Concluida or CampaignStatus.Cancelada),
+        _ => Campaigns
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            Campaigns = await Api.GetManagedCampaignsAsync(CancellationToken.None);
+        }
+        catch
+        {
+            Error = "Não foi possível carregar as campanhas.";
+        }
+    }
+
+    private async Task CancelAsync(Guid id)
+    {
+        try
+        {
+            await Api.CancelCampaignAsync(id, CancellationToken.None);
+            PendingCancellation = null;
+            await LoadAsync();
+        }
+        catch
+        {
+            Error = "A campanha não pôde ser encerrada.";
+        }
+    }
+
+    private static string StatusLabel(CampaignStatus status) => status switch
+    {
+        CampaignStatus.Rascunho => "Rascunho",
+        CampaignStatus.EmRevisao => "Em revisão",
+        CampaignStatus.Aprovada => "Aprovada",
+        CampaignStatus.Ativa => "Publicada",
+        CampaignStatus.Concluida => "Concluída",
+        CampaignStatus.Cancelada => "Cancelada",
+        _ => status.ToString()
+    };
+}

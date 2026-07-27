@@ -1,19 +1,99 @@
 global:
-  environment: azure
+  environment: production
   cloudProvider: azure
+  observability:
+    otlpEndpoint: http://conexao-solidaria-otel-collector:4317
 
 image:
-  registry: "<acr-name>.azurecr.io"
-  repository: conexao-solidaria-web
+  registry: <acr-name>.azurecr.io
   tag: latest
-  pullPolicy: IfNotPresent
 
-web:
-  replicaCount: 2
-  ingress:
+components:
+  web:
+    replicaCount: 1
+    autoscaling: &autoscaling
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+    env:
+      Gateway__BaseUrl: http://conexao-solidaria-gateway:8080
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Proxy__TrustForwardedHeaders: "true"
+      DemoAccess__Enabled: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+      Readiness__Dependencies__IdentityProvider: http://conexao-solidaria-keycloak:8080/auth/realms/conexao-solidaria/.well-known/openid-configuration
+  gateway:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env: &azureAuth
+      Auth__Authority: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__Issuer: https://{{ .Values.ingress.host }}/auth/realms/conexao-solidaria
+      Auth__RequireHttpsMetadata: "true"
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+  identity-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env:
+      <<: *azureAuth
+      Keycloak__BaseUrl: http://conexao-solidaria-keycloak:8080/auth
+  campaigns-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env: *azureAuth
+  campaigns-worker:
+    replicaCount: 1
+    env:
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+  payments-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env: *azureAuth
+  donations-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env: *azureAuth
+  audit-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env: *azureAuth
+  knowledge-api:
+    replicaCount: 1
+    autoscaling: *autoscaling
+    env:
+      Observability__LokiUrl: http://conexao-solidaria-loki:3100
+
+ingress:
+  enabled: true
+  className: conexao-solidaria-public
+  host: conexao-solidaria.example.com
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  additionalPaths:
+    - path: /auth
+      pathType: Prefix
+      serviceName: conexao-solidaria-keycloak
+      servicePort: 8080
+  tls:
     enabled: true
-    className: webapprouting.kubernetes.azure.com
-    host: conexao-solidaria.example.com
+    secretName: conexao-solidaria-tls
 
-observability:
-  otlpEndpoint: http://otel-collector.observability:4317
+certManager:
+  clusterIssuer:
+    enabled: true
+    name: letsencrypt-production
+    email: bruno.loures@hotmail.com
+
+azureRouting:
+  enabled: true
+  publicIpName: pip-conexao-solidaria-production
+  publicIpResourceGroup: rg-conexao-solidaria-production
+
+networkPolicy:
+  enabled: true
+  allowedIngressNamespaces:
+    - app-routing-system
+
+topologySpreadConstraints:
+  enabled: false

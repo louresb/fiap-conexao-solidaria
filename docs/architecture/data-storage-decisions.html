@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conexão Solidária - Decisões de persistência</title>
+  <style>
+    @page { size: A4; margin: 16mm 16mm 15mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #17211d; background: #fff; font: 10.5pt/1.5 "Segoe UI", Arial, sans-serif; letter-spacing: 0; }
+    h1, h2, h3 { margin: 0; color: #123d32; font-family: Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: 0; }
+    h1 { max-width: 155mm; font-size: 30pt; line-height: 1.04; }
+    h2 { margin: 0 0 5mm; font-size: 20pt; }
+    h3 { margin: 5mm 0 2mm; font-size: 13pt; }
+    p { margin: 0 0 3.2mm; }
+    ul { margin: 2mm 0 4mm; padding-left: 5mm; }
+    li { margin-bottom: 1.5mm; }
+    code { color: #174f40; font: 9.5pt Consolas, monospace; }
+    .cover { min-height: 255mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+    .brand { display: flex; align-items: center; gap: 4mm; color: #123d32; font-weight: 700; }
+    .mark { width: 12mm; height: 12mm; display: grid; place-items: center; border-radius: 2mm; background: #123d32; color: #fff; font-family: Georgia, serif; }
+    .kicker { margin-bottom: 5mm; color: #176b50; font-size: 9pt; font-weight: 700; text-transform: uppercase; }
+    .lead { max-width: 155mm; margin-top: 8mm; color: #52615a; font-size: 13pt; line-height: 1.55; }
+    .cover-meta { padding-top: 5mm; border-top: 1px solid #d9e1dc; color: #52615a; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .section-number { margin-bottom: 2mm; color: #b17d12; font-size: 9pt; font-weight: 700; }
+    .callout { margin: 5mm 0; padding: 4mm 5mm; border-left: 3px solid #f2bd42; background: #fff8e7; }
+    .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .decision { padding: 4mm; border: 1px solid #d9e1dc; border-radius: 2mm; break-inside: avoid; }
+    .decision strong { display: block; margin-bottom: 1mm; color: #176b50; font-size: 11pt; }
+    table { width: 100%; margin: 4mm 0 6mm; border-collapse: collapse; font-size: 9pt; }
+    th, td { padding: 2.8mm 2.5mm; border: 1px solid #d9e1dc; text-align: left; vertical-align: top; }
+    th { background: #edf3ef; color: #123d32; }
+    tr { break-inside: avoid; }
+    .flow { margin: 5mm 0; padding: 5mm; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; border: 1px solid #d9e1dc; border-radius: 2mm; background: #f7f9f8; }
+    .flow span { position: relative; padding: 3mm 2mm; border-radius: 1.5mm; background: #fff; text-align: center; font-size: 8.5pt; font-weight: 600; }
+    .flow span:not(:last-child)::after { position: absolute; top: 50%; right: -2.2mm; color: #176b50; content: "›"; font-size: 15pt; transform: translateY(-53%); }
+    .two-columns { columns: 2; column-gap: 8mm; }
+    .two-columns section { break-inside: avoid; }
+    .footer-note { margin-top: 7mm; padding-top: 3mm; border-top: 1px solid #d9e1dc; color: #637169; font-size: 8.5pt; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="brand"><span class="mark">CS</span> Conexão Solidária</div>
+    <div>
+      <p class="kicker">Registro de decisão arquitetural</p>
+      <h1>Decisões de persistência e consistência de dados</h1>
+      <p class="lead">Justificativa técnica para PostgreSQL, MongoDB, Redis e OpenSearch, com os limites de responsabilidade de cada tecnologia na plataforma.</p>
+    </div>
+    <div class="cover-meta">
+      <strong>FIAP - Arquitetura de Sistemas .NET</strong><br>
+      Documento associado à implementação cloud-native da Conexão Solidária.
+    </div>
+  </section>
+
+  <section class="page">
+    <p class="section-number">01 / CONTEXTO E CRITÉRIOS</p>
+    <h2>Persistência poliglota com responsabilidade explícita</h2>
+    <p>A plataforma combina dados transacionais, consultas públicas de alta frequência, busca textual e auditoria. Uma única tecnologia conseguiria armazenar todos esses dados, mas imporia compromissos inadequados de consistência, custo de consulta ou evolução de esquema.</p>
+    <div class="callout"><strong>Princípio:</strong> PostgreSQL é a fonte de verdade transacional. Redis e OpenSearch são projeções reconstruíveis. MongoDB preserva a trilha de auditoria append-only.</div>
+
+    <h3>Critérios usados</h3>
+    <div class="decision-grid">
+      <div class="decision"><strong>Consistência</strong>Campanhas, doações e pagamentos precisam de transações ACID, restrições e idempotência verificável.</div>
+      <div class="decision"><strong>Padrão de acesso</strong>Listagens públicas, busca fuzzy e consulta cronológica de eventos têm perfis de leitura distintos.</div>
+      <div class="decision"><strong>Recuperação</strong>Cache e índices devem ser reconstruíveis sem perda do registro financeiro ou da auditoria.</div>
+      <div class="decision"><strong>Operação</strong>Cada componente expõe health checks, métricas e configuração externa para execução local ou gerenciada.</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Tecnologia</th><th>Responsabilidade</th><th>Consistência</th><th>Fonte de verdade</th></tr></thead>
+      <tbody>
+        <tr><td><strong>PostgreSQL</strong></td><td>Campanhas, perfis, doações, pagamentos, webhooks, Outbox e Inbox.</td><td>Forte / transacional</td><td>Sim</td></tr>
+        <tr><td><strong>MongoDB</strong></td><td>Eventos de auditoria por tenant e correlação.</td><td>Append-only por documento</td><td>Sim, para auditoria</td></tr>
+        <tr><td><strong>Redis</strong></td><td>Campanhas ativas e respostas públicas frequentes.</td><td>Eventual / TTL</td><td>Não</td></tr>
+        <tr><td><strong>OpenSearch</strong></td><td>Busca fuzzy de campanhas e recuperação de fontes documentais.</td><td>Eventual / indexada</td><td>Não</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page">
+    <p class="section-number">02 / ESCOLHAS PRINCIPAIS</p>
+    <h2>PostgreSQL para o núcleo; MongoDB para auditoria</h2>
+
+    <h3>PostgreSQL</h3>
+    <p>O domínio financeiro exige atomicidade entre estado e mensagens. Campanhas, doações e pagamentos possuem relações, regras de unicidade e mudanças de estado que se beneficiam de constraints e transações. O EF Core mantém o modelo explícito e permite testes relacionais com SQLite sem substituir a validação em PostgreSQL no runtime.</p>
+    <ul>
+      <li>Índices compostos por <code>TenantId</code> e estado suportam isolamento lógico e consultas operacionais.</li>
+      <li>Outbox e Inbox persistem eventos e consumo idempotente junto da alteração de negócio.</li>
+      <li>Webhooks de pagamento possuem chave do provedor e não confirmam a mesma transação duas vezes.</li>
+      <li>O ledger permanece íntegro mesmo quando Redis, OpenSearch ou RabbitMQ estão temporariamente indisponíveis.</li>
+    </ul>
+
+    <h3>MongoDB</h3>
+    <p>A auditoria recebe envelopes de eventos heterogêneos. O documento preserva o payload original, enquanto campos estáveis - tenant, tipo, origem, correlação e instante - permanecem indexados. Esse formato evita alterar uma tabela relacional a cada evolução de contrato e mantém a consulta cronológica simples.</p>
+    <ul>
+      <li>Coleção append-only; a API expõe leitura, não mutação de registros.</li>
+      <li>Índices <code>(TenantId, Timestamp)</code> e <code>(TenantId, CorrelationId)</code>.</li>
+      <li>Payload serializado para rastreabilidade sem acoplar o armazenamento aos assemblies dos produtores.</li>
+    </ul>
+
+    <div class="callout"><strong>Trade-off aceito:</strong> uma consulta analítica que combine ledger e auditoria atravessa duas fontes. A correlação é feita por <code>TenantId</code>, <code>CorrelationId</code>, <code>EventId</code> e identificadores de agregado, não por transação distribuída.</div>
+  </section>
+
+  <section class="page">
+    <p class="section-number">03 / PROJEÇÕES E CONSISTÊNCIA</p>
+    <h2>Redis e OpenSearch aceleram leitura sem controlar o domínio</h2>
+
+    <h3>Redis</h3>
+    <p>O painel público concentra leituras repetidas de campanhas ativas. Redis reduz latência e carga no banco relacional, com chave segmentada por tenant e expiração definida. A API sinaliza <code>X-Cache: MISS</code> ou <code>HIT</code>, tornando o comportamento observável.</p>
+
+    <h3>OpenSearch</h3>
+    <p>A busca precisa tolerar pequenas diferenças de escrita e pesquisar título e descrição. OpenSearch oferece análise textual e fuzzy matching sem degradar o modelo transacional. A mesma infraestrutura mantém documentos verificados usados pela Knowledge API, sempre com fontes retornadas ao usuário.</p>
+
+    <div class="flow">
+      <span>Comando autenticado</span>
+      <span>PostgreSQL + Outbox</span>
+      <span>RabbitMQ</span>
+      <span>Consumer idempotente</span>
+      <span>Projeções atualizadas</span>
+    </div>
+
+    <h3>Modelo de consistência</h3>
+    <table>
+      <thead><tr><th>Situação</th><th>Comportamento</th><th>Recuperação</th></tr></thead>
+      <tbody>
+        <tr><td>Redis indisponível</td><td>Leitura recorre ao PostgreSQL; escrita do domínio continua.</td><td>Cache volta a ser preenchido sob demanda.</td></tr>
+        <tr><td>OpenSearch atrasado</td><td>CRUD e listagem transacional continuam; busca pode refletir estado anterior.</td><td>Reindexação a partir do PostgreSQL.</td></tr>
+        <tr><td>RabbitMQ indisponível</td><td>Evento permanece na Outbox até nova tentativa.</td><td>Publicação posterior sem duplicar efeito.</td></tr>
+        <tr><td>Consumer reprocessado</td><td>Inbox e chaves de idempotência rejeitam efeito duplicado.</td><td>Retry seguro e DLQ para intervenção.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page">
+    <p class="section-number">04 / SEGURANÇA E OPERAÇÃO</p>
+    <h2>Controles aplicados e caminho de evolução</h2>
+    <div class="two-columns">
+      <section>
+        <h3>Isolamento lógico</h3>
+        <ul>
+          <li><code>tenant_id</code> emitido pelo Keycloak e propagado no JWT.</li>
+          <li><code>TenantId</code> obrigatório em tabelas, documentos, eventos, cache e logs.</li>
+          <li>Tenant autenticado prevalece sobre parâmetros enviados pelo cliente.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Segredos</h3>
+        <ul>
+          <li>Nenhuma senha é versionada.</li>
+          <li>Ambiente local gera valores criptograficamente aleatórios em <code>.env</code>.</li>
+          <li>Kubernetes consome um Secret existente; nuvens usam secrets do ambiente de entrega.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Proteção de dados</h3>
+        <ul>
+          <li>Senhas pertencem ao Keycloak e não ao domínio.</li>
+          <li>CPF normalizado e protegido no perfil; logs não registram credenciais.</li>
+          <li>Auditoria registra contexto técnico sem se tornar fonte de autenticação.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Produção</h3>
+        <ul>
+          <li>PostgreSQL gerenciado com backup point-in-time e alta disponibilidade.</li>
+          <li>Redis e OpenSearch gerenciados quando a escala justificar.</li>
+          <li>Políticas de retenção e arquivamento para auditoria.</li>
+        </ul>
+      </section>
+    </div>
+
+    <h3>Conclusão</h3>
+    <p>A separação não existe para multiplicar tecnologias. Ela protege o ledger transacional, preserva auditoria independente e permite otimizar as leituras públicas. O desenho mantém uma origem autoritativa clara e define como cada projeção pode ser reconstruída.</p>
+    <p class="footer-note">Implementação correspondente: PostgreSQL 17, MongoDB 8, Redis 8, OpenSearch 3, EF Core, MassTransit Outbox/Inbox e contratos de integração multi-tenant.</p>
+  </section>
+</body>
+</html>

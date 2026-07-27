@@ -1,0 +1,269 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-loki
+  labels: &lokiLabels
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: logs
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *lokiLabels
+  ports:
+    - name: http
+      port: 3100
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-loki
+  labels: &lokiLabels
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: logs
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *lokiLabels
+  template:
+    metadata:
+      labels: *lokiLabels
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: loki
+          image: grafana/loki:3.5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          args: ["-config.file=/etc/loki/local-config.yaml"]
+          ports:
+            - name: http
+              containerPort: 3100
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 384Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /loki
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-loki
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-loki
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-prometheus
+  labels: &prometheusLabels
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *prometheusLabels
+  ports:
+    - name: http
+      port: 9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-prometheus
+  labels: &prometheusLabels
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *prometheusLabels
+  template:
+    metadata:
+      labels: *prometheusLabels
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v3.4.1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.retention.time=7d
+          ports:
+            - name: http
+              containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+              readOnly: true
+            - name: data
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: conexao-solidaria-prometheus-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-prometheus
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-prometheus
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-grafana
+  labels: &grafanaLabels
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *grafanaLabels
+  ports:
+    - name: http
+      port: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-grafana
+  labels: &grafanaLabels
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *grafanaLabels
+  template:
+    metadata:
+      labels: *grafanaLabels
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: grafana
+          image: grafana/grafana:12.0.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - { name: GF_SECURITY_ADMIN_USER, value: admin }
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: grafana-admin-password
+            - { name: GF_USERS_ALLOW_SIGN_UP, value: "false" }
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards/dashboards.yml
+              subPath: dashboards.yml
+              readOnly: true
+            - name: dashboard
+              mountPath: /etc/grafana/provisioning/dashboards/conexao-solidaria.json
+              subPath: conexao-solidaria.json
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/grafana
+      volumes:
+        - name: datasources
+          configMap:
+            name: conexao-solidaria-grafana-datasources
+        - name: dashboard-provider
+          configMap:
+            name: conexao-solidaria-grafana-dashboard-provider
+        - name: dashboard
+          configMap:
+            name: conexao-solidaria-grafana-dashboard
+        - name: data
+          persistentVolumeClaim:
+            claimName: conexao-solidaria-grafana
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conexao-solidaria-grafana
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi

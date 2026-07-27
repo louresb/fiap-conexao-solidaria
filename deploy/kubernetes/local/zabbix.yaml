@@ -1,0 +1,248 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-zabbix-db
+  labels: &zabbixDbLabels
+    app.kubernetes.io/name: zabbix-db
+    app.kubernetes.io/component: monitoring-database
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *zabbixDbLabels
+  ports:
+    - name: postgres
+      port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: conexao-solidaria-zabbix-db
+  labels: &zabbixDbLabels
+    app.kubernetes.io/name: zabbix-db
+    app.kubernetes.io/component: monitoring-database
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  serviceName: conexao-solidaria-zabbix-db
+  replicas: 1
+  selector:
+    matchLabels: *zabbixDbLabels
+  template:
+    metadata:
+      labels: *zabbixDbLabels
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - { name: POSTGRES_USER, value: zabbix }
+            - { name: POSTGRES_DB, value: zabbix }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: zabbix-db-password
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U zabbix -d zabbix"]
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U zabbix -d zabbix"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U zabbix -d zabbix"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-zabbix-server
+  labels: &zabbixServerLabels
+    app.kubernetes.io/name: zabbix-server
+    app.kubernetes.io/component: infrastructure-monitoring
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *zabbixServerLabels
+  ports:
+    - name: server
+      port: 10051
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-zabbix-server
+  labels: &zabbixServerLabels
+    app.kubernetes.io/name: zabbix-server
+    app.kubernetes.io/component: infrastructure-monitoring
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *zabbixServerLabels
+  template:
+    metadata:
+      labels: *zabbixServerLabels
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1997
+        runAsGroup: 1995
+        fsGroup: 1995
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: zabbix/zabbix-server-pgsql:alpine-7.4-latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: server
+              containerPort: 10051
+          env:
+            - { name: DB_SERVER_HOST, value: conexao-solidaria-zabbix-db }
+            - { name: POSTGRES_USER, value: zabbix }
+            - { name: POSTGRES_DB, value: zabbix }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: zabbix-db-password
+          startupProbe:
+            tcpSocket:
+              port: server
+            periodSeconds: 5
+            failureThreshold: 90
+          readinessProbe:
+            tcpSocket:
+              port: server
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: server
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 750m, memory: 768Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conexao-solidaria-zabbix-web
+  labels: &zabbixWebLabels
+    app.kubernetes.io/name: zabbix-web
+    app.kubernetes.io/component: monitoring-console
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  selector: *zabbixWebLabels
+  ports:
+    - name: http
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conexao-solidaria-zabbix-web
+  labels: &zabbixWebLabels
+    app.kubernetes.io/name: zabbix-web
+    app.kubernetes.io/component: monitoring-console
+    app.kubernetes.io/part-of: conexao-solidaria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: *zabbixWebLabels
+  template:
+    metadata:
+      labels: *zabbixWebLabels
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1997
+        runAsGroup: 1995
+        fsGroup: 1995
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: zabbix/zabbix-web-nginx-pgsql:alpine-7.4-latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - { name: ZBX_SERVER_HOST, value: conexao-solidaria-zabbix-server }
+            - { name: ZBX_SERVER_NAME, value: Conexao Solidaria }
+            - { name: DB_SERVER_HOST, value: conexao-solidaria-zabbix-db }
+            - { name: POSTGRES_USER, value: zabbix }
+            - { name: POSTGRES_DB, value: zabbix }
+            - { name: PHP_TZ, value: America/Sao_Paulo }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: conexao-solidaria-runtime
+                  key: zabbix-db-password
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 5
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }

@@ -1,0 +1,193 @@
+:root {
+    --cs-ink: #17211d;
+    --cs-ink-soft: #52615a;
+    --cs-surface: #ffffff;
+    --cs-surface-soft: #edf3ef;
+    --cs-line: #d9e1dc;
+    --cs-green: #176b50;
+    --cs-green-dark: #123d32;
+    --cs-yellow: #f2bd42;
+}
+
+body#keycloak-bg.login-pf {
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--cs-surface-soft);
+    color: var(--cs-ink);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    letter-spacing: 0;
+}
+
+.pf-v5-c-login {
+    min-height: 100vh;
+    padding: 32px;
+    display: grid;
+    place-items: center;
+    background: var(--cs-surface-soft);
+}
+
+.pf-v5-c-login__container {
+    width: min(1080px, 100%);
+    min-height: 640px;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-areas: "header main";
+    grid-template-columns: minmax(330px, .86fr) minmax(430px, 1.14fr);
+    overflow: hidden;
+    border: 1px solid var(--cs-line);
+    border-radius: 8px;
+    background: var(--cs-surface);
+    box-shadow: 0 24px 60px rgba(18, 45, 36, .14);
+}
+
+#kc-header {
+    grid-area: header;
+    min-height: 100%;
+    margin: 0;
+    padding: 58px;
+    display: flex;
+    align-items: flex-end;
+    background: var(--cs-green-dark);
+}
+
+#kc-header-wrapper {
+    width: 100%;
+    color: #ffffff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1.02;
+    text-transform: none;
+}
+
+#kc-header-wrapper::before {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .36);
+    border-radius: 6px;
+    background: var(--cs-yellow);
+    color: #2b2414;
+    content: "CS";
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+}
+
+#kc-header-wrapper::after {
+    max-width: 290px;
+    margin-top: 28px;
+    display: block;
+    color: #bed0c8;
+    content: "Doa\00e7\00e3o segura, impacto acompanhado e transpar\00ea ncia p\00fa blica.";
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: .9rem;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.pf-v5-c-login__main {
+    grid-area: main;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: clamp(48px, 7vw, 88px);
+    align-self: center;
+    background: var(--cs-surface);
+    box-shadow: none;
+}
+
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+    padding-inline: 0;
+}
+
+#kc-page-title {
+    color: var(--cs-ink);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.3rem;
+    line-height: 1.1;
+}
+
+.pf-v5-c-form__label-text,
+.pf-v5-c-check__label {
+    color: var(--cs-ink);
+}
+
+.pf-v5-c-form-control {
+    min-height: 44px;
+    border-color: #aebbb5;
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--cs-ink);
+}
+
+.pf-v5-c-form-control:focus-within {
+    border-color: var(--cs-green);
+    box-shadow: 0 0 0 3px rgba(23, 107, 80, .14);
+}
+
+.pf-v5-c-button.pf-m-primary {
+    min-height: 46px;
+    border-radius: 6px;
+    background: var(--cs-yellow);
+    color: #2b2414;
+    font-weight: 700;
+}
+
+.pf-v5-c-button.pf-m-primary:hover {
+    background: #ffd066;
+}
+
+a,
+.pf-v5-c-helper-text__item-text a {
+    color: var(--cs-green);
+}
+
+@media (max-width: 760px) {
+    .pf-v5-c-login {
+        padding: 0;
+        place-items: stretch;
+    }
+
+    .pf-v5-c-login__container {
+        min-height: 100vh;
+        grid-template-areas: "header" "main";
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        border: 0;
+        border-radius: 0;
+    }
+
+    #kc-header {
+        min-height: 230px;
+        padding: 30px 24px;
+    }
+
+    #kc-header-wrapper {
+        font-size: 2.1rem;
+    }
+
+    #kc-header-wrapper::before {
+        width: 42px;
+        height: 42px;
+        margin-bottom: 18px;
+    }
+
+    #kc-header-wrapper::after {
+        margin-top: 14px;
+        font-size: .78rem;
+    }
+
+    .pf-v5-c-login__main {
+        padding: 42px 24px 58px;
+        align-self: stretch;
+    }
+
+    #kc-page-title {
+        font-size: 2rem;
+    }
+}

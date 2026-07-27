@@ -1,0 +1,22 @@
+location                = "Chile Central"
+environment             = "production"
+acknowledge_aks_costs   = false
+name_prefix             = "conexao-solidaria"
+container_registry_name = "conexaosolidariablouresfiap26"
+ingress_dns_label        = "conexao-solidaria-blouresfiap26"
+github_repository        = "louresb/fiap-conexao-solidaria"
+kubernetes_version      = "1.35"
+node_vm_size            = "Standard_B4as_v2"
+node_min_count          = 1
+node_max_count          = 1
+
+# Replace with the public /32 CIDR of each trusted operator workstation.
+# GitHub delivery uses AKS Run Command and does not require direct API exposure.
+api_server_authorized_ip_ranges = ["203.0.113.10/32"]
+aks_admin_principal_object_ids   = ["00000000-0000-0000-0000-000000000000"]
+
+tags = {
+  Owner      = "louresb"
+  CostCenter = "fiap-hackathon"
+  Lifecycle  = "ephemeral"
+}
