@@ -63,4 +63,7 @@
   <data name="Category.Meio ambiente" xml:space="preserve"><value>Meio ambiente</value></data>
   <data name="Category.Inclusão digital" xml:space="preserve"><value>Inclusão digital</value></data>
   <data name="Category.Desenvolvimento social" xml:space="preserve"><value>Desenvolvimento social</value></data>
+  <data name="Category.Segurança alimentar" xml:space="preserve"><value>Segurança alimentar</value></data>
+  <data name="Category.Educação ambiental" xml:space="preserve"><value>Educação ambiental</value></data>
+  <data name="Category.Formação tecnológica" xml:space="preserve"><value>Formação tecnológica</value></data>
 </root>
