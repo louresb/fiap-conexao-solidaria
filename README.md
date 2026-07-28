@@ -1,10 +1,11 @@
 # FIAP Conexão Solidária
 
 [![Platform CI/CD](https://github.com/louresb/fiap-conexao-solidaria/actions/workflows/ci.yml/badge.svg)](https://github.com/louresb/fiap-conexao-solidaria/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/louresb/fiap-conexao-solidaria?label=version&sort=semver)](https://github.com/louresb/fiap-conexao-solidaria/tags)
 
 Projeto desenvolvido para o Hackathon da pós-graduação em Arquitetura de Sistemas .NET da FIAP. A plataforma conecta organizações, doadores e campanhas com pagamentos, processamento assíncrono, transparência e auditoria ponta a ponta.
 
-[![Página inicial da Conexão Solidária](docs/product/screenshots/home.png)](https://conexao-solidaria-blouresfiap26.chilecentral.cloudapp.azure.com/)
+[![Página inicial da Conexão Solidária](docs/product/screenshots/home.jpg)](https://conexao-solidaria-blouresfiap26.chilecentral.cloudapp.azure.com/)
 
 ## Produto
 

@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject IStringLocalizer<WebResources> Localizer
 
 <div class="site-shell" data-interactive="@(_interactiveReady ? "ready" : null)">
     <NavMenu />
@@ -8,16 +9,16 @@
     <footer class="site-footer">
         <div class="footer-inner">
             <div>
-                <a class="brand brand-footer" href="/" aria-label="Conexão Solidária">
+                <a class="brand brand-footer" href="/" aria-label="@Localizer["BrandHomeAria"]">
                     <span class="brand-mark" aria-hidden="true">CS</span>
-                    <span><strong>Conexão Solidária</strong><small>Transparência que aproxima</small></span>
+                    <span><strong>Conexão Solidária</strong><small>@Localizer["FooterTagline"]</small></span>
                 </a>
             </div>
-            <p>Campanhas, doações e impacto acompanhados de ponta a ponta.</p>
-            <nav aria-label="Rodapé">
-                <a href="/transparencia">Transparência</a>
-                <a href="/assistente">Tire suas dúvidas</a>
-                <a href="/acesso">Acessar plataforma</a>
+            <p>@Localizer["FooterDescription"]</p>
+            <nav aria-label="@Localizer["FooterNavigation"]">
+                <a href="/transparencia">@Localizer["Transparency"]</a>
+                <a href="/assistente">@Localizer["AskQuestions"]</a>
+                <a href="/acesso">@Localizer["AccessPlatform"]</a>
             </nav>
         </div>
     </footer>
@@ -39,7 +40,7 @@
 }
 
 <div id="blazor-error-ui" data-nosnippet>
-    A conexão foi interrompida.
-    <a href="." class="reload">Recarregar</a>
-    <button type="button" class="dismiss" aria-label="Fechar">×</button>
+    @Localizer["ConnectionInterrupted"]
+    <a href="." class="reload">@Localizer["Reload"]</a>
+    <button type="button" class="dismiss" aria-label="@Localizer["Close"]">×</button>
 </div>

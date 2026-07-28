@@ -1,14 +1,15 @@
 @page "/assistente"
 @using ConexaoSolidaria.Contracts.Knowledge
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Assistente | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["AssistantPageTitle"]</PageTitle>
 
 <section class="assistant-page @Tenant.AccentClass">
     <div class="assistant-intro">
-        <p class="eyebrow">Informação com fonte</p>
-        <h1>Converse com a @Tenant.ShortName.</h1>
-        <p>Consulte políticas, prestação de contas e atuação institucional. As respostas usam somente documentos verificados da organização.</p>
+        <p class="eyebrow">@Localizer["SourcedInformation"]</p>
+        <h1>@Localizer["TalkToOrganization", Tenant.ShortName]</h1>
+        <p>@Localizer["AssistantIntroduction"]</p>
         <div class="suggested-questions">
             @foreach (var suggestion in Suggestions)
             {
@@ -22,20 +23,20 @@
         {
             <div class="conversation-empty">
                 <span aria-hidden="true">?</span>
-                <strong>Como podemos ajudar?</strong>
-                <p>Escreva uma pergunta sobre a organização ou uma campanha.</p>
+                <strong>@Localizer["HowCanWeHelp"]</strong>
+                <p>@Localizer["AskAboutOrganization"]</p>
             </div>
         }
         else
         {
             <div class="question-bubble">@LastQuestion</div>
             <div class="answer-block">
-                <span class="answer-mode">@(Answer.AnswerMode == "grounded-generation" ? "Síntese fundamentada por IA" : "Resposta extrativa")</span>
+                <span class="answer-mode">@(Answer.AnswerMode == "grounded-generation" ? Localizer["GroundedAiAnswer"] : Localizer["ExtractiveAnswer"])</span>
                 <p>@Answer.Answer</p>
                 @if (Answer.Sources.Count > 0)
                 {
                     <div class="source-list">
-                        <strong>Fontes consultadas</strong>
+                        <strong>@Localizer["SourcesConsulted"]</strong>
                         @foreach (var source in Answer.Sources)
                         {
                             <details>
@@ -45,14 +46,14 @@
                         }
                     </div>
                 }
-                <small>Correlação: @Answer.CorrelationId</small>
+                <small>@Localizer["Correlation"]: @Answer.CorrelationId</small>
             </div>
         }
 
         <div class="assistant-composer">
-            <label for="knowledge-question">Sua pergunta</label>
-            <textarea id="knowledge-question" @bind="Question" placeholder="Como a organização presta contas das doações?"></textarea>
-            <button class="button button-primary" type="button" @onclick="AskAsync" disabled="@Loading">@(Loading ? "Consultando fontes..." : "Enviar pergunta")</button>
+            <label for="knowledge-question">@Localizer["YourQuestion"]</label>
+            <textarea id="knowledge-question" @bind="Question" placeholder="@Localizer["QuestionPlaceholder"]"></textarea>
+            <button class="button button-primary" type="button" @onclick="AskAsync" disabled="@Loading">@(Loading ? Localizer["ConsultingSources"] : Localizer["SendQuestion"])</button>
         </div>
         @if (!string.IsNullOrWhiteSpace(Error))
         {
@@ -64,11 +65,11 @@
 @code {
     [SupplyParameterFromQuery(Name = "tenant")] public string? TenantId { get; set; }
 
-    private static readonly string[] Suggestions =
+    private string[] Suggestions =>
     [
-        "Como a ONG presta contas?",
-        "Quais dados são públicos?",
-        "Como uma doação é confirmada?"
+        Localizer["Suggestion.Accountability"],
+        Localizer["Suggestion.PublicData"],
+        Localizer["Suggestion.DonationConfirmation"]
     ];
 
     private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
@@ -88,7 +89,7 @@
     {
         if (Question.Trim().Length < 5)
         {
-            Error = "Escreva uma pergunta um pouco mais completa.";
+            Error = Localizer["QuestionTooShort"];
             return;
         }
 
@@ -102,7 +103,7 @@
         }
         catch
         {
-            Error = "O assistente está temporariamente indisponível.";
+            Error = Localizer["AssistantUnavailable"];
         }
         finally
         {

@@ -6,15 +6,16 @@
 @using ConexaoSolidaria.Contracts.Validation
 @inject SolidariaApiClient Api
 @inject NavigationManager Navigation
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>@(Id.HasValue ? "Editar campanha" : "Nova campanha") | Gestão</PageTitle>
+<PageTitle>@(Id.HasValue ? Localizer["EditCampaignPageTitle"] : Localizer["NewCampaignPageTitle"])</PageTitle>
 
 <section class="management-heading">
     <div class="section-inner">
-        <a class="back-link" href="/gestao/campanhas">← Voltar para campanhas</a>
-        <p class="eyebrow">@(Id.HasValue ? "Atualizar iniciativa" : "Nova iniciativa")</p>
-        <h1>@(Id.HasValue ? "Editar campanha" : "Criar campanha")</h1>
-        <p>As informações publicadas ficarão disponíveis para doadores e serão registradas na auditoria.</p>
+        <a class="back-link" href="/gestao/campanhas">← @Localizer["BackToCampaigns"]</a>
+        <p class="eyebrow">@(Id.HasValue ? Localizer["UpdateInitiative"] : Localizer["NewInitiative"])</p>
+        <h1>@(Id.HasValue ? Localizer["EditCampaign"] : Localizer["CreateCampaign"])</h1>
+        <p>@Localizer["CampaignEditorDescription"]</p>
     </div>
 </section>
 
@@ -23,45 +24,45 @@
         <DataAnnotationsValidator />
         <div class="editor-layout">
             <div class="form-section">
-                <div class="section-heading"><p class="eyebrow">Conteúdo público</p><h2>Informações da campanha</h2></div>
+                <div class="section-heading"><p class="eyebrow">@Localizer["PublicContent"]</p><h2>@Localizer["CampaignInformation"]</h2></div>
                 <div class="form-field">
-                    <label for="title">Título</label>
+                    <label for="title">@Localizer["Title"]</label>
                     <InputText id="title" @bind-Value="Model.Title" />
                     <ValidationMessage For="() => Model.Title" />
                 </div>
                 <div class="form-field">
-                    <label for="description">Descrição</label>
+                    <label for="description">@Localizer["Description"]</label>
                     <InputTextArea id="description" @bind-Value="Model.Description" />
                     <ValidationMessage For="() => Model.Description" />
-                    <small>Explique o destino dos recursos e o impacto esperado.</small>
+                    <small>@Localizer["CampaignDescriptionHelp"]</small>
                 </div>
             </div>
 
             <div class="form-section">
-                <div class="section-heading"><p class="eyebrow">Planejamento</p><h2>Meta e período</h2></div>
+                <div class="section-heading"><p class="eyebrow">@Localizer["Planning"]</p><h2>@Localizer["GoalAndPeriod"]</h2></div>
                 <div class="form-grid">
                     <div class="form-field">
-                        <label for="goal">Meta financeira</label>
+                        <label for="goal">@Localizer["FinancialGoal"]</label>
                         <InputNumber id="goal" @bind-Value="Model.GoalAmount" />
                         <ValidationMessage For="() => Model.GoalAmount" />
                     </div>
                     <div class="form-field">
-                        <label for="status">Status</label>
+                        <label for="status">@Localizer["Status"]</label>
                         <InputSelect id="status" @bind-Value="Model.Status">
                             @foreach (var status in AvailableStatuses)
                             {
                                 <option value="@status">@StatusLabel(status)</option>
                             }
                         </InputSelect>
-                        <small>O fluxo preserva revisão e aprovação antes da publicação.</small>
+                        <small>@Localizer["StatusWorkflowHelp"]</small>
                     </div>
                     <div class="form-field">
-                        <label for="start">Data de início</label>
+                        <label for="start">@Localizer["StartDate"]</label>
                         <InputDate id="start" @bind-Value="Model.StartDate" />
                         <ValidationMessage For="() => Model.StartDate" />
                     </div>
                     <div class="form-field">
-                        <label for="end">Data de encerramento</label>
+                        <label for="end">@Localizer["EndDate"]</label>
                         <InputDate id="end" @bind-Value="Model.EndDate" />
                         <ValidationMessage For="() => Model.EndDate" />
                     </div>
@@ -74,8 +75,8 @@
             <div class="notice notice-error">@Error</div>
         }
         <div class="editor-actions">
-            <a class="button button-outline" href="/gestao/campanhas">Cancelar</a>
-            <button class="button button-primary" type="submit" disabled="@Saving">@(Saving ? "Salvando..." : "Salvar campanha")</button>
+            <a class="button button-outline" href="/gestao/campanhas">@Localizer["Cancel"]</a>
+            <button class="button button-primary" type="submit" disabled="@Saving">@(Saving ? Localizer["Saving"] : Localizer["SaveCampaign"])</button>
         </div>
     </EditForm>
 </section>
@@ -104,7 +105,7 @@
             var campaign = (await Api.GetManagedCampaignsAsync(CancellationToken.None)).FirstOrDefault(item => item.Id == Id);
             if (campaign is null)
             {
-                Error = "Campanha não encontrada.";
+                Error = Localizer["CampaignNotFound"];
                 return;
             }
 
@@ -121,7 +122,7 @@
         }
         catch
         {
-            Error = "Não foi possível carregar a campanha.";
+            Error = Localizer["CampaignQueryError"];
         }
     }
 
@@ -150,8 +151,8 @@
         catch (SolidariaApiException exception)
         {
             Error = exception.Detail.Contains("data", StringComparison.OrdinalIgnoreCase)
-                ? "Revise o período e a meta financeira da campanha."
-                : "Não foi possível salvar a campanha.";
+                ? Localizer["CampaignPeriodGoalError"]
+                : Localizer["CampaignSaveError"];
         }
         finally
         {
@@ -161,15 +162,15 @@
 
     private sealed class CampaignFormModel
     {
-        [Required(ErrorMessage = "Informe o título.")]
-        [StringLength(160, MinimumLength = 5, ErrorMessage = "Use entre 5 e 160 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CampaignTitleRequired))]
+        [StringLength(160, MinimumLength = 5, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CampaignTitleLength))]
         public string Title { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Informe a descrição.")]
-        [StringLength(2000, MinimumLength = 20, ErrorMessage = "Use entre 20 e 2.000 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CampaignDescriptionRequired))]
+        [StringLength(2000, MinimumLength = 20, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CampaignDescriptionLength))]
         public string Description { get; set; } = string.Empty;
 
-        [Range(1, 100000000, ErrorMessage = "A meta deve ser maior que zero.")]
+        [Range(1, 100000000, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CampaignGoalPositive))]
         public decimal GoalAmount { get; set; } = 25000;
 
         public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -177,14 +178,14 @@
         public CampaignStatus Status { get; set; } = CampaignStatus.Rascunho;
     }
 
-    private static string StatusLabel(CampaignStatus status) => status switch
+    private string StatusLabel(CampaignStatus status) => status switch
     {
-        CampaignStatus.Rascunho => "Rascunho",
-        CampaignStatus.EmRevisao => "Em revisão",
-        CampaignStatus.Aprovada => "Aprovada",
-        CampaignStatus.Ativa => "Publicada",
-        CampaignStatus.Concluida => "Concluída",
-        CampaignStatus.Cancelada => "Cancelada",
+        CampaignStatus.Rascunho => Localizer["StatusDraft"],
+        CampaignStatus.EmRevisao => Localizer["StatusInReview"],
+        CampaignStatus.Aprovada => Localizer["StatusApproved"],
+        CampaignStatus.Ativa => Localizer["StatusPublished"],
+        CampaignStatus.Concluida => Localizer["StatusCompleted"],
+        CampaignStatus.Cancelada => Localizer["StatusCancelled"],
         _ => status.ToString()
     };
 }

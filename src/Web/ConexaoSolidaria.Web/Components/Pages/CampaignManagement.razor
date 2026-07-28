@@ -2,13 +2,14 @@
 @attribute [Authorize(Roles = "GestorONG")]
 @using ConexaoSolidaria.Contracts.Campaigns
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Campanhas | Gestão</PageTitle>
+<PageTitle>@Localizer["CampaignManagementPageTitle"]</PageTitle>
 
 <section class="management-heading">
     <div class="section-inner split-heading">
-        <div><p class="eyebrow">Gestão de campanhas</p><h1>Campanhas</h1><p>Crie, atualize e encerre iniciativas preservando o histórico.</p></div>
-        <a class="button button-primary" href="/gestao/campanhas/nova">Nova campanha</a>
+        <div><p class="eyebrow">@Localizer["CampaignManagement"]</p><h1>@Localizer["Campaigns"]</h1><p>@Localizer["CampaignManagementDescription"]</p></div>
+        <a class="button button-primary" href="/gestao/campanhas/nova">@Localizer["NewCampaign"]</a>
     </div>
 </section>
 
@@ -17,7 +18,7 @@
     {
         <div class="notice notice-error">@Error</div>
     }
-    <div class="filter-tabs" role="tablist" aria-label="Filtrar campanhas">
+    <div class="filter-tabs" role="tablist" aria-label="@Localizer["FilterCampaigns"]">
         @foreach (var filter in Filters)
         {
             <button type="button" class="@(CurrentFilter == filter.Key ? "active" : null)" @onclick="() => CurrentFilter = filter.Key">@filter.Value</button>
@@ -26,27 +27,27 @@
 
     <div class="campaign-admin-table">
         <table class="data-table">
-            <thead><tr><th>Campanha</th><th>Período</th><th>Arrecadação</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
+            <thead><tr><th>@Localizer["Campaign"]</th><th>@Localizer["Period"]</th><th>@Localizer["Fundraising"]</th><th>@Localizer["Status"]</th><th><span class="sr-only">@Localizer["Actions"]</span></th></tr></thead>
             <tbody>
                 @foreach (var campaign in FilteredCampaigns)
                 {
                     <tr>
                         <td><strong>@campaign.Title</strong><small>@campaign.Description</small></td>
-                        <td>@campaign.StartDate.ToString("dd/MM/yy") – @campaign.EndDate.ToString("dd/MM/yy")</td>
-                        <td>@campaign.TotalRaised.ToString("C0", Culture)<small>Meta @campaign.GoalAmount.ToString("C0", Culture)</small></td>
+                        <td>@campaign.StartDate.ToString("d", Culture) – @campaign.EndDate.ToString("d", Culture)</td>
+                        <td>@campaign.TotalRaised.ToString("C0", Culture)<small>@Localizer["Goal"] @campaign.GoalAmount.ToString("C0", Culture)</small></td>
                         <td><span class="status-badge status-@campaign.Status.ToString().ToLowerInvariant()">@StatusLabel(campaign.Status)</span></td>
                         <td class="table-actions">
-                            <a class="button button-quiet" href="/gestao/campanhas/@campaign.Id/editar">Editar</a>
+                            <a class="button button-quiet" href="/gestao/campanhas/@campaign.Id/editar">@Localizer["Edit"]</a>
                             @if (campaign.Status == CampaignStatus.Ativa)
                             {
                                 @if (PendingCancellation == campaign.Id)
                                 {
-                                    <button class="button button-danger" type="button" @onclick="() => CancelAsync(campaign.Id)">Confirmar</button>
-                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = null">Voltar</button>
+                                    <button class="button button-danger" type="button" @onclick="() => CancelAsync(campaign.Id)">@Localizer["Confirm"]</button>
+                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = null">@Localizer["Back"]</button>
                                 }
                                 else
                                 {
-                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = campaign.Id">Encerrar</button>
+                                    <button class="button button-quiet" type="button" @onclick="() => PendingCancellation = campaign.Id">@Localizer["CloseCampaign"]</button>
                                 }
                             }
                         </td>
@@ -58,13 +59,13 @@
 </section>
 
 @code {
-    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
-    private static readonly IReadOnlyDictionary<string, string> Filters = new Dictionary<string, string>
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
+    private IReadOnlyDictionary<string, string> Filters => new Dictionary<string, string>
     {
-        ["all"] = "Todas",
-        ["active"] = "Publicadas",
-        ["workflow"] = "Em preparação",
-        ["closed"] = "Encerradas"
+        ["all"] = Localizer["FilterAll"],
+        ["active"] = Localizer["FilterPublished"],
+        ["workflow"] = Localizer["FilterInPreparation"],
+        ["closed"] = Localizer["FilterClosed"]
     };
     private IReadOnlyList<CampaignDto> Campaigns { get; set; } = [];
     private string CurrentFilter { get; set; } = "all";
@@ -88,7 +89,7 @@
         }
         catch
         {
-            Error = "Não foi possível carregar as campanhas.";
+            Error = Localizer["ManagedCampaignsLoadError"];
         }
     }
 
@@ -102,18 +103,18 @@
         }
         catch
         {
-            Error = "A campanha não pôde ser encerrada.";
+            Error = Localizer["CampaignCloseError"];
         }
     }
 
-    private static string StatusLabel(CampaignStatus status) => status switch
+    private string StatusLabel(CampaignStatus status) => status switch
     {
-        CampaignStatus.Rascunho => "Rascunho",
-        CampaignStatus.EmRevisao => "Em revisão",
-        CampaignStatus.Aprovada => "Aprovada",
-        CampaignStatus.Ativa => "Publicada",
-        CampaignStatus.Concluida => "Concluída",
-        CampaignStatus.Cancelada => "Cancelada",
+        CampaignStatus.Rascunho => Localizer["StatusDraft"],
+        CampaignStatus.EmRevisao => Localizer["StatusInReview"],
+        CampaignStatus.Aprovada => Localizer["StatusApproved"],
+        CampaignStatus.Ativa => Localizer["StatusPublished"],
+        CampaignStatus.Concluida => Localizer["StatusCompleted"],
+        CampaignStatus.Cancelada => Localizer["StatusCancelled"],
         _ => status.ToString()
     };
 }

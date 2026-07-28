@@ -2,7 +2,10 @@ using ConexaoSolidaria.Contracts.Campaigns;
 
 namespace ConexaoSolidaria.Web.Models;
 
-public sealed record CampaignPresentation(string Image, string Category, string ImpactLabel);
+public sealed record CampaignPresentation(
+    string Image,
+    string Category,
+    string? DescriptionResourceKey = null);
 
 public static class CampaignPresentations
 {
@@ -12,39 +15,39 @@ public static class CampaignPresentations
             ["Mesa Cheia nas Férias"] = new(
                 "/images/campaign-mesa-cheia-nas-ferias.jpg",
                 "Segurança alimentar",
-                "Famílias acompanhadas"),
+                "CampaignDescription.MesaCheiaNasFerias"),
             ["Cozinha Parceira"] = new(
                 "/images/campaign-cozinha-parceira.jpg",
                 "Segurança alimentar",
-                "Refeições servidas"),
+                "CampaignDescription.CozinhaParceira"),
             ["Conexão para Aprender"] = new(
                 "/images/campaign-conexao-para-aprender.jpg",
                 "Inclusão digital",
-                "Estudantes conectados"),
+                "CampaignDescription.ConexaoParaAprender"),
             ["Mangue Vivo"] = new(
                 "/images/hero-mare-limpa.jpg",
                 "Meio ambiente",
-                "Ecossistema restaurado"),
+                "CampaignDescription.MangueVivo"),
             ["Praia Limpa, Bairro Vivo"] = new(
                 "/images/campaign-praia-limpa-bairro-vivo.jpg",
                 "Meio ambiente",
-                "Resíduos retirados"),
+                "CampaignDescription.PraiaLimpaBairroVivo"),
             ["Escola Azul"] = new(
                 "/images/campaign-escola-azul.jpg",
                 "Educação ambiental",
-                "Estudantes mobilizados"),
+                "CampaignDescription.EscolaAzul"),
             ["Laboratório Aberto"] = new(
                 "/images/campaign-laboratorio-aberto.jpg",
                 "Inclusão digital",
-                "Jovens em formação"),
+                "CampaignDescription.LaboratorioAberto"),
             ["Bolsa Dados para Estudar"] = new(
                 "/images/campaign-bolsa-dados-para-estudar.jpg",
                 "Inclusão digital",
-                "Permanência ampliada"),
+                "CampaignDescription.BolsaDadosParaEstudar"),
             ["Primeiro Código"] = new(
                 "/images/campaign-trilha-jovem-monitor.jpg",
                 "Formação tecnológica",
-                "Talentos desenvolvidos")
+                "CampaignDescription.PrimeiroCodigo")
         };
 
     public static CampaignPresentation For(ActiveCampaignDto campaign)
@@ -57,14 +60,14 @@ public static class CampaignPresentations
         var searchable = $"{campaign.TenantId} {campaign.Title} {campaign.Description}".ToLowerInvariant();
         if (searchable.Contains("mar") || searchable.Contains("mangue") || searchable.Contains("praia") || searchable.Contains("ambient"))
         {
-            return new("/images/hero-mare-limpa.jpg", "Meio ambiente", "Ecossistema protegido");
+            return new("/images/hero-mare-limpa.jpg", "Meio ambiente");
         }
 
         if (searchable.Contains("digital") || searchable.Contains("tecnolog") || searchable.Contains("laborat") || searchable.Contains("conex"))
         {
-            return new("/images/hero-futuro-em-rede.jpg", "Inclusão digital", "Autonomia ampliada");
+            return new("/images/hero-futuro-em-rede.jpg", "Inclusão digital");
         }
 
-        return new("/images/hero-esperanca-solidaria.jpg", "Desenvolvimento social", "Famílias acompanhadas");
+        return new("/images/hero-esperanca-solidaria.jpg", "Desenvolvimento social");
     }
 }

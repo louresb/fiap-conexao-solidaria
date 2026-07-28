@@ -1,14 +1,15 @@
 @page "/transparencia"
 @using ConexaoSolidaria.Contracts.Campaigns
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Transparência | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["TransparencyPageTitle"]</PageTitle>
 
 <section class="page-heading @Tenant.AccentClass">
     <div class="section-inner">
         <p class="eyebrow">@Tenant.Name</p>
-        <h1>Transparência que pode ser acompanhada.</h1>
-        <p>Metas, arrecadação e execução reunidas para apoiar decisões conscientes.</p>
+        <h1>@Localizer["TransparencyTitle"]</h1>
+        <p>@Localizer["TransparencyDescription"]</p>
     </div>
 </section>
 
@@ -20,34 +21,34 @@
     else
     {
         <div class="transparency-metrics">
-            <div><span>Total mobilizado</span><strong>@Snapshot.TotalRaised.ToString("C0", Culture)</strong><small>nas campanhas ativas</small></div>
-            <div><span>Metas publicadas</span><strong>@Snapshot.PublishedGoal.ToString("C0", Culture)</strong><small>com prazo definido</small></div>
-            <div><span>Progresso médio</span><strong>@Snapshot.AverageProgress.ToString("0")%</strong><small>atualização contínua</small></div>
-            <div><span>Campanhas</span><strong>@Snapshot.ActiveCampaigns</strong><small>abertas para contribuição</small></div>
+            <div><span>@Localizer["TotalMobilized"]</span><strong>@Snapshot.TotalRaised.ToString("C0", Culture)</strong><small>@Localizer["InActiveCampaigns"]</small></div>
+            <div><span>@Localizer["PublishedGoals"]</span><strong>@Snapshot.PublishedGoal.ToString("C0", Culture)</strong><small>@Localizer["WithDefinedDeadline"]</small></div>
+            <div><span>@Localizer["AverageProgress"]</span><strong>@Snapshot.AverageProgress.ToString("0", Culture)%</strong><small>@Localizer["ContinuousUpdates"]</small></div>
+            <div><span>@Localizer["Campaigns"]</span><strong>@Snapshot.ActiveCampaigns</strong><small>@Localizer["OpenForContributions"]</small></div>
         </div>
 
         <section class="transparency-history" aria-labelledby="donation-history-title">
             <div class="section-heading">
-                <p class="eyebrow">Histórico público</p>
-                <h2 id="donation-history-title">Contribuições confirmadas</h2>
-                <p>Valores materializados a partir dos eventos processados, sem identificação pessoal do doador.</p>
+                <p class="eyebrow">@Localizer["PublicHistory"]</p>
+                <h2 id="donation-history-title">@Localizer["ConfirmedContributions"]</h2>
+                <p>@Localizer["ConfirmedContributionsDescription"]</p>
             </div>
             @if (Snapshot.RecentDonations.Count == 0)
             {
-                <div class="notice">As próximas contribuições confirmadas aparecerão aqui.</div>
+                <div class="notice">@Localizer["FutureContributionsNotice"]</div>
             }
             else
             {
                 <div class="transparency-table-wrap">
                     <table class="data-table">
-                        <thead><tr><th>Confirmação</th><th>Campanha</th><th>Identificação</th><th>Valor</th></tr></thead>
+                        <thead><tr><th>@Localizer["Confirmation"]</th><th>@Localizer["Campaign"]</th><th>@Localizer["Identification"]</th><th>@Localizer["Amount"]</th></tr></thead>
                         <tbody>
                             @foreach (var donation in Snapshot.RecentDonations)
                             {
                                 <tr>
                                     <td>@donation.ProcessedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", Culture)</td>
                                     <td><a href="/campanhas/@donation.CampaignId?tenant=@Tenant.Id">@donation.CampaignTitle</a></td>
-                                    <td>Doação anônima</td>
+                                    <td>@Localizer["AnonymousDonation"]</td>
                                     <td><strong>@donation.Amount.ToString("C2", Culture)</strong></td>
                                 </tr>
                             }
@@ -60,11 +61,11 @@
         <div class="transparency-layout">
             <div class="transparency-table-wrap">
                 <div class="section-heading">
-                    <p class="eyebrow">Evolução financeira</p>
-                    <h2>Arrecadação por campanha</h2>
+                    <p class="eyebrow">@Localizer["FinancialProgress"]</p>
+                    <h2>@Localizer["FundsByCampaign"]</h2>
                 </div>
                 <table class="data-table">
-                    <thead><tr><th>Campanha</th><th>Arrecadado</th><th>Meta</th><th>Progresso</th></tr></thead>
+                    <thead><tr><th>@Localizer["Campaign"]</th><th>@Localizer["RaisedTitle"]</th><th>@Localizer["Goal"]</th><th>@Localizer["Progress"]</th></tr></thead>
                     <tbody>
                         @foreach (var campaign in Campaigns.OrderByDescending(c => c.TotalRaised))
                         {
@@ -80,16 +81,16 @@
             </div>
 
             <aside class="transparency-principles">
-                <p class="eyebrow">Como cuidamos dos dados</p>
-                <h2>Uma trilha verificável.</h2>
+                <p class="eyebrow">@Localizer["HowWeProtectData"]</p>
+                <h2>@Localizer["VerifiableTrail"]</h2>
                 <ol>
-                    <li><strong>Registro</strong><span>Cada intenção recebe correlação própria.</span></li>
-                    <li><strong>Confirmação</strong><span>O total muda somente após o provedor confirmar.</span></li>
-                    <li><strong>Auditoria</strong><span>Os eventos ficam preservados em histórico append-only.</span></li>
+                    <li><strong>@Localizer["Record"]</strong><span>@Localizer["RecordDescription"]</span></li>
+                    <li><strong>@Localizer["Confirmation"]</strong><span>@Localizer["ConfirmationDescription"]</span></li>
+                    <li><strong>@Localizer["Audit"]</strong><span>@Localizer["AuditDescription"]</span></li>
                 </ol>
                 <details class="technical-detail">
-                    <summary>Atualização dos dados</summary>
-                    <p>Esta consulta foi atendida com status de cache <strong>@CacheStatus</strong>. O cache reduz latência sem substituir a fonte transacional.</p>
+                    <summary>@Localizer["DataUpdates"]</summary>
+                    <p>@Localizer["CacheStatusDescription", CacheStatus]</p>
                 </details>
             </aside>
         </div>
@@ -99,7 +100,7 @@
 @code {
     [SupplyParameterFromQuery(Name = "tenant")] public string? TenantId { get; set; }
 
-    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
     private TenantBrand Tenant => TenantCatalog.Resolve(TenantId);
     private IReadOnlyList<ActiveCampaignDto> Campaigns { get; set; } = [];
@@ -128,7 +129,7 @@
         }
         catch
         {
-            Error = "Não foi possível carregar o painel de transparência.";
+            Error = Localizer["TransparencyLoadError"];
         }
     }
 }
