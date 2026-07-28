@@ -2,18 +2,19 @@
 @using System.ComponentModel.DataAnnotations
 @using ConexaoSolidaria.Contracts.Identity
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Cadastro de doador | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["DonorRegistrationPageTitle"]</PageTitle>
 
 <section class="registration-page">
     <div class="registration-intro @Tenant.AccentClass">
         <p class="eyebrow">@Tenant.Name</p>
-        <h1>Crie sua conta de doador.</h1>
-        <p>Uma conta permite contribuir com segurança e acompanhar cada etapa do processamento.</p>
+        <h1>@Localizer["CreateDonorAccountTitle"]</h1>
+        <p>@Localizer["CreateDonorAccountDescription"]</p>
         <div class="registration-benefits">
-            <span>Identidade protegida</span>
-            <span>Histórico por organização</span>
-            <span>Consentimento transparente</span>
+            <span>@Localizer["ProtectedIdentity"]</span>
+            <span>@Localizer["OrganizationHistory"]</span>
+            <span>@Localizer["TransparentConsent"]</span>
         </div>
     </div>
     <div class="registration-form">
@@ -21,19 +22,19 @@
         {
             <div class="registration-success">
                 <span aria-hidden="true">✓</span>
-                <h2>Cadastro concluído</h2>
-                <p>Sua conta foi vinculada à @Tenant.Name. Entre para escolher uma campanha.</p>
-                <a class="button button-primary button-full" href="/account/login?returnUrl=@Uri.EscapeDataString($"/?tenant={Tenant.Id}")">Entrar agora</a>
+                <h2>@Localizer["RegistrationCompleted"]</h2>
+                <p>@Localizer["AccountLinked", Tenant.Name]</p>
+                <a class="button button-primary button-full" href="/account/login?returnUrl=@Uri.EscapeDataString($"/?tenant={Tenant.Id}")">@Localizer["SignInNow"]</a>
             </div>
         }
         else
         {
-            <p class="eyebrow">Dados pessoais</p>
-            <h2>Comece por aqui</h2>
+            <p class="eyebrow">@Localizer["PersonalData"]</p>
+            <h2>@Localizer["StartHere"]</h2>
             <EditForm Model="Model" OnValidSubmit="RegisterAsync" FormName="donor-registration">
                 <DataAnnotationsValidator />
                 <div class="form-field">
-                    <label for="tenant">Organização</label>
+                    <label for="tenant">@Localizer["Organization"]</label>
                     <select id="tenant" @bind="SelectedTenantId">
                         @foreach (var tenant in TenantCatalog.All)
                         {
@@ -42,7 +43,7 @@
                     </select>
                 </div>
                 <div class="form-field">
-                    <label for="name">Nome completo</label>
+                    <label for="name">@Localizer["FullName"]</label>
                     <InputText id="name" autocomplete="name" @bind-Value="Model.FullName" />
                     <ValidationMessage For="() => Model.FullName" />
                 </div>
@@ -57,23 +58,23 @@
                     <ValidationMessage For="() => Model.Cpf" />
                 </div>
                 <div class="form-field">
-                    <label for="password">Senha</label>
+                    <label for="password">@Localizer["Password"]</label>
                     <InputText id="password" type="password" autocomplete="new-password" @bind-Value="Model.Password" />
                     <ValidationMessage For="() => Model.Password" />
-                    <small>Use ao menos 10 caracteres, com maiúscula, minúscula e número.</small>
+                    <small>@Localizer["PasswordRequirements"]</small>
                 </div>
                 <label class="consent-field">
                     <InputCheckbox @bind-Value="Model.Consent" />
-                    <span>Li e concordo com o uso dos dados para cadastro, autenticação e processamento das doações.</span>
+                    <span>@Localizer["DataConsent"]</span>
                 </label>
                 <ValidationMessage For="() => Model.Consent" />
                 @if (!string.IsNullOrWhiteSpace(Error))
                 {
                     <div class="notice notice-error">@Error</div>
                 }
-                <button class="button button-primary button-full" type="submit" disabled="@Submitting">@(Submitting ? "Criando conta..." : "Criar conta")</button>
+                <button class="button button-primary button-full" type="submit" disabled="@Submitting">@(Submitting ? Localizer["CreatingAccount"] : Localizer["CreateAccount"])</button>
             </EditForm>
-            <p class="access-security">Já tem uma conta? <a href="/account/login?returnUrl=/">Entrar</a></p>
+            <p class="access-security">@Localizer["AlreadyHaveAccount"] <a href="/account/login?returnUrl=/">@Localizer["SignIn"]</a></p>
         }
     </div>
 </section>
@@ -97,7 +98,7 @@
     {
         if (!Model.Consent)
         {
-            Error = "Confirme o consentimento para continuar.";
+            Error = Localizer["ConsentRequired"];
             return;
         }
 
@@ -114,8 +115,8 @@
         catch (SolidariaApiException exception)
         {
             Error = exception.StatusCode == System.Net.HttpStatusCode.Conflict
-                ? "Este e-mail já possui cadastro nesta organização."
-                : "Não foi possível concluir o cadastro. Revise os dados informados.";
+                ? Localizer["EmailAlreadyRegistered"]
+                : Localizer["RegistrationError"];
         }
         finally
         {
@@ -125,23 +126,23 @@
 
     private sealed class RegistrationModel
     {
-        [Required(ErrorMessage = "Informe seu nome.")]
-        [StringLength(120, MinimumLength = 3, ErrorMessage = "Informe o nome completo.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.FullNameRequired))]
+        [StringLength(120, MinimumLength = 3, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.FullNameInvalid))]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Informe seu e-mail.")]
-        [EmailAddress(ErrorMessage = "Informe um e-mail válido.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.EmailInvalid))]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Informe seu CPF.")]
-        [StringLength(14, MinimumLength = 11, ErrorMessage = "Informe um CPF válido.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CpfRequired))]
+        [StringLength(14, MinimumLength = 11, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.CpfInvalid))]
         public string Cpf { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Crie uma senha.")]
-        [MinLength(10, ErrorMessage = "A senha deve ter ao menos 10 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.PasswordRequired))]
+        [MinLength(10, ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.PasswordLength))]
         public string Password { get; set; } = string.Empty;
 
-        [Range(typeof(bool), "true", "true", ErrorMessage = "O consentimento é obrigatório.")]
+        [Range(typeof(bool), "true", "true", ErrorMessageResourceType = typeof(ValidationMessages), ErrorMessageResourceName = nameof(ValidationMessages.ConsentRequired))]
         public bool Consent { get; set; }
     }
 }

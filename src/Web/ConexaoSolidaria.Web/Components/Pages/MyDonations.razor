@@ -2,21 +2,22 @@
 @attribute [Authorize(Roles = "Doador")]
 @using ConexaoSolidaria.Contracts.Donations
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Minhas doações | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["MyDonationsPageTitle"]</PageTitle>
 
 <section class="page-heading donor-heading @Tenant.AccentClass">
     <div class="section-inner">
-        <p class="eyebrow">Área do doador</p>
-        <h1>Seu impacto, contribuição por contribuição.</h1>
-        <p>@Tenant.Name · um histórico privado das doações vinculadas à sua conta.</p>
+        <p class="eyebrow">@Localizer["DonorArea"]</p>
+        <h1>@Localizer["YourImpactTitle"]</h1>
+        <p>@Localizer["PrivateDonationHistoryDescription", Tenant.Name]</p>
     </div>
 </section>
 
 <section class="section-inner donor-page">
     @if (Loading)
     {
-        <div class="page-loading">Carregando suas contribuições...</div>
+        <div class="page-loading">@Localizer["LoadingContributions"]</div>
     }
     else if (!string.IsNullOrWhiteSpace(Error))
     {
@@ -24,27 +25,27 @@
     }
     else
     {
-        <div class="donor-metrics" aria-label="Resumo das suas doações">
-            <div><span>Total confirmado</span><strong>@ConfirmedTotal.ToString("C2", Culture)</strong><small>impacto já processado</small></div>
-            <div><span>Campanhas apoiadas</span><strong>@SupportedCampaigns</strong><small>iniciativas diferentes</small></div>
-            <div><span>Contribuições</span><strong>@ConfirmedCount</strong><small>pagamentos confirmados</small></div>
-            <div><span>Em processamento</span><strong>@PendingCount</strong><small>aguardando confirmação</small></div>
+        <div class="donor-metrics" aria-label="@Localizer["DonationSummary"]">
+            <div><span>@Localizer["ConfirmedTotal"]</span><strong>@ConfirmedTotal.ToString("C2", Culture)</strong><small>@Localizer["ImpactAlreadyProcessed"]</small></div>
+            <div><span>@Localizer["SupportedCampaigns"]</span><strong>@SupportedCampaigns</strong><small>@Localizer["DifferentInitiatives"]</small></div>
+            <div><span>@Localizer["Contributions"]</span><strong>@ConfirmedCount</strong><small>@Localizer["ConfirmedPayments"]</small></div>
+            <div><span>@Localizer["Processing"]</span><strong>@PendingCount</strong><small>@Localizer["AwaitingConfirmation"]</small></div>
         </div>
 
         <div class="donor-history-heading split-heading">
             <div>
-                <p class="eyebrow">Histórico privado</p>
-                <h2>Minhas contribuições</h2>
+                <p class="eyebrow">@Localizer["PrivateHistory"]</p>
+                <h2>@Localizer["MyContributions"]</h2>
             </div>
-            <a class="button button-primary" href="/?tenant=@Tenant.Id">Apoiar outra campanha</a>
+            <a class="button button-primary" href="/?tenant=@Tenant.Id">@Localizer["SupportAnotherCampaign"]</a>
         </div>
 
         @if (Donations.Count == 0)
         {
             <div class="empty-state donor-empty">
-                <h3>Seu primeiro impacto começa aqui.</h3>
-                <p>Escolha uma campanha ativa e acompanhe cada etapa da contribuição nesta página.</p>
-                <a class="button button-dark" href="/?tenant=@Tenant.Id">Conhecer campanhas</a>
+                <h3>@Localizer["FirstImpactTitle"]</h3>
+                <p>@Localizer["FirstImpactDescription"]</p>
+                <a class="button button-dark" href="/?tenant=@Tenant.Id">@Localizer["ExploreCampaigns"]</a>
             </div>
         }
         else
@@ -55,9 +56,9 @@
                     <article>
                         <div class="donation-status-mark @StatusClass(donation.Status)" aria-hidden="true">@StatusInitial(donation.Status)</div>
                         <div class="donation-main">
-                            <span>@donation.CreatedAtUtc.LocalDateTime.ToString("dd 'de' MMMM 'de' yyyy", Culture)</span>
+                            <span>@donation.CreatedAtUtc.LocalDateTime.ToString("D", Culture)</span>
                             <h3>@donation.CampaignTitle</h3>
-                            <small>@PaymentMethodLabel(donation.PaymentMethod) · referência @donation.Id.ToString()[..8].ToUpperInvariant()</small>
+                            <small>@PaymentMethodLabel(donation.PaymentMethod) · @Localizer["Reference"].Value.ToLower(Culture) @donation.Id.ToString()[..8].ToUpperInvariant()</small>
                         </div>
                         <div class="donation-value">
                             <strong>@donation.Amount.ToString("C2", Culture)</strong>
@@ -69,14 +70,14 @@
         }
 
         <aside class="donor-privacy-note">
-            <strong>Privacidade por padrão</strong>
-            <p>Esta visão usa a identidade do seu acesso e o tenant da organização. Nenhum identificador de outro doador pode ser consultado por esta rota.</p>
+            <strong>@Localizer["PrivacyByDefault"]</strong>
+            <p>@Localizer["DonorPrivacyDescription"]</p>
         </aside>
     }
 </section>
 
 @code {
-    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private UserApiContext User { get; set; } = new(false, "", "", "", "", false, false);
     private TenantBrand Tenant => TenantCatalog.Resolve(User.TenantId);
     private IReadOnlyList<DonationDto> Donations { get; set; } = [];
@@ -96,7 +97,7 @@
         }
         catch
         {
-            Error = "Não foi possível carregar seu histórico de doações agora.";
+            Error = Localizer["DonationHistoryError"];
         }
         finally
         {
@@ -112,16 +113,16 @@
         "Rejected" => "donation-rejected",
         _ => "donation-pending"
     };
-    private static string StatusLabel(string status) => status switch
+    private string StatusLabel(string status) => status switch
     {
-        "Confirmed" => "Confirmada",
-        "Rejected" => "Não concluída",
-        _ => "Processando"
+        "Confirmed" => Localizer["StatusConfirmed"],
+        "Rejected" => Localizer["StatusNotCompleted"],
+        _ => Localizer["StatusProcessing"]
     };
-    private static string PaymentMethodLabel(string paymentMethod) => paymentMethod switch
+    private string PaymentMethodLabel(string paymentMethod) => paymentMethod switch
     {
-        "credit_card" => "Cartão",
-        "bank_slip" => "Boleto",
+        "credit_card" => Localizer["CreditCard"],
+        "bank_slip" => Localizer["BankSlip"],
         _ => "Pix"
     };
 }

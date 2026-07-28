@@ -3,23 +3,24 @@
 @using System.Text.Json
 @using ConexaoSolidaria.Contracts.Audit
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Auditoria | Gestão</PageTitle>
+<PageTitle>@Localizer["AuditPageTitle"]</PageTitle>
 
 <section class="management-heading">
     <div class="section-inner split-heading">
-        <div><p class="eyebrow">Governança</p><h1>Trilha de auditoria</h1><p>Eventos append-only segregados por organização e correlação.</p></div>
-        <button class="button button-outline" type="button" @onclick="LoadAsync" disabled="@Loading">Atualizar</button>
+        <div><p class="eyebrow">@Localizer["Governance"]</p><h1>@Localizer["AuditTrail"]</h1><p>@Localizer["AuditTrailDescription"]</p></div>
+        <button class="button button-outline" type="button" @onclick="LoadAsync" disabled="@Loading">@Localizer["Refresh"]</button>
     </div>
 </section>
 
 <section class="section-inner audit-page">
     <div class="audit-toolbar">
         <div class="search-control compact-search">
-            <label for="event-filter">Filtrar eventos</label>
-            <input id="event-filter" @bind="Filter" @bind:event="oninput" placeholder="Tipo, serviço ou correlação" />
+            <label for="event-filter">@Localizer["FilterEvents"]</label>
+            <input id="event-filter" @bind="Filter" @bind:event="oninput" placeholder="@Localizer["EventFilterPlaceholder"]" />
         </div>
-        <span>@FilteredEvents.Count() registros visíveis</span>
+        <span>@Localizer["VisibleRecords", FilteredEvents.Count()]</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Error))
@@ -35,15 +36,15 @@
                     <span class="event-dot"></span>
                     <div class="audit-event-heading">
                         <div><strong>@EventLabel(item.EventType)</strong><span>@item.EventType</span></div>
-                        <time datetime="@item.Timestamp.ToString("O")">@item.Timestamp.LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss")</time>
+                        <time datetime="@item.Timestamp.ToString("O")">@item.Timestamp.LocalDateTime.ToString("G", Culture)</time>
                     </div>
                     <dl>
-                        <div><dt>Origem</dt><dd>@item.Source</dd></div>
+                        <div><dt>@Localizer["Source"]</dt><dd>@item.Source</dd></div>
                         <div><dt>Tenant</dt><dd>@item.TenantId</dd></div>
-                        <div><dt>Correlação</dt><dd><code>@item.CorrelationId</code></dd></div>
+                        <div><dt>@Localizer["Correlation"]</dt><dd><code>@item.CorrelationId</code></dd></div>
                     </dl>
                     <details>
-                        <summary>Inspecionar payload protegido</summary>
+                        <summary>@Localizer["InspectProtectedPayload"]</summary>
                         <pre>@PrettyJson(item.PayloadJson)</pre>
                     </details>
                 </article>
@@ -53,6 +54,7 @@
 </section>
 
 @code {
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private IReadOnlyList<AuditEventDto> Events { get; set; } = [];
     private string Filter { get; set; } = string.Empty;
     private string Error { get; set; } = string.Empty;
@@ -73,7 +75,7 @@
         }
         catch
         {
-            Error = "Não foi possível consultar a trilha de auditoria.";
+            Error = Localizer["AuditQueryError"];
         }
         finally
         {
@@ -94,18 +96,18 @@
         }
     }
 
-    private static string EventLabel(string eventType) => eventType switch
+    private string EventLabel(string eventType) => eventType switch
     {
-        "DonorRegistered" => "Doador cadastrado",
-        "CampaignCreated" => "Campanha criada",
-        "CampaignUpdated" => "Campanha atualizada",
-        "CampaignCancelled" => "Campanha encerrada",
-        "DonationIntentCreated" => "Doação iniciada",
-        "PaymentAwaitingConfirmation" => "Pagamento criado",
-        "PaymentConfirmed" => "Pagamento confirmado",
-        "DonationProcessed" => "Doação processada",
-        "CampaignGoalReached" => "Meta alcançada",
-        "KnowledgeQuestionAnswered" => "Pergunta respondida",
+        "DonorRegistered" => Localizer["Event.DonorRegistered"],
+        "CampaignCreated" => Localizer["Event.CampaignCreated"],
+        "CampaignUpdated" => Localizer["Event.CampaignUpdated"],
+        "CampaignCancelled" => Localizer["Event.CampaignCancelled"],
+        "DonationIntentCreated" => Localizer["Event.DonationIntentCreated"],
+        "PaymentAwaitingConfirmation" => Localizer["Event.PaymentAwaitingConfirmation"],
+        "PaymentConfirmed" => Localizer["Event.PaymentConfirmed"],
+        "DonationProcessed" => Localizer["Event.DonationProcessed"],
+        "CampaignGoalReached" => Localizer["Event.CampaignGoalReached"],
+        "KnowledgeQuestionAnswered" => Localizer["Event.KnowledgeQuestionAnswered"],
         _ => eventType
     };
 }

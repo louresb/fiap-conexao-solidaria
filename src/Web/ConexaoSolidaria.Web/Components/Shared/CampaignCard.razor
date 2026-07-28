@@ -10,7 +10,7 @@
         <div>
             <p class="card-kicker">@Localizer["DaysToContribute", DaysRemaining]</p>
             <h3><a href="/campanhas/@Campaign.Id?tenant=@Campaign.TenantId">@Campaign.Title</a></h3>
-            <p>@Campaign.Description</p>
+            <p>@Description</p>
         </div>
         <div class="campaign-progress" aria-label="@Localizer["ProgressAria", Campaign.ProgressPercent.ToString("0", Culture)]">
             <div class="progress-track"><span style="width:@Math.Min(Campaign.ProgressPercent, 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span></div>
@@ -27,5 +27,8 @@
 
     private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private CampaignPresentation Presentation => CampaignPresentations.For(Campaign);
+    private string Description => Presentation.DescriptionResourceKey is null
+        ? Campaign.Description
+        : Localizer[Presentation.DescriptionResourceKey];
     private int DaysRemaining => Math.Max(0, Campaign.EndDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber);
 }

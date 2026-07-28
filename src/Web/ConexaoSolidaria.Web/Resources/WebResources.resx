@@ -66,4 +66,333 @@
   <data name="Category.Segurança alimentar" xml:space="preserve"><value>Segurança alimentar</value></data>
   <data name="Category.Educação ambiental" xml:space="preserve"><value>Educação ambiental</value></data>
   <data name="Category.Formação tecnológica" xml:space="preserve"><value>Formação tecnológica</value></data>
+  <data name="FooterTagline" xml:space="preserve"><value>Transparência que aproxima</value></data>
+  <data name="FooterDescription" xml:space="preserve"><value>Campanhas, doações e impacto acompanhados de ponta a ponta.</value></data>
+  <data name="FooterNavigation" xml:space="preserve"><value>Rodapé</value></data>
+  <data name="AskQuestions" xml:space="preserve"><value>Tire suas dúvidas</value></data>
+  <data name="AccessPlatform" xml:space="preserve"><value>Acessar plataforma</value></data>
+  <data name="ConnectionInterrupted" xml:space="preserve"><value>A conexão foi interrompida.</value></data>
+  <data name="Reload" xml:space="preserve"><value>Recarregar</value></data>
+  <data name="Close" xml:space="preserve"><value>Fechar</value></data>
+  <data name="AccessPageTitle" xml:space="preserve"><value>Acessar | Conexão Solidária</value></data>
+  <data name="AccessImageAlt" xml:space="preserve"><value>Espaço comunitário de leitura e aprendizagem</value></data>
+  <data name="AccessEyebrow" xml:space="preserve"><value>Uma rede, diferentes formas de participar</value></data>
+  <data name="AccessIntroduction" xml:space="preserve"><value>Entre para contribuir com campanhas ou acompanhar a operação da sua organização.</value></data>
+  <data name="SecureAccess" xml:space="preserve"><value>Acesso seguro</value></data>
+  <data name="ChooseYourSpace" xml:space="preserve"><value>Escolha seu espaço</value></data>
+  <data name="DonorArea" xml:space="preserve"><value>Área do doador</value></data>
+  <data name="DonorAreaDescription" xml:space="preserve"><value>Contribua e acompanhe suas participações.</value></data>
+  <data name="CreateDonorAccount" xml:space="preserve"><value>Criar uma conta de doador</value></data>
+  <data name="OrganizationManagement" xml:space="preserve"><value>Gestão da organização</value></data>
+  <data name="OrganizationManagementDescription" xml:space="preserve"><value>Gerencie campanhas, indicadores e auditoria.</value></data>
+  <data name="PlatformAdministration" xml:space="preserve"><value>Administração da plataforma</value></data>
+  <data name="PlatformAdministrationDescription" xml:space="preserve"><value>Acompanhe tenants e serviços críticos.</value></data>
+  <data name="AuthenticationProtection" xml:space="preserve"><value>Autenticação protegida por OpenID Connect e controle de acesso por perfil.</value></data>
+  <data name="EvaluationAccounts" xml:space="preserve"><value>Contas para avaliação</value></data>
+  <data name="EsperancaManager" xml:space="preserve"><value>Gestor Esperança</value></data>
+  <data name="EsperancaDonor" xml:space="preserve"><value>Doador Esperança</value></data>
+  <data name="PlatformAdmin" xml:space="preserve"><value>Admin da plataforma</value></data>
+  <data name="NeedAccessHelp" xml:space="preserve"><value>Precisa de ajuda para acessar?</value></data>
+  <data name="AccessHelpDescription" xml:space="preserve"><value>Use uma conta vinculada à organização desejada. O perfil e o tenant são aplicados automaticamente após a autenticação.</value></data>
+  <data name="Campaign" xml:space="preserve"><value>Campanha</value></data>
+  <data name="CampaignPageTitle" xml:space="preserve"><value>{0} | Conexão Solidária</value></data>
+  <data name="LoadingCampaign" xml:space="preserve"><value>Carregando campanha...</value></data>
+  <data name="CampaignNotFound" xml:space="preserve"><value>Campanha não encontrada</value></data>
+  <data name="CampaignNotFoundDescription" xml:space="preserve"><value>Ela pode ter sido encerrada ou não pertence a esta organização.</value></data>
+  <data name="BackToCampaigns" xml:space="preserve"><value>Voltar às campanhas</value></data>
+  <data name="AllCampaigns" xml:space="preserve"><value>Todas as campanhas</value></data>
+  <data name="RaisedOf" xml:space="preserve"><value>arrecadados de {0}</value></data>
+  <data name="Deadline" xml:space="preserve"><value>Prazo</value></data>
+  <data name="Progress" xml:space="preserve"><value>Progresso</value></data>
+  <data name="AccountabilityShort" xml:space="preserve"><value>Prestação</value></data>
+  <data name="ContinuousUpdates" xml:space="preserve"><value>Atualização contínua</value></data>
+  <data name="ExpectedImpact" xml:space="preserve"><value>Impacto esperado</value></data>
+  <data name="VisibleDestinationTitle" xml:space="preserve"><value>Uma contribuição com destino visível.</value></data>
+  <data name="VisibleDestinationDescription" xml:space="preserve"><value>A execução financeira e os marcos de impacto permanecem disponíveis no painel público de transparência.</value></data>
+  <data name="YouChoose" xml:space="preserve"><value>Você escolhe</value></data>
+  <data name="YouChooseDescription" xml:space="preserve"><value>Defina o valor e a forma de pagamento.</value></data>
+  <data name="WeConfirm" xml:space="preserve"><value>Nós confirmamos</value></data>
+  <data name="WeConfirmDescription" xml:space="preserve"><value>O provedor confirma e o processamento ocorre por eventos.</value></data>
+  <data name="EveryoneTracks" xml:space="preserve"><value>Todos acompanham</value></data>
+  <data name="EveryoneTracksDescription" xml:space="preserve"><value>O total e a auditoria registram a evolução.</value></data>
+  <data name="Contribute" xml:space="preserve"><value>Contribuir</value></data>
+  <data name="JoinCampaign" xml:space="preserve"><value>Faça parte desta campanha</value></data>
+  <data name="SignInToDonateDescription" xml:space="preserve"><value>Entre como doador para continuar com segurança.</value></data>
+  <data name="SignInToDonate" xml:space="preserve"><value>Entrar para doar</value></data>
+  <data name="NoAccountYet" xml:space="preserve"><value>Ainda não tenho cadastro</value></data>
+  <data name="ManagerCannotDonate" xml:space="preserve"><value>O perfil de gestor acompanha resultados, mas não inicia doações.</value></data>
+  <data name="DifferentOrganization" xml:space="preserve"><value>Sua conta pertence a outra organização. Selecione uma campanha de {0}.</value></data>
+  <data name="ContributionAmount" xml:space="preserve"><value>Valor da contribuição</value></data>
+  <data name="OtherAmount" xml:space="preserve"><value>Outro valor</value></data>
+  <data name="PaymentMethod" xml:space="preserve"><value>Forma de pagamento</value></data>
+  <data name="CreditCard" xml:space="preserve"><value>Cartão</value></data>
+  <data name="BankSlip" xml:space="preserve"><value>Boleto</value></data>
+  <data name="PreparingPayment" xml:space="preserve"><value>Preparando pagamento...</value></data>
+  <data name="ContinueContribution" xml:space="preserve"><value>Continuar contribuição</value></data>
+  <data name="Reference" xml:space="preserve"><value>Referência</value></data>
+  <data name="PixCopyPasteCode" xml:space="preserve"><value>Código Pix copia e cola</value></data>
+  <data name="PaymentEnvironment" xml:space="preserve"><value>Ambiente de pagamento</value></data>
+  <data name="PaymentSandboxDescription" xml:space="preserve"><value>Este provedor opera em modo sandbox. A confirmação abaixo reproduz o retorno assinado do gateway.</value></data>
+  <data name="ConfirmInSandbox" xml:space="preserve"><value>Confirmar no sandbox</value></data>
+  <data name="ContributionConfirmed" xml:space="preserve"><value>Contribuição confirmada.</value></data>
+  <data name="ImpactProcessing" xml:space="preserve"><value>O impacto já está em processamento.</value></data>
+  <data name="ContributionPrivacy" xml:space="preserve"><value>Seus dados são protegidos e usados somente para processar a contribuição.</value></data>
+  <data name="PaymentConfirmedStatus" xml:space="preserve"><value>Pagamento confirmado</value></data>
+  <data name="AwaitingConfirmation" xml:space="preserve"><value>Aguardando confirmação</value></data>
+  <data name="CampaignQueryError" xml:space="preserve"><value>Não foi possível consultar esta campanha.</value></data>
+  <data name="DonationAcceptedPaymentPending" xml:space="preserve"><value>A doação foi recebida, mas o pagamento ainda está sendo preparado.</value></data>
+  <data name="ContributionStartError" xml:space="preserve"><value>Não foi possível iniciar a contribuição. Revise os dados e tente novamente.</value></data>
+  <data name="ConfirmationError" xml:space="preserve"><value>A confirmação não foi concluída.</value></data>
+  <data name="CampaignDescription.MesaCheiaNasFerias" xml:space="preserve"><value>Kits alimentares e acompanhamento nutricional para famílias durante o recesso escolar.</value></data>
+  <data name="CampaignDescription.CozinhaParceira" xml:space="preserve"><value>Fortalecimento de cozinhas comunitárias com insumos, equipamentos e formação.</value></data>
+  <data name="CampaignDescription.ConexaoParaAprender" xml:space="preserve"><value>Conectividade e equipamentos para estudantes acompanhados pela organização.</value></data>
+  <data name="CampaignDescription.MangueVivo" xml:space="preserve"><value>Recuperação participativa do manguezal com monitoramento ambiental aberto.</value></data>
+  <data name="CampaignDescription.PraiaLimpaBairroVivo" xml:space="preserve"><value>Mutirões de limpeza, educação ambiental e destinação responsável de resíduos.</value></data>
+  <data name="CampaignDescription.EscolaAzul" xml:space="preserve"><value>Educação oceânica para estudantes e formação de multiplicadores ambientais.</value></data>
+  <data name="CampaignDescription.LaboratorioAberto" xml:space="preserve"><value>Laboratórios comunitários com acesso a computadores, internet e mentoria.</value></data>
+  <data name="CampaignDescription.BolsaDadosParaEstudar" xml:space="preserve"><value>Pacotes de dados para garantir acesso contínuo a atividades educacionais.</value></data>
+  <data name="CampaignDescription.PrimeiroCodigo" xml:space="preserve"><value>Formação introdutória em programação com mentoria e projetos práticos.</value></data>
+  <data name="DonorRegistrationPageTitle" xml:space="preserve"><value>Cadastro de doador | Conexão Solidária</value></data>
+  <data name="CreateDonorAccountTitle" xml:space="preserve"><value>Crie sua conta de doador.</value></data>
+  <data name="CreateDonorAccountDescription" xml:space="preserve"><value>Uma conta permite contribuir com segurança e acompanhar cada etapa do processamento.</value></data>
+  <data name="ProtectedIdentity" xml:space="preserve"><value>Identidade protegida</value></data>
+  <data name="OrganizationHistory" xml:space="preserve"><value>Histórico por organização</value></data>
+  <data name="TransparentConsent" xml:space="preserve"><value>Consentimento transparente</value></data>
+  <data name="RegistrationCompleted" xml:space="preserve"><value>Cadastro concluído</value></data>
+  <data name="AccountLinked" xml:space="preserve"><value>Sua conta foi vinculada à {0}. Entre para escolher uma campanha.</value></data>
+  <data name="SignInNow" xml:space="preserve"><value>Entrar agora</value></data>
+  <data name="PersonalData" xml:space="preserve"><value>Dados pessoais</value></data>
+  <data name="StartHere" xml:space="preserve"><value>Comece por aqui</value></data>
+  <data name="Organization" xml:space="preserve"><value>Organização</value></data>
+  <data name="FullName" xml:space="preserve"><value>Nome completo</value></data>
+  <data name="Password" xml:space="preserve"><value>Senha</value></data>
+  <data name="PasswordRequirements" xml:space="preserve"><value>Use ao menos 10 caracteres, com maiúscula, minúscula e número.</value></data>
+  <data name="DataConsent" xml:space="preserve"><value>Li e concordo com o uso dos dados para cadastro, autenticação e processamento das doações.</value></data>
+  <data name="CreatingAccount" xml:space="preserve"><value>Criando conta...</value></data>
+  <data name="CreateAccount" xml:space="preserve"><value>Criar conta</value></data>
+  <data name="AlreadyHaveAccount" xml:space="preserve"><value>Já tem uma conta?</value></data>
+  <data name="ConsentRequired" xml:space="preserve"><value>Confirme o consentimento para continuar.</value></data>
+  <data name="EmailAlreadyRegistered" xml:space="preserve"><value>Este e-mail já possui cadastro nesta organização.</value></data>
+  <data name="RegistrationError" xml:space="preserve"><value>Não foi possível concluir o cadastro. Revise os dados informados.</value></data>
+  <data name="MyDonationsPageTitle" xml:space="preserve"><value>Minhas doações | Conexão Solidária</value></data>
+  <data name="YourImpactTitle" xml:space="preserve"><value>Seu impacto, contribuição por contribuição.</value></data>
+  <data name="PrivateDonationHistoryDescription" xml:space="preserve"><value>{0} · um histórico privado das doações vinculadas à sua conta.</value></data>
+  <data name="LoadingContributions" xml:space="preserve"><value>Carregando suas contribuições...</value></data>
+  <data name="DonationSummary" xml:space="preserve"><value>Resumo das suas doações</value></data>
+  <data name="ConfirmedTotal" xml:space="preserve"><value>Total confirmado</value></data>
+  <data name="ImpactAlreadyProcessed" xml:space="preserve"><value>impacto já processado</value></data>
+  <data name="SupportedCampaigns" xml:space="preserve"><value>Campanhas apoiadas</value></data>
+  <data name="DifferentInitiatives" xml:space="preserve"><value>iniciativas diferentes</value></data>
+  <data name="Contributions" xml:space="preserve"><value>Contribuições</value></data>
+  <data name="ConfirmedPayments" xml:space="preserve"><value>pagamentos confirmados</value></data>
+  <data name="Processing" xml:space="preserve"><value>Em processamento</value></data>
+  <data name="PrivateHistory" xml:space="preserve"><value>Histórico privado</value></data>
+  <data name="MyContributions" xml:space="preserve"><value>Minhas contribuições</value></data>
+  <data name="SupportAnotherCampaign" xml:space="preserve"><value>Apoiar outra campanha</value></data>
+  <data name="FirstImpactTitle" xml:space="preserve"><value>Seu primeiro impacto começa aqui.</value></data>
+  <data name="FirstImpactDescription" xml:space="preserve"><value>Escolha uma campanha ativa e acompanhe cada etapa da contribuição nesta página.</value></data>
+  <data name="PrivacyByDefault" xml:space="preserve"><value>Privacidade por padrão</value></data>
+  <data name="DonorPrivacyDescription" xml:space="preserve"><value>Esta visão usa a identidade do seu acesso e o tenant da organização. Nenhum identificador de outro doador pode ser consultado por esta rota.</value></data>
+  <data name="DonationHistoryError" xml:space="preserve"><value>Não foi possível carregar seu histórico de doações agora.</value></data>
+  <data name="StatusConfirmed" xml:space="preserve"><value>Confirmada</value></data>
+  <data name="StatusNotCompleted" xml:space="preserve"><value>Não concluída</value></data>
+  <data name="StatusProcessing" xml:space="preserve"><value>Processando</value></data>
+  <data name="TransparencyPageTitle" xml:space="preserve"><value>Transparência | Conexão Solidária</value></data>
+  <data name="TransparencyTitle" xml:space="preserve"><value>Transparência que pode ser acompanhada.</value></data>
+  <data name="TransparencyDescription" xml:space="preserve"><value>Metas, arrecadação e execução reunidas para apoiar decisões conscientes.</value></data>
+  <data name="TotalMobilized" xml:space="preserve"><value>Total mobilizado</value></data>
+  <data name="InActiveCampaigns" xml:space="preserve"><value>nas campanhas ativas</value></data>
+  <data name="PublishedGoals" xml:space="preserve"><value>Metas publicadas</value></data>
+  <data name="WithDefinedDeadline" xml:space="preserve"><value>com prazo definido</value></data>
+  <data name="AverageProgress" xml:space="preserve"><value>Progresso médio</value></data>
+  <data name="OpenForContributions" xml:space="preserve"><value>abertas para contribuição</value></data>
+  <data name="PublicHistory" xml:space="preserve"><value>Histórico público</value></data>
+  <data name="ConfirmedContributions" xml:space="preserve"><value>Contribuições confirmadas</value></data>
+  <data name="ConfirmedContributionsDescription" xml:space="preserve"><value>Valores materializados a partir dos eventos processados, sem identificação pessoal do doador.</value></data>
+  <data name="FutureContributionsNotice" xml:space="preserve"><value>As próximas contribuições confirmadas aparecerão aqui.</value></data>
+  <data name="Confirmation" xml:space="preserve"><value>Confirmação</value></data>
+  <data name="Identification" xml:space="preserve"><value>Identificação</value></data>
+  <data name="Amount" xml:space="preserve"><value>Valor</value></data>
+  <data name="AnonymousDonation" xml:space="preserve"><value>Doação anônima</value></data>
+  <data name="FinancialProgress" xml:space="preserve"><value>Evolução financeira</value></data>
+  <data name="FundsByCampaign" xml:space="preserve"><value>Arrecadação por campanha</value></data>
+  <data name="RaisedTitle" xml:space="preserve"><value>Arrecadado</value></data>
+  <data name="Goal" xml:space="preserve"><value>Meta</value></data>
+  <data name="HowWeProtectData" xml:space="preserve"><value>Como cuidamos dos dados</value></data>
+  <data name="VerifiableTrail" xml:space="preserve"><value>Uma trilha verificável.</value></data>
+  <data name="Record" xml:space="preserve"><value>Registro</value></data>
+  <data name="RecordDescription" xml:space="preserve"><value>Cada intenção recebe correlação própria.</value></data>
+  <data name="ConfirmationDescription" xml:space="preserve"><value>O total muda somente após o provedor confirmar.</value></data>
+  <data name="AuditDescription" xml:space="preserve"><value>Os eventos ficam preservados em histórico append-only.</value></data>
+  <data name="DataUpdates" xml:space="preserve"><value>Atualização dos dados</value></data>
+  <data name="CacheStatusDescription" xml:space="preserve"><value>Esta consulta foi atendida com status de cache {0}. O cache reduz latência sem substituir a fonte transacional.</value></data>
+  <data name="TransparencyLoadError" xml:space="preserve"><value>Não foi possível carregar o painel de transparência.</value></data>
+  <data name="AssistantPageTitle" xml:space="preserve"><value>Assistente | Conexão Solidária</value></data>
+  <data name="SourcedInformation" xml:space="preserve"><value>Informação com fonte</value></data>
+  <data name="TalkToOrganization" xml:space="preserve"><value>Converse com a {0}.</value></data>
+  <data name="AssistantIntroduction" xml:space="preserve"><value>Consulte políticas, prestação de contas e atuação institucional. As respostas usam somente documentos verificados da organização.</value></data>
+  <data name="HowCanWeHelp" xml:space="preserve"><value>Como podemos ajudar?</value></data>
+  <data name="AskAboutOrganization" xml:space="preserve"><value>Escreva uma pergunta sobre a organização ou uma campanha.</value></data>
+  <data name="GroundedAiAnswer" xml:space="preserve"><value>Síntese fundamentada por IA</value></data>
+  <data name="ExtractiveAnswer" xml:space="preserve"><value>Resposta extrativa</value></data>
+  <data name="SourcesConsulted" xml:space="preserve"><value>Fontes consultadas</value></data>
+  <data name="Correlation" xml:space="preserve"><value>Correlação</value></data>
+  <data name="YourQuestion" xml:space="preserve"><value>Sua pergunta</value></data>
+  <data name="QuestionPlaceholder" xml:space="preserve"><value>Como a organização presta contas das doações?</value></data>
+  <data name="ConsultingSources" xml:space="preserve"><value>Consultando fontes...</value></data>
+  <data name="SendQuestion" xml:space="preserve"><value>Enviar pergunta</value></data>
+  <data name="Suggestion.Accountability" xml:space="preserve"><value>Como a ONG presta contas?</value></data>
+  <data name="Suggestion.PublicData" xml:space="preserve"><value>Quais dados são públicos?</value></data>
+  <data name="Suggestion.DonationConfirmation" xml:space="preserve"><value>Como uma doação é confirmada?</value></data>
+  <data name="QuestionTooShort" xml:space="preserve"><value>Escreva uma pergunta um pouco mais completa.</value></data>
+  <data name="AssistantUnavailable" xml:space="preserve"><value>O assistente está temporariamente indisponível.</value></data>
+  <data name="CampaignManagementPageTitle" xml:space="preserve"><value>Campanhas | Gestão</value></data>
+  <data name="CampaignManagement" xml:space="preserve"><value>Gestão de campanhas</value></data>
+  <data name="CampaignManagementDescription" xml:space="preserve"><value>Crie, atualize e encerre iniciativas preservando o histórico.</value></data>
+  <data name="NewCampaign" xml:space="preserve"><value>Nova campanha</value></data>
+  <data name="FilterCampaigns" xml:space="preserve"><value>Filtrar campanhas</value></data>
+  <data name="Period" xml:space="preserve"><value>Período</value></data>
+  <data name="Fundraising" xml:space="preserve"><value>Arrecadação</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Actions" xml:space="preserve"><value>Ações</value></data>
+  <data name="Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Confirmar</value></data>
+  <data name="Back" xml:space="preserve"><value>Voltar</value></data>
+  <data name="CloseCampaign" xml:space="preserve"><value>Encerrar</value></data>
+  <data name="FilterAll" xml:space="preserve"><value>Todas</value></data>
+  <data name="FilterPublished" xml:space="preserve"><value>Publicadas</value></data>
+  <data name="FilterInPreparation" xml:space="preserve"><value>Em preparação</value></data>
+  <data name="FilterClosed" xml:space="preserve"><value>Encerradas</value></data>
+  <data name="ManagedCampaignsLoadError" xml:space="preserve"><value>Não foi possível carregar as campanhas.</value></data>
+  <data name="CampaignCloseError" xml:space="preserve"><value>A campanha não pôde ser encerrada.</value></data>
+  <data name="StatusDraft" xml:space="preserve"><value>Rascunho</value></data>
+  <data name="StatusInReview" xml:space="preserve"><value>Em revisão</value></data>
+  <data name="StatusApproved" xml:space="preserve"><value>Aprovada</value></data>
+  <data name="StatusPublished" xml:space="preserve"><value>Publicada</value></data>
+  <data name="StatusCompleted" xml:space="preserve"><value>Concluída</value></data>
+  <data name="StatusCancelled" xml:space="preserve"><value>Cancelada</value></data>
+  <data name="EditCampaignPageTitle" xml:space="preserve"><value>Editar campanha | Gestão</value></data>
+  <data name="NewCampaignPageTitle" xml:space="preserve"><value>Nova campanha | Gestão</value></data>
+  <data name="UpdateInitiative" xml:space="preserve"><value>Atualizar iniciativa</value></data>
+  <data name="NewInitiative" xml:space="preserve"><value>Nova iniciativa</value></data>
+  <data name="EditCampaign" xml:space="preserve"><value>Editar campanha</value></data>
+  <data name="CreateCampaign" xml:space="preserve"><value>Criar campanha</value></data>
+  <data name="CampaignEditorDescription" xml:space="preserve"><value>As informações publicadas ficarão disponíveis para doadores e serão registradas na auditoria.</value></data>
+  <data name="PublicContent" xml:space="preserve"><value>Conteúdo público</value></data>
+  <data name="CampaignInformation" xml:space="preserve"><value>Informações da campanha</value></data>
+  <data name="Title" xml:space="preserve"><value>Título</value></data>
+  <data name="Description" xml:space="preserve"><value>Descrição</value></data>
+  <data name="CampaignDescriptionHelp" xml:space="preserve"><value>Explique o destino dos recursos e o impacto esperado.</value></data>
+  <data name="Planning" xml:space="preserve"><value>Planejamento</value></data>
+  <data name="GoalAndPeriod" xml:space="preserve"><value>Meta e período</value></data>
+  <data name="FinancialGoal" xml:space="preserve"><value>Meta financeira</value></data>
+  <data name="StatusWorkflowHelp" xml:space="preserve"><value>O fluxo preserva revisão e aprovação antes da publicação.</value></data>
+  <data name="StartDate" xml:space="preserve"><value>Data de início</value></data>
+  <data name="EndDate" xml:space="preserve"><value>Data de encerramento</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Saving" xml:space="preserve"><value>Salvando...</value></data>
+  <data name="SaveCampaign" xml:space="preserve"><value>Salvar campanha</value></data>
+  <data name="CampaignPeriodGoalError" xml:space="preserve"><value>Revise o período e a meta financeira da campanha.</value></data>
+  <data name="CampaignSaveError" xml:space="preserve"><value>Não foi possível salvar a campanha.</value></data>
+  <data name="ManagementPageTitle" xml:space="preserve"><value>Gestão | Conexão Solidária</value></data>
+  <data name="OrganizationDashboard" xml:space="preserve"><value>Painel da organização</value></data>
+  <data name="Overview" xml:space="preserve"><value>Visão geral</value></data>
+  <data name="UpdatedOperationIndicators" xml:space="preserve"><value>{0} · indicadores atualizados da operação.</value></data>
+  <data name="ActiveFundraising" xml:space="preserve"><value>Arrecadação ativa</value></data>
+  <data name="CampaignCount" xml:space="preserve"><value>{0} campanhas</value></data>
+  <data name="ConsolidatedGoal" xml:space="preserve"><value>Meta consolidada</value></data>
+  <data name="PercentReached" xml:space="preserve"><value>{0}% alcançados</value></data>
+  <data name="RecentEvents" xml:space="preserve"><value>Eventos recentes</value></data>
+  <data name="LatestRecords" xml:space="preserve"><value>últimos registros</value></data>
+  <data name="OperationalHealth" xml:space="preserve"><value>Saúde operacional</value></data>
+  <data name="Operating" xml:space="preserve"><value>Operando</value></data>
+  <data name="AvailableFlows" xml:space="preserve"><value>fluxos disponíveis</value></data>
+  <data name="Portfolio" xml:space="preserve"><value>Portfólio</value></data>
+  <data name="ManageAll" xml:space="preserve"><value>Gerenciar todas</value></data>
+  <data name="Traceability" xml:space="preserve"><value>Rastreabilidade</value></data>
+  <data name="RecentActivity" xml:space="preserve"><value>Atividade recente</value></data>
+  <data name="OpenAudit" xml:space="preserve"><value>Abrir auditoria</value></data>
+  <data name="FutureEventsNotice" xml:space="preserve"><value>Os próximos eventos processados aparecerão aqui.</value></data>
+  <data name="ManagementIndicatorsError" xml:space="preserve"><value>Não foi possível carregar todos os indicadores da gestão.</value></data>
+  <data name="AuditPageTitle" xml:space="preserve"><value>Auditoria | Gestão</value></data>
+  <data name="Governance" xml:space="preserve"><value>Governança</value></data>
+  <data name="AuditTrail" xml:space="preserve"><value>Trilha de auditoria</value></data>
+  <data name="AuditTrailDescription" xml:space="preserve"><value>Eventos append-only segregados por organização e correlação.</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Atualizar</value></data>
+  <data name="FilterEvents" xml:space="preserve"><value>Filtrar eventos</value></data>
+  <data name="EventFilterPlaceholder" xml:space="preserve"><value>Tipo, serviço ou correlação</value></data>
+  <data name="VisibleRecords" xml:space="preserve"><value>{0} registros visíveis</value></data>
+  <data name="Source" xml:space="preserve"><value>Origem</value></data>
+  <data name="InspectProtectedPayload" xml:space="preserve"><value>Inspecionar payload protegido</value></data>
+  <data name="AuditQueryError" xml:space="preserve"><value>Não foi possível consultar a trilha de auditoria.</value></data>
+  <data name="Event.DonorRegistered" xml:space="preserve"><value>Doador cadastrado</value></data>
+  <data name="Event.CampaignCreated" xml:space="preserve"><value>Campanha criada</value></data>
+  <data name="Event.CampaignUpdated" xml:space="preserve"><value>Campanha atualizada</value></data>
+  <data name="Event.CampaignCancelled" xml:space="preserve"><value>Campanha encerrada</value></data>
+  <data name="Event.DonationIntentCreated" xml:space="preserve"><value>Doação iniciada</value></data>
+  <data name="Event.PaymentAwaitingConfirmation" xml:space="preserve"><value>Pagamento criado</value></data>
+  <data name="Event.PaymentConfirmed" xml:space="preserve"><value>Pagamento confirmado</value></data>
+  <data name="Event.DonationProcessed" xml:space="preserve"><value>Doação processada</value></data>
+  <data name="Event.CampaignGoalReached" xml:space="preserve"><value>Meta alcançada</value></data>
+  <data name="Event.KnowledgeQuestionAnswered" xml:space="preserve"><value>Pergunta respondida</value></data>
+  <data name="Event.CampaignPublished" xml:space="preserve"><value>Campanha publicada</value></data>
+  <data name="PlatformAdministrationPageTitle" xml:space="preserve"><value>Administração | Conexão Solidária</value></data>
+  <data name="SaasAdministration" xml:space="preserve"><value>Administração SaaS</value></data>
+  <data name="PlatformOperationalView" xml:space="preserve"><value>Visão operacional da plataforma.</value></data>
+  <data name="PlatformOperationalDescription" xml:space="preserve"><value>Saúde dos serviços e alcance dos tenants em uma leitura única, sem expor dados pessoais.</value></data>
+  <data name="ConsolidatingPlatformState" xml:space="preserve"><value>Consolidando o estado da plataforma...</value></data>
+  <data name="ActiveTenants" xml:space="preserve"><value>Tenants ativos</value></data>
+  <data name="SharedCatalog" xml:space="preserve"><value>catálogo compartilhado</value></data>
+  <data name="PublishedCampaigns" xml:space="preserve"><value>Campanhas publicadas</value></data>
+  <data name="IsolatedByTenant" xml:space="preserve"><value>isoladas por tenant</value></data>
+  <data name="AggregatedView" xml:space="preserve"><value>visão agregada</value></data>
+  <data name="HealthyServices" xml:space="preserve"><value>Serviços saudáveis</value></data>
+  <data name="ServedOrganizations" xml:space="preserve"><value>Organizações atendidas</value></data>
+  <data name="Mobilized" xml:space="preserve"><value>Mobilizado</value></data>
+  <data name="Operation" xml:space="preserve"><value>Operação</value></data>
+  <data name="CriticalDependencies" xml:space="preserve"><value>Dependências críticas</value></data>
+  <data name="Available" xml:space="preserve"><value>Disponível</value></data>
+  <data name="Unavailable" xml:space="preserve"><value>Indisponível</value></data>
+  <data name="PlatformStateError" xml:space="preserve"><value>Não foi possível consolidar o estado operacional da plataforma.</value></data>
+  <data name="Service.Identity" xml:space="preserve"><value>Identidade</value></data>
+  <data name="Service.Campaigns" xml:space="preserve"><value>Campanhas</value></data>
+  <data name="Service.Donations" xml:space="preserve"><value>Doações</value></data>
+  <data name="Service.Payments" xml:space="preserve"><value>Pagamentos</value></data>
+  <data name="Service.Audit" xml:space="preserve"><value>Auditoria</value></data>
+  <data name="Service.Knowledge" xml:space="preserve"><value>Conhecimento</value></data>
+  <data name="HealthStatus.Healthy" xml:space="preserve"><value>Saudável</value></data>
+  <data name="HealthStatus.Degraded" xml:space="preserve"><value>Degradado</value></data>
+  <data name="HealthStatus.Unhealthy" xml:space="preserve"><value>Indisponível</value></data>
+  <data name="HealthStatus.Unknown" xml:space="preserve"><value>Desconhecido</value></data>
+  <data name="ErrorPageTitle" xml:space="preserve"><value>Erro | Conexão Solidária</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Algo não saiu como esperado.</value></data>
+  <data name="ErrorDescription" xml:space="preserve"><value>Não foi possível processar sua solicitação.</value></data>
+  <data name="RequestId" xml:space="preserve"><value>ID da solicitação</value></data>
+  <data name="ErrorSupportDescription" xml:space="preserve"><value>Tente novamente. Se o problema persistir, informe o identificador da solicitação ao suporte.</value></data>
+  <data name="NotFoundPageTitle" xml:space="preserve"><value>Conteúdo não encontrado | Conexão Solidária</value></data>
+  <data name="NotFoundTitle" xml:space="preserve"><value>Conteúdo não encontrado</value></data>
+  <data name="NotFoundDescription" xml:space="preserve"><value>O conteúdo que você procura não existe ou não está mais disponível.</value></data>
+  <data name="BackHome" xml:space="preserve"><value>Voltar ao início</value></data>
+  <data name="RejoiningServer" xml:space="preserve"><value>Restabelecendo a conexão...</value></data>
+  <data name="RejoinRetryPrefix" xml:space="preserve"><value>Não foi possível reconectar. Nova tentativa em</value></data>
+  <data name="RejoinRetrySuffix" xml:space="preserve"><value>segundos.</value></data>
+  <data name="RejoinFailed" xml:space="preserve"><value>Não foi possível reconectar. Tente novamente ou recarregue a página.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Tentar novamente</value></data>
+  <data name="SessionPaused" xml:space="preserve"><value>A sessão foi pausada pelo servidor.</value></data>
+  <data name="ResumeFailed" xml:space="preserve"><value>Não foi possível retomar a sessão. Tente novamente ou recarregue a página.</value></data>
+  <data name="Resume" xml:space="preserve"><value>Retomar</value></data>
+  <data name="Validation.FullNameRequired" xml:space="preserve"><value>Informe seu nome.</value></data>
+  <data name="Validation.FullNameInvalid" xml:space="preserve"><value>Informe o nome completo.</value></data>
+  <data name="Validation.EmailRequired" xml:space="preserve"><value>Informe seu e-mail.</value></data>
+  <data name="Validation.EmailInvalid" xml:space="preserve"><value>Informe um e-mail válido.</value></data>
+  <data name="Validation.CpfRequired" xml:space="preserve"><value>Informe seu CPF.</value></data>
+  <data name="Validation.CpfInvalid" xml:space="preserve"><value>Informe um CPF válido.</value></data>
+  <data name="Validation.PasswordRequired" xml:space="preserve"><value>Crie uma senha.</value></data>
+  <data name="Validation.PasswordLength" xml:space="preserve"><value>A senha deve ter ao menos 10 caracteres.</value></data>
+  <data name="Validation.ConsentRequired" xml:space="preserve"><value>O consentimento é obrigatório.</value></data>
+  <data name="Validation.CampaignTitleRequired" xml:space="preserve"><value>Informe o título.</value></data>
+  <data name="Validation.CampaignTitleLength" xml:space="preserve"><value>Use entre 5 e 160 caracteres.</value></data>
+  <data name="Validation.CampaignDescriptionRequired" xml:space="preserve"><value>Informe a descrição.</value></data>
+  <data name="Validation.CampaignDescriptionLength" xml:space="preserve"><value>Use entre 20 e 2.000 caracteres.</value></data>
+  <data name="Validation.CampaignGoalPositive" xml:space="preserve"><value>A meta deve ser maior que zero.</value></data>
 </root>

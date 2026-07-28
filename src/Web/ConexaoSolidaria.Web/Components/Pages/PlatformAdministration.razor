@@ -1,14 +1,15 @@
 @page "/administracao"
 @attribute [Authorize(Roles = "AdminSaaS")]
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Administração | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["PlatformAdministrationPageTitle"]</PageTitle>
 
 <section class="page-heading tenant-platform">
     <div class="section-inner">
-        <p class="eyebrow">Administração SaaS</p>
-        <h1>Visão operacional da plataforma.</h1>
-        <p>Saúde dos serviços e alcance dos tenants em uma leitura única, sem expor dados pessoais.</p>
+        <p class="eyebrow">@Localizer["SaasAdministration"]</p>
+        <h1>@Localizer["PlatformOperationalView"]</h1>
+        <p>@Localizer["PlatformOperationalDescription"]</p>
     </div>
 </section>
 
@@ -19,22 +20,22 @@
     }
     else if (Loading)
     {
-        <div class="notice">Consolidando o estado da plataforma...</div>
+        <div class="notice">@Localizer["ConsolidatingPlatformState"]</div>
     }
     else
     {
         <div class="management-metrics">
-            <div><span>Tenants ativos</span><strong>@Tenants.Count</strong><small>catálogo compartilhado</small></div>
-            <div><span>Campanhas publicadas</span><strong>@Tenants.Sum(t => t.CampaignCount)</strong><small>isoladas por tenant</small></div>
-            <div><span>Total mobilizado</span><strong>@Tenants.Sum(t => t.TotalRaised).ToString("C0", Culture)</strong><small>visão agregada</small></div>
-            <div><span>Serviços saudáveis</span><strong>@HealthyServices/@Health.Dependencies.Count</strong><small>@Health.Status</small></div>
+            <div><span>@Localizer["ActiveTenants"]</span><strong>@Tenants.Count</strong><small>@Localizer["SharedCatalog"]</small></div>
+            <div><span>@Localizer["PublishedCampaigns"]</span><strong>@Tenants.Sum(t => t.CampaignCount)</strong><small>@Localizer["IsolatedByTenant"]</small></div>
+            <div><span>@Localizer["TotalMobilized"]</span><strong>@Tenants.Sum(t => t.TotalRaised).ToString("C0", Culture)</strong><small>@Localizer["AggregatedView"]</small></div>
+            <div><span>@Localizer["HealthyServices"]</span><strong>@HealthyServices/@Health.Dependencies.Count</strong><small>@Localizer[$"HealthStatus.{Health.Status}"]</small></div>
         </div>
 
         <div class="platform-admin-grid">
             <section aria-labelledby="tenant-overview-title">
                 <div class="section-heading">
                     <p class="eyebrow">Multi-tenancy</p>
-                    <h2 id="tenant-overview-title">Organizações atendidas</h2>
+                    <h2 id="tenant-overview-title">@Localizer["ServedOrganizations"]</h2>
                 </div>
                 <div class="tenant-admin-list">
                     @foreach (var tenant in Tenants)
@@ -45,8 +46,8 @@
                                 <strong>@tenant.Brand.Name</strong>
                             </div>
                             <dl>
-                                <div><dt>Campanhas</dt><dd>@tenant.CampaignCount</dd></div>
-                                <div><dt>Mobilizado</dt><dd>@tenant.TotalRaised.ToString("C0", Culture)</dd></div>
+                                <div><dt>@Localizer["Campaigns"]</dt><dd>@tenant.CampaignCount</dd></div>
+                                <div><dt>@Localizer["Mobilized"]</dt><dd>@tenant.TotalRaised.ToString("C0", Culture)</dd></div>
                             </dl>
                         </article>
                     }
@@ -55,8 +56,8 @@
 
             <aside class="service-health" aria-labelledby="service-health-title">
                 <div class="section-heading">
-                    <p class="eyebrow">Operação</p>
-                    <h2 id="service-health-title">Dependências críticas</h2>
+                    <p class="eyebrow">@Localizer["Operation"]</p>
+                    <h2 id="service-health-title">@Localizer["CriticalDependencies"]</h2>
                 </div>
                 <ul>
                     @foreach (var dependency in Health.Dependencies.OrderBy(d => d.Name))
@@ -64,7 +65,7 @@
                         <li>
                             <span class="health-dot @(dependency.Healthy ? "healthy" : "unhealthy")" aria-hidden="true"></span>
                             <strong>@ServiceLabel(dependency.Name)</strong>
-                            <small>@(dependency.Healthy ? "Disponível" : "Indisponível")</small>
+                            <small>@(dependency.Healthy ? Localizer["Available"] : Localizer["Unavailable"])</small>
                         </li>
                     }
                 </ul>
@@ -74,8 +75,7 @@
 </section>
 
 @code {
-    private static readonly System.Globalization.CultureInfo Culture =
-        System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private bool Loading { get; set; } = true;
     private string Error { get; set; } = string.Empty;
     private PlatformHealthDto Health { get; set; } = new("Unknown", []);
@@ -102,7 +102,7 @@
         }
         catch
         {
-            Error = "Não foi possível consolidar o estado operacional da plataforma.";
+            Error = Localizer["PlatformStateError"];
         }
         finally
         {
@@ -110,14 +110,14 @@
         }
     }
 
-    private static string ServiceLabel(string name) => name switch
+    private string ServiceLabel(string name) => name switch
     {
-        "identity" => "Identidade",
-        "campaigns" => "Campanhas",
-        "donations" => "Doações",
-        "payments" => "Pagamentos",
-        "audit" => "Auditoria",
-        "knowledge" => "Conhecimento",
+        "identity" => Localizer["Service.Identity"],
+        "campaigns" => Localizer["Service.Campaigns"],
+        "donations" => Localizer["Service.Donations"],
+        "payments" => Localizer["Service.Payments"],
+        "audit" => Localizer["Service.Audit"],
+        "knowledge" => Localizer["Service.Knowledge"],
         _ => name
     };
 

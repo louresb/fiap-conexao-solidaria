@@ -1,5 +1,11 @@
-﻿@page "/not-found"
+@page "/not-found"
 @layout MainLayout
+@inject IStringLocalizer<WebResources> Localizer
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>@Localizer["NotFoundPageTitle"]</PageTitle>
+
+<section class="narrow-page empty-state">
+    <h1>@Localizer["NotFoundTitle"]</h1>
+    <p>@Localizer["NotFoundDescription"]</p>
+    <a class="button button-dark" href="/">@Localizer["BackHome"]</a>
+</section>

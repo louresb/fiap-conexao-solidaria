@@ -3,17 +3,18 @@
 @using ConexaoSolidaria.Contracts.Audit
 @using ConexaoSolidaria.Contracts.Campaigns
 @inject SolidariaApiClient Api
+@inject IStringLocalizer<WebResources> Localizer
 
-<PageTitle>Gestão | Conexão Solidária</PageTitle>
+<PageTitle>@Localizer["ManagementPageTitle"]</PageTitle>
 
 <section class="management-heading">
     <div class="section-inner split-heading">
         <div>
-            <p class="eyebrow">Painel da organização</p>
-            <h1>Visão geral</h1>
-            <p>@Tenant.Name · indicadores atualizados da operação.</p>
+            <p class="eyebrow">@Localizer["OrganizationDashboard"]</p>
+            <h1>@Localizer["Overview"]</h1>
+            <p>@Localizer["UpdatedOperationIndicators", Tenant.Name]</p>
         </div>
-        <a class="button button-primary" href="/gestao/campanhas/nova">Nova campanha</a>
+        <a class="button button-primary" href="/gestao/campanhas/nova">@Localizer["NewCampaign"]</a>
     </div>
 </section>
 
@@ -24,17 +25,17 @@
     }
 
     <div class="management-metrics">
-        <div><span>Arrecadação ativa</span><strong>@ActiveCampaigns.Sum(c => c.TotalRaised).ToString("C0", Culture)</strong><small>@ActiveCampaigns.Count campanhas</small></div>
-        <div><span>Meta consolidada</span><strong>@ActiveCampaigns.Sum(c => c.GoalAmount).ToString("C0", Culture)</strong><small>@Progress.ToString("0")% alcançados</small></div>
-        <div><span>Eventos recentes</span><strong>@AuditEvents.Count</strong><small>últimos registros</small></div>
-        <div><span>Saúde operacional</span><strong class="healthy-value">Operando</strong><small>fluxos disponíveis</small></div>
+        <div><span>@Localizer["ActiveFundraising"]</span><strong>@ActiveCampaigns.Sum(c => c.TotalRaised).ToString("C0", Culture)</strong><small>@Localizer["CampaignCount", ActiveCampaigns.Count]</small></div>
+        <div><span>@Localizer["ConsolidatedGoal"]</span><strong>@ActiveCampaigns.Sum(c => c.GoalAmount).ToString("C0", Culture)</strong><small>@Localizer["PercentReached", Progress.ToString("0", Culture)]</small></div>
+        <div><span>@Localizer["RecentEvents"]</span><strong>@AuditEvents.Count</strong><small>@Localizer["LatestRecords"]</small></div>
+        <div><span>@Localizer["OperationalHealth"]</span><strong class="healthy-value">@Localizer["Operating"]</strong><small>@Localizer["AvailableFlows"]</small></div>
     </div>
 
     <div class="management-grid">
         <section class="management-section campaigns-overview">
             <div class="section-heading split-heading compact-heading">
-                <div><p class="eyebrow">Portfólio</p><h2>Campanhas</h2></div>
-                <a class="text-link" href="/gestao/campanhas">Gerenciar todas</a>
+                <div><p class="eyebrow">@Localizer["Portfolio"]</p><h2>@Localizer["Campaigns"]</h2></div>
+                <a class="text-link" href="/gestao/campanhas">@Localizer["ManageAll"]</a>
             </div>
             <div class="management-campaign-list">
                 @foreach (var campaign in Campaigns.Take(5))
@@ -50,8 +51,8 @@
 
         <section class="management-section event-overview">
             <div class="section-heading split-heading compact-heading">
-                <div><p class="eyebrow">Rastreabilidade</p><h2>Atividade recente</h2></div>
-                <a class="text-link" href="/gestao/auditoria">Abrir auditoria</a>
+                <div><p class="eyebrow">@Localizer["Traceability"]</p><h2>@Localizer["RecentActivity"]</h2></div>
+                <a class="text-link" href="/gestao/auditoria">@Localizer["OpenAudit"]</a>
             </div>
             <div class="event-stream">
                 @foreach (var item in AuditEvents.Take(6))
@@ -63,7 +64,7 @@
                 }
                 @if (AuditEvents.Count == 0)
                 {
-                    <p class="muted">Os próximos eventos processados aparecerão aqui.</p>
+                    <p class="muted">@Localizer["FutureEventsNotice"]</p>
                 }
             </div>
         </section>
@@ -71,7 +72,7 @@
 </section>
 
 @code {
-    private static readonly System.Globalization.CultureInfo Culture = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    private System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.CurrentCulture;
     private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
     private UserApiContext User { get; set; } = new(false, "", "", "", "", false, false);
     private TenantBrand Tenant => TenantCatalog.Resolve(User.TenantId);
@@ -91,30 +92,30 @@
         }
         catch
         {
-            Error = "Não foi possível carregar todos os indicadores da gestão.";
+            Error = Localizer["ManagementIndicatorsError"];
         }
     }
 
     private static decimal ProgressOf(CampaignDto campaign) => campaign.GoalAmount <= 0 ? 0 : Math.Min(campaign.TotalRaised / campaign.GoalAmount * 100, 100);
-    private static string StatusLabel(CampaignStatus status) => status switch
+    private string StatusLabel(CampaignStatus status) => status switch
     {
-        CampaignStatus.Rascunho => "Rascunho",
-        CampaignStatus.EmRevisao => "Em revisão",
-        CampaignStatus.Aprovada => "Aprovada",
-        CampaignStatus.Ativa => "Publicada",
-        CampaignStatus.Concluida => "Concluída",
-        CampaignStatus.Cancelada => "Cancelada",
+        CampaignStatus.Rascunho => Localizer["StatusDraft"],
+        CampaignStatus.EmRevisao => Localizer["StatusInReview"],
+        CampaignStatus.Aprovada => Localizer["StatusApproved"],
+        CampaignStatus.Ativa => Localizer["StatusPublished"],
+        CampaignStatus.Concluida => Localizer["StatusCompleted"],
+        CampaignStatus.Cancelada => Localizer["StatusCancelled"],
         _ => status.ToString()
     };
-    private static string EventLabel(string eventType) => eventType switch
+    private string EventLabel(string eventType) => eventType switch
     {
-        "DonationIntentCreated" => "Doação iniciada",
-        "PaymentConfirmed" => "Pagamento confirmado",
-        "DonationProcessed" => "Doação processada",
-        "CampaignCreated" => "Campanha criada",
-        "CampaignPublished" => "Campanha publicada",
-        "CampaignUpdated" => "Campanha atualizada",
-        "CampaignCancelled" => "Campanha cancelada",
+        "DonationIntentCreated" => Localizer["Event.DonationIntentCreated"],
+        "PaymentConfirmed" => Localizer["Event.PaymentConfirmed"],
+        "DonationProcessed" => Localizer["Event.DonationProcessed"],
+        "CampaignCreated" => Localizer["Event.CampaignCreated"],
+        "CampaignPublished" => Localizer["Event.CampaignPublished"],
+        "CampaignUpdated" => Localizer["Event.CampaignUpdated"],
+        "CampaignCancelled" => Localizer["Event.CampaignCancelled"],
         _ => eventType
     };
 }
