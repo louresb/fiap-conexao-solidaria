@@ -5,7 +5,7 @@
 
 Projeto desenvolvido para o Hackathon da pós-graduação em Arquitetura de Sistemas .NET da FIAP. A plataforma conecta organizações, doadores e campanhas com pagamentos, processamento assíncrono, transparência e auditoria ponta a ponta.
 
-[![Página inicial da Conexão Solidária](docs/product/screenshots/home.jpg)](https://conexao-solidaria-blouresfiap26.chilecentral.cloudapp.azure.com/)
+![Página inicial da Conexão Solidária](docs/product/screenshots/home.jpg)
 
 ## Produto
 
