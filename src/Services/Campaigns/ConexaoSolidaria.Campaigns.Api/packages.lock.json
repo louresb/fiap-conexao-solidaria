@@ -105,18 +105,18 @@
       },
       "Serilog.Sinks.Grafana.Loki": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "l2Ko8Z+0VaChnc1gEeiGwz1OIphLTMI1G6zXDQtWWEhSGdvxjkZsZY+jTLeOvRJDiMow4L27AOY3c6+NqyuuFw==",
+        "requested": "[9.0.2, )",
+        "resolved": "9.0.2",
+        "contentHash": "Tgja5SRbZfNVZsPtq3ThQayf4G11kWdoDHJjUDK93uGuhrEsKn+nA0FsMmCfohZV+717bZOKFwGWxQzWQdaEpg==",
         "dependencies": {
-          "FSharp.Core": "10.1.300",
+          "FSharp.Core": "10.1.301",
           "Serilog": "4.3.1"
         }
       },
       "FSharp.Core": {
         "type": "Transitive",
-        "resolved": "10.1.300",
-        "contentHash": "BACHDBo/KL615GifW2wGB8vw3HLraCJb77VN/XVmQZPceNw+Oc+J+McehOo2yHtcr7hABmW4EqZZzVYiR1Z1EQ=="
+        "resolved": "10.1.301",
+        "contentHash": "excLf2zM/qUB3WhRUfI0xvOOaPwcRAEdYT/BXe9eiTKySnWVuIKMQTf5+6ETy5nsb1dpLp1s2j2yAM/XcRgFMg=="
       },
       "Humanizer.Core": {
         "type": "Transitive",
